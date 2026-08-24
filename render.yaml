@@ -1,29 +1,24 @@
 # Render blueprint. In Render: New → Blueprint → point at this repo.
-# It provisions the database and the web service together, and wires
-# DATABASE_URL from the database into the service automatically.
-databases:
-  - name: voltgrid-db
-    databaseName: voltgrid
-    user: voltgrid
-    plan: free
-
+#
+# No database is declared here on purpose: Render's free plan allows only one
+# active free PostgreSQL per account, so a blueprint that tries to create one
+# fails with "cannot have more than one active free tier database" if you
+# already have any. Create the database yourself (or reuse an existing one) and
+# paste its Internal Database URL into DATABASE_URL when prompted.
+#
+# `npm start` runs `prisma migrate deploy` and seeds an empty database before
+# serving, so the schema is always in place no matter how the host is set up.
 services:
   - type: web
     name: volt-grid
     runtime: node
     plan: free
     region: singapore
-    # migrate before build so the schema exists; `--if-empty` seeds the demo
-    # data on the first deploy only and leaves real data alone afterwards.
-    buildCommand: npm ci && npx prisma migrate deploy && npm run seed -- --if-empty && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /login
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: voltgrid-db
-          property: connectionString
+        sync: false # paste the database's Internal Database URL
       - key: JWT_SECRET
         generateValue: true
-      - key: NODE_VERSION
-        value: 24.16.0

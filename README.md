@@ -50,7 +50,9 @@ before deploying anywhere real.
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the dev server |
-| `npm run build` / `npm start` | Production build and serve |
+| `npm run build` | Production build |
+| `npm start` | Apply migrations, seed an empty database, then serve |
+| `npm run start:next` | Serve only, without the migrate/seed step |
 | `npm run db:up` / `npm run db:down` | Start / stop the local PostgreSQL container |
 | `npm run seed` | Wipe and repopulate the demo data |
 | `npm run seed:if-empty` | Seed only when the database has no stations (used by deploys) |
@@ -221,22 +223,31 @@ The app needs a PostgreSQL database and two environment variables:
 point it at this repository; it creates the database, creates the web service,
 wires `DATABASE_URL` between them and generates a `JWT_SECRET`.
 
+Note that Render's free plan allows only **one active free PostgreSQL per
+account**. If you already have one, reuse it rather than letting the blueprint
+create a second — a blueprint that tries fails with *cannot have more than one
+active free tier database*.
+
 ### Render (manual), or any other Node host
 
 Create a PostgreSQL database first, then a web service with:
 
 | Setting | Value |
 |---|---|
-| Build command | `npm ci && npx prisma migrate deploy && npm run seed -- --if-empty && npm run build` |
+| Build command | `npm ci && npm run build` |
 | Start command | `npm start` |
 | `DATABASE_URL` | the database's internal connection string |
 | `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
 
-`prisma migrate deploy` creates the tables — **skipping it is what produces
-`DriverAdapterError: TableDoesNotExist` at runtime**, because the app starts
-against a database that has no schema. `seed -- --if-empty` fills the demo data
-on the first deploy and does nothing on later ones, so accounts and sessions
-created on the live site survive a redeploy.
+`npm start` runs `prisma migrate deploy` and then seeds an empty database
+before handing over to `next start`, so the schema is in place however the host
+is configured. That is deliberate: a deploy whose build step forgets
+`prisma migrate deploy` is exactly what produces
+`DriverAdapterError: TableDoesNotExist` at runtime, and booting through the
+migration removes that failure mode entirely.
+
+Seeding uses `--if-empty`, so the demo data lands on the first boot and later
+restarts leave accounts and sessions created on the live site alone.
 
 On Render's free plan the service sleeps after inactivity, so the first request
 after a while takes a few seconds to wake up.

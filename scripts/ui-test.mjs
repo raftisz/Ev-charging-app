@@ -111,6 +111,10 @@ console.log("\n=== Desktop 1440x900 · driver ===");
   await page.waitForTimeout(1500);
   check("reservation wizard steps", await page.locator("text=1. Station").isVisible());
   await page.selectOption('select[aria-label="Choose a station"]', { index: 3 });
+  await page.waitForTimeout(1500);
+  // Slots run 08:00-20:30, so pick tomorrow to stay deterministic whatever
+  // time of day the suite runs at.
+  await page.selectOption('select[aria-label="Choose a day"]', { index: 1 });
   await page.waitForTimeout(1800);
   check("slots appear after choosing a station", (await page.locator('button:has-text(":00"), button:has-text(":30")').count()) > 4);
   const slot = page.locator("button:not([disabled])").filter({ hasText: /^\d{2}:\d{2}$/ }).first();

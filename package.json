@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "prisma migrate deploy && tsx prisma/seed.ts --if-empty && next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
@@ -16,7 +16,8 @@
     "test:ui": "node scripts/ui-test.mjs",
     "seed:if-empty": "tsx prisma/seed.ts --if-empty",
     "db:up": "docker compose up -d db",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "start:next": "next start"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

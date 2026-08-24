@@ -54,6 +54,8 @@ export function NewReservationFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const days = useMemo(() => dayOptions(), []);
+
   const stationsQuery = useAsync(() => api.stations({ sort: "distance" }), []);
   const stations = stationsQuery.data?.stations ?? [];
 
@@ -71,8 +73,14 @@ export function NewReservationFlow() {
     [stationId, day, durationMinutes],
   );
 
-  const chargers = availability.data?.chargers ?? [];
+  const chargers = useMemo(() => availability.data?.chargers ?? [], [availability.data]);
   const selectedCharger = chargers.find((c) => c.id === chargerId) ?? null;
+
+  // Slots run 08:00–20:30, so late in the evening "Today" has nothing left.
+  const dayIsFull =
+    chargers.length > 0 &&
+    chargers.every((c) => !c.bookable || c.slots.every((slot) => !slot.available));
+  const nextDay = days.find((d) => d.value > day)?.value ?? null;
 
   const estimate = useMemo(() => {
     if (!station || !selectedCharger) return null;
@@ -85,8 +93,6 @@ export function NewReservationFlow() {
       total: energy * station.pricePerKwh + fee,
     };
   }, [station, selectedCharger, durationMinutes]);
-
-  const days = useMemo(() => dayOptions(), []);
 
   async function submit() {
     if (!stationId || !chargerId || !slotIso) return;
@@ -229,6 +235,26 @@ export function NewReservationFlow() {
               ) : null}
               {availability.loading && !availability.data ? <ListSkeleton count={2} /> : null}
 
+              {dayIsFull ? (
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3">
+                  <span className="flex-1 text-[13px] leading-relaxed text-muted">
+                    No slots left on this day. Bookings run 08:00 to 20:30.
+                  </span>
+                  {nextDay ? (
+                    <Button
+                      size="sm"
+                      variant="tint"
+                      onClick={() => {
+                        setDay(nextDay);
+                        setSlotIso(null);
+                      }}
+                    >
+                      Try {days.find((d) => d.value === nextDay)?.label}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+
               {chargers.length === 0 && availability.data ? (
                 <EmptyState title="This station has no chargers yet" />
               ) : null}
@@ -256,6 +282,12 @@ export function NewReservationFlow() {
                           {charger.bookable ? `${free} slots free` : "Out of service"}
                         </span>
                       </div>
+
+                      {charger.bookable && free === 0 ? (
+                        <p className="mb-2 text-[12.5px] text-faint">
+                          Fully booked or past for this day.
+                        </p>
+                      ) : null}
 
                       {charger.bookable ? (
                         <div className="flex flex-wrap gap-2">
