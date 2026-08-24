@@ -1,10 +1,15 @@
 /**
  * Resets and repopulates the Volt Grid demo database.
- *   npm run seed
+ *
+ *   npm run seed              wipe and reseed
+ *   npm run seed -- --if-empty   seed only when the database has no stations
+ *
+ * The `--if-empty` form is what deploys run: the first boot fills an empty
+ * database, and later deploys leave real accounts and sessions alone.
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import type {
   ChargerStatus,
@@ -13,10 +18,11 @@ import type {
 } from "../src/generated/prisma/enums";
 import { STATION_ROWS, type ConnectorName } from "./stations";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
-const prisma = new PrismaClient({ adapter });
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not set. Copy .env.example to .env first.");
+}
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 const CONNECTOR: Record<ConnectorName, ConnectorType> = {
   CCS2: "CCS2",
@@ -67,6 +73,27 @@ function stationStatusFor(isOpen: boolean, free: number, total: number, id: numb
   return "AVAILABLE";
 }
 
+/**
+ * The stations are inserted with explicit ids so the demo data is stable, but
+ * an explicit id does not advance Postgres's identity sequence. Without this
+ * the next `create()` would reuse id 1 and fail on the unique constraint.
+ */
+async function resyncSequences() {
+  const tables = [
+    "User", "Station", "Charger", "Connector",
+    "Reservation", "ChargingSession", "Notification", "Favorite",
+  ];
+  for (const table of tables) {
+    await prisma.$executeRawUnsafe(
+      `SELECT setval(
+         pg_get_serial_sequence('"${table}"', 'id'),
+         COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1,
+         false
+       )`,
+    );
+  }
+}
+
 async function reset() {
   // Order matters: children first (SQLite cascades are on, but be explicit).
   await prisma.notification.deleteMany();
@@ -80,6 +107,17 @@ async function reset() {
 }
 
 async function main() {
+  const onlyIfEmpty = process.argv.includes("--if-empty");
+
+  if (onlyIfEmpty) {
+    const existing = await prisma.station.count();
+    if (existing > 0) {
+      console.log(`Database already has ${existing} stations — skipping seed.`);
+      return;
+    }
+    console.log("Database is empty — seeding demo data.");
+  }
+
   console.log("• Clearing existing data");
   await reset();
 
@@ -337,6 +375,9 @@ async function main() {
       },
     });
   }
+
+  console.log("• Resyncing id sequences");
+  await resyncSequences();
 
   const counts = {
     users: await prisma.user.count(),

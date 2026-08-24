@@ -1,9 +1,7 @@
 // Volt Grid — EV charging network schema.
 //
-// Provider is SQLite so the demo runs with zero external services.
-// To move to PostgreSQL: change `provider` to "postgresql", point
-// DATABASE_URL at the server, swap the adapter in src/lib/prisma.ts
-// for @prisma/adapter-pg, then `npx prisma migrate dev`.
+// PostgreSQL, so the same schema runs locally (docker compose up -d db)
+// and on a hosted Postgres instance. DATABASE_URL selects which.
 
 generator client {
   provider = "prisma-client"
@@ -11,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Role {

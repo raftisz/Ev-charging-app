@@ -9,19 +9,23 @@ card-based system built on Space Grotesk + Inter, a `#1A66F0` brand blue and a
 `#0E7A3E` green used for anything live.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
-Prisma 7 · SQLite · Leaflet + OpenStreetMap · JWT auth in an httpOnly cookie.
+Prisma 7 · PostgreSQL · Leaflet + OpenStreetMap · JWT auth in an httpOnly cookie.
 
 ---
 
 ## Quick start
 
 ```bash
-npm install          # also runs `prisma generate`
+npm install              # also runs `prisma generate`
 cp .env.example .env
-npx prisma migrate dev   # creates dev.db and applies the schema
+npm run db:up            # PostgreSQL 16 in Docker on port 5433
+npx prisma migrate dev   # applies the schema
 npm run seed             # 20 stations, 71 chargers, 10 users, ~113 sessions
 npm run dev
 ```
+
+If you already run PostgreSQL locally, skip `npm run db:up` and point
+`DATABASE_URL` at your own instance instead.
 
 Open <http://localhost:3000>.
 
@@ -47,7 +51,9 @@ before deploying anywhere real.
 |---|---|
 | `npm run dev` | Start the dev server |
 | `npm run build` / `npm start` | Production build and serve |
+| `npm run db:up` / `npm run db:down` | Start / stop the local PostgreSQL container |
 | `npm run seed` | Wipe and repopulate the demo data |
+| `npm run seed:if-empty` | Seed only when the database has no stations (used by deploys) |
 | `npm run db:reset` | Drop the database, re-run migrations, reseed |
 | `npm run lint` | ESLint (Next 16 + React Compiler rules) |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -59,6 +65,8 @@ before deploying anywhere real.
 ## Project structure
 
 ```
+docker-compose.yml       # local PostgreSQL
+render.yaml              # Render blueprint: database + web service
 prisma/
   schema.prisma          # User, Station, Charger, Connector, Reservation,
                          # ChargingSession, Notification, Favorite
@@ -202,13 +210,33 @@ errors at every width. Screenshots are written to `test-screenshots/`.
 
 ---
 
-## Moving to PostgreSQL
+## Deploying
 
-SQLite is the default so the demo runs with no external services. To switch:
+The app needs a PostgreSQL database and two environment variables:
+`DATABASE_URL` and `JWT_SECRET`.
 
-1. `provider = "postgresql"` in `prisma/schema.prisma`.
-2. Point `DATABASE_URL` at the server.
-3. Swap the adapter in `src/lib/prisma.ts` for `@prisma/adapter-pg`.
-4. `npx prisma migrate dev && npm run seed`.
+### Render (blueprint)
 
-Nothing above the Prisma client needs to change.
+`render.yaml` provisions both pieces. In Render choose **New → Blueprint** and
+point it at this repository; it creates the database, creates the web service,
+wires `DATABASE_URL` between them and generates a `JWT_SECRET`.
+
+### Render (manual), or any other Node host
+
+Create a PostgreSQL database first, then a web service with:
+
+| Setting | Value |
+|---|---|
+| Build command | `npm ci && npx prisma migrate deploy && npm run seed -- --if-empty && npm run build` |
+| Start command | `npm start` |
+| `DATABASE_URL` | the database's internal connection string |
+| `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+
+`prisma migrate deploy` creates the tables — **skipping it is what produces
+`DriverAdapterError: TableDoesNotExist` at runtime**, because the app starts
+against a database that has no schema. `seed -- --if-empty` fills the demo data
+on the first deploy and does nothing on later ones, so accounts and sessions
+created on the live site survive a redeploy.
+
+On Render's free plan the service sleeps after inactivity, so the first request
+after a while takes a few seconds to wake up.

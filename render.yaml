@@ -1,0 +1,29 @@
+# Render blueprint. In Render: New → Blueprint → point at this repo.
+# It provisions the database and the web service together, and wires
+# DATABASE_URL from the database into the service automatically.
+databases:
+  - name: voltgrid-db
+    databaseName: voltgrid
+    user: voltgrid
+    plan: free
+
+services:
+  - type: web
+    name: volt-grid
+    runtime: node
+    plan: free
+    region: singapore
+    # migrate before build so the schema exists; `--if-empty` seeds the demo
+    # data on the first deploy only and leaves real data alone afterwards.
+    buildCommand: npm ci && npx prisma migrate deploy && npm run seed -- --if-empty && npm run build
+    startCommand: npm start
+    healthCheckPath: /login
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: voltgrid-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_VERSION
+        value: 24.16.0
