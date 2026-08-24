@@ -162,7 +162,7 @@ export default function ProfilePage() {
             </div>
           ) : null}
 
-          <div className="vg-card divide-y divide-surface-alt">
+          <div className="vg-card divide-y divide-line">
             <NavRow href="/favorites" label="Favourite stations" glyph="♥" />
             <NavRow href="/reservations" label="Reservations" glyph="▦" />
             <NavRow href="/notifications" label="Notifications" glyph="◉" />

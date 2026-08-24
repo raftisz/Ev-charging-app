@@ -17,17 +17,17 @@ export function StationCard({
   className?: string;
 }) {
   return (
-    <div className={clsx("vg-card relative p-4 transition-shadow hover:shadow-[0_14px_30px_-24px_rgba(18,22,28,0.6)]", className)}>
+    <div className={clsx("vg-card relative p-4.5 px-5 py-4.5 transition-shadow hover:shadow-[var(--shadow-raised)]", className)}>
       {onToggleFavorite ? (
         <button
           onClick={() => onToggleFavorite(station)}
           aria-label={station.isFavorite ? "Remove from favourites" : "Save to favourites"}
           aria-pressed={station.isFavorite}
           className={clsx(
-            "absolute top-3.5 right-3.5 flex h-8 w-8 items-center justify-center rounded-[10px] border transition-colors",
+            "absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full transition-colors",
             station.isFavorite
-              ? "border-danger-tint bg-danger-tint text-danger"
-              : "border-line bg-white text-faint hover:text-ink",
+              ? "bg-danger-tint text-danger"
+              : "bg-surface-alt text-faint hover:text-ink",
           )}
         >
           <HeartIcon filled={station.isFavorite} />
@@ -82,9 +82,9 @@ export function StationHeroCard({ station }: { station: StationDTO }) {
   return (
     <Link
       href={`/stations/${station.id}`}
-      className="vg-card w-[226px] shrink-0 overflow-hidden lg:w-auto"
+      className="vg-card w-[236px] shrink-0 overflow-hidden transition-shadow hover:shadow-[var(--shadow-raised)] lg:w-auto"
     >
-      <div className="relative h-24 bg-[linear-gradient(140deg,#16305E,#1A66F0_70%,#2E9B6B)]">
+      <div className="relative h-24 bg-[linear-gradient(140deg,#1e3a8a,#2563eb_65%,#10b981)]">
         <svg
           viewBox="0 0 226 96"
           preserveAspectRatio="xMidYMid slice"

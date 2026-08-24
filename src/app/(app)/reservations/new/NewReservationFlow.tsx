@@ -125,7 +125,7 @@ export function NewReservationFlow() {
           <li key={label} className="flex items-center gap-2">
             <span
               className={clsx(
-                "flex h-6 w-6 items-center justify-center rounded-full font-display text-[11.5px] font-bold",
+                "flex h-7 w-7 items-center justify-center rounded-full font-display text-[11.5px] font-bold",
                 i === stepIndex
                   ? "bg-brand text-white"
                   : i < stepIndex
@@ -210,10 +210,10 @@ export function NewReservationFlow() {
                       }}
                       aria-pressed={durationMinutes === minutes}
                       className={clsx(
-                        "flex-1 rounded-xl border py-2.5 text-[12.5px] font-semibold transition-colors",
+                        "flex-1 rounded-full py-2.5 text-[12.5px] font-semibold transition-all",
                         durationMinutes === minutes
-                          ? "border-ink bg-ink text-white"
-                          : "border-line bg-white text-muted hover:border-faint-soft",
+                          ? "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.9)]"
+                          : "bg-white text-muted shadow-[0_4px_12px_-9px_rgba(30,58,138,0.6)] hover:text-ink",
                       )}
                     >
                       {minutes}m
@@ -236,7 +236,7 @@ export function NewReservationFlow() {
               {availability.loading && !availability.data ? <ListSkeleton count={2} /> : null}
 
               {dayIsFull ? (
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3">
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5">
                   <span className="flex-1 text-[13px] leading-relaxed text-muted">
                     No slots left on this day. Bookings run 08:00 to 20:30.
                   </span>
@@ -310,12 +310,12 @@ export function NewReservationFlow() {
                                       : undefined
                                 }
                                 className={clsx(
-                                  "min-w-[62px] rounded-[10px] border px-2.5 py-2 text-[12.5px] font-semibold transition-colors",
+                                  "min-w-[66px] rounded-full px-3.5 py-2 text-[12.5px] font-semibold transition-all",
                                   active
-                                    ? "border-brand bg-brand text-white"
+                                    ? "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.9)]"
                                     : slot.available
-                                      ? "border-line bg-white text-ink hover:border-brand hover:text-brand"
-                                      : "cursor-not-allowed border-surface-alt bg-surface-alt text-faint line-through",
+                                      ? "bg-white text-ink shadow-[0_4px_12px_-9px_rgba(30,58,138,0.6)] hover:text-brand"
+                                      : "cursor-not-allowed bg-surface-alt text-faint line-through",
                                 )}
                               >
                                 {slot.time}

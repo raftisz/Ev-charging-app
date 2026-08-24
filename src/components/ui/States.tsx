@@ -22,7 +22,7 @@ export function ListSkeleton({ count = 4 }: { count?: number }) {
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="vg-card flex items-center gap-4 p-4">
-          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <Skeleton className="h-12 w-12 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-3.5 w-1/2" />
             <Skeleton className="h-3 w-3/4" />
@@ -59,8 +59,8 @@ export function EmptyState({
   action?: { label: string; href?: string; onClick?: () => void };
 }) {
   return (
-    <div className="vg-card flex flex-col items-center gap-3 px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-alt font-display text-lg text-faint">
+    <div className="vg-card flex flex-col items-center gap-3 px-6 py-14 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-alt font-display text-xl text-faint">
         {icon}
       </span>
       <div>
@@ -96,8 +96,8 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[18px] border border-[#f5c2c2] bg-danger-tint px-6 py-10 text-center">
-      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white font-display text-lg font-bold text-danger">
+    <div className="flex flex-col items-center gap-3 rounded-[22px] bg-danger-tint px-6 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white font-display text-lg font-bold text-danger">
         !
       </span>
       <div>
@@ -131,7 +131,7 @@ export function FormError({ message }: { message?: string | null }) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-[#f5c2c2] bg-danger-tint px-3.5 py-3 text-[13px] font-medium text-danger-dark"
+      className="rounded-[14px] bg-danger-tint px-4 py-3 text-[13px] font-medium text-danger-dark"
     >
       {message}
     </div>

@@ -147,7 +147,7 @@ export default function ChargingPage() {
       {session ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
           <div className="min-w-0 space-y-4">
-            <div className="rounded-[22px] bg-grid-green p-5 text-white shadow-[0_16px_34px_-22px_rgba(14,122,62,0.9)] lg:p-7">
+            <div className="rounded-[26px] bg-grid-green p-5 text-white shadow-[0_18px_44px_-20px_rgba(5,150,105,0.85)] lg:p-7">
               <div className="mb-4 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="vg-pulse absolute inset-0 rounded-full bg-grid-green-pale" />
@@ -271,7 +271,7 @@ export default function ChargingPage() {
                 You will be asked to pay once the session stops. Wallet balance right now is{" "}
                 <span className="font-semibold text-ink">{thb(user.walletBalance)}</span>.
               </p>
-              <div className="mt-3 rounded-[10px] bg-brand-tint px-3 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
+              <div className="mt-3 rounded-[14px] bg-brand-pale px-3.5 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
                 Charging slows down sharply above 80%. Stopping at the target keeps the cost per
                 kWh sensible.
               </div>
@@ -353,10 +353,10 @@ export default function ChargingPage() {
                 key={m.key}
                 onClick={() => setMethod(m.key)}
                 className={clsx(
-                  "flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors",
+                  "flex w-full items-center gap-3 rounded-[16px] px-4 py-3.5 text-left transition-colors",
                   method === m.key
-                    ? "border-brand bg-brand-tint"
-                    : "border-line bg-white hover:border-faint-soft",
+                    ? "bg-brand-tint ring-2 ring-brand"
+                    : "bg-surface hover:bg-surface-alt",
                 )}
               >
                 <span
@@ -379,7 +379,7 @@ export default function ChargingPage() {
             ))}
           </div>
           {payFor ? (
-            <dl className="rounded-xl bg-surface p-3.5 text-[13px]">
+            <dl className="rounded-[16px] bg-surface p-4 text-[13px]">
               <Row label="Energy" value={kwh(payFor.energyKwh)} />
               <Row label={`Rate`} value={`${thb(payFor.pricePerKwh, 2)}/kWh`} />
               <div className="mt-2 flex justify-between border-t border-line pt-2">
@@ -407,7 +407,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-3 border-b border-surface-alt py-1.5 last:border-0">
+    <div className="flex justify-between gap-3 border-b border-line py-1.5 last:border-0">
       <dt className="text-faint">{label}</dt>
       <dd className="text-right font-medium text-ink">{value}</dd>
     </div>

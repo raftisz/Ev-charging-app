@@ -87,7 +87,7 @@ export default function SettingsPage() {
           <p className="mt-1 mb-3 text-[13px] text-faint">
             Choose what Volt Grid tells you about. Stored on this device for the demo.
           </p>
-          <ul className="divide-y divide-surface-alt">
+          <ul className="divide-y divide-line">
             {(
               [
                 ["reservationReminders", "Reservation reminders", "30 minutes before your slot"],

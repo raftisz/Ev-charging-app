@@ -222,7 +222,7 @@ export default function AdminStationsPage() {
 
       {stations.length ? (
         <div className="vg-card overflow-hidden">
-          <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-surface-alt bg-[#FAFBFC] px-4 py-2.5 lg:grid">
+          <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
             {["Station", "Status", "Chargers", "Price", "Location", ""].map((c) => (
               <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
@@ -233,7 +233,7 @@ export default function AdminStationsPage() {
             {stations.map((s) => (
               <li
                 key={s.id}
-                className="grid gap-3 border-b border-[#F5F7F9] px-4 py-3.5 last:border-0 lg:grid-cols-[2fr_1fr_0.8fr_0.8fr_1fr_auto] lg:items-center"
+                className="grid gap-3 border-b border-line px-4 py-3.5 last:border-0 lg:grid-cols-[2fr_1fr_0.8fr_0.8fr_1fr_auto] lg:items-center"
               >
                 <div className="min-w-0">
                   <Link

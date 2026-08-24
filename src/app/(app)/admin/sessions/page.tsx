@@ -90,17 +90,17 @@ export default function AdminSessionsPage() {
             <StatTile label="Outstanding" value={thb(totals.outstanding)} />
           </div>
 
-          <div className="mt-4 mb-3 flex gap-1 rounded-xl bg-canvas p-1 lg:w-fit">
+          <div className="mt-4 mb-3 flex gap-1 rounded-full bg-surface-alt p-1 lg:w-fit">
             {FILTERS.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 aria-pressed={filter === f}
                 className={clsx(
-                  "flex-1 rounded-lg px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
+                  "flex-1 rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
                   filter === f
-                    ? "bg-white text-ink shadow-[0_1px_3px_rgba(18,22,28,0.16)]"
-                    : "text-muted",
+                    ? "bg-brand text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.9)]"
+                    : "text-muted hover:text-ink",
                 )}
               >
                 {f}
@@ -112,7 +112,7 @@ export default function AdminSessionsPage() {
             <EmptyState icon="⚡" title={`No ${filter.toLowerCase()} sessions`} />
           ) : (
             <div className="vg-card overflow-hidden">
-              <div className="hidden grid-cols-[0.5fr_1.5fr_1.3fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-surface-alt bg-[#FAFBFC] px-4 py-2.5 lg:grid">
+              <div className="hidden grid-cols-[0.5fr_1.5fr_1.3fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
                 {["#", "Station", "Driver", "Started", "Energy", "Cost", "Status", ""].map((c) => (
                   <span
                     key={c}
@@ -126,7 +126,7 @@ export default function AdminSessionsPage() {
                 {filtered.map((s) => (
                   <li
                     key={s.id}
-                    className="grid gap-2 border-b border-[#F5F7F9] px-4 py-3.5 last:border-0 lg:grid-cols-[0.5fr_1.5fr_1.3fr_1fr_0.8fr_0.8fr_1fr_auto] lg:items-center lg:gap-3"
+                    className="grid gap-2 border-b border-line px-4 py-3.5 last:border-0 lg:grid-cols-[0.5fr_1.5fr_1.3fr_1fr_0.8fr_0.8fr_1fr_auto] lg:items-center lg:gap-3"
                   >
                     <span className="text-[12.5px] text-faint">#{s.id}</span>
                     <div className="min-w-0">

@@ -7,7 +7,7 @@ import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
 import { dayMonth, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
-import { BarChart, ProgressRing } from "@/components/ui/Stat";
+import { BarChart, ProgressRing, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { StationHeroCard } from "@/components/stations/StationCard";
 import { Badge } from "@/components/ui/Badge";
@@ -90,7 +90,7 @@ export default function DashboardPage() {
             </section>
 
             <section className="vg-card overflow-hidden">
-              <div className="flex items-center border-b border-surface-alt px-4 py-3.5">
+              <div className="flex items-center border-b border-line px-4 py-3.5">
                 <h2 className="flex-1 font-display text-[16px] font-semibold text-ink">
                   Recent activity
                 </h2>
@@ -103,9 +103,9 @@ export default function DashboardPage() {
                   {data.recentSessions.map((session) => (
                     <li
                       key={session.id}
-                      className="flex items-center gap-3 border-b border-[#F5F7F9] px-4 py-3 last:border-0"
+                      className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-0"
                     >
-                      <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] bg-grid-green-tint font-display text-[12px] font-bold text-grid-green">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-grid-green-tint font-display text-[12px] font-bold text-grid-green">
                         ⚡
                       </span>
                       <div className="min-w-0 flex-1">
@@ -168,7 +168,7 @@ export default function DashboardPage() {
               {data.nextReservation ? (
                 <>
                   <div className="mt-3 flex items-center gap-3">
-                    <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[13px] bg-brand-tint">
+                    <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[16px] bg-brand-tint">
                       <span className="font-display text-[16px] leading-none font-bold text-brand">
                         {new Date(data.nextReservation.startTime).getDate()}
                       </span>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 rounded-[10px] bg-brand-tint px-3 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
+                  <div className="mt-3 rounded-[14px] bg-brand-pale px-3.5 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
                     The charger is held for 15 minutes past your slot start.
                   </div>
                   <Button href="/reservations" variant="secondary" size="sm" fullWidth className="mt-3">
@@ -215,11 +215,31 @@ export default function DashboardPage() {
                   {new Intl.DateTimeFormat("en-GB", { month: "long" }).format(new Date())}
                 </span>
               </div>
-              <div className="mb-3.5 grid grid-cols-2 gap-x-2.5 gap-y-3">
-                <MiniStat value={kwh(data.stats.monthEnergyKwh, 0)} label="Energy charged" />
-                <MiniStat value={thb(data.stats.monthSpend)} label="Spent" />
-                <MiniStat value={String(data.stats.monthSessions)} label="Sessions" />
-                <MiniStat value={`${data.stats.co2SavedKg} kg`} label="CO₂ avoided" />
+              <div className="mb-4 grid grid-cols-2 gap-2.5">
+                <StatTile
+                  tint="lilac"
+                  glyph="⚡"
+                  value={kwh(data.stats.monthEnergyKwh, 0)}
+                  label="Energy charged"
+                />
+                <StatTile
+                  tint="amber"
+                  glyph="฿"
+                  value={thb(data.stats.monthSpend)}
+                  label="Spent"
+                />
+                <StatTile
+                  tint="mint"
+                  glyph="◐"
+                  value={String(data.stats.monthSessions)}
+                  label="Sessions"
+                />
+                <StatTile
+                  tint="blue"
+                  glyph="♺"
+                  value={`${data.stats.co2SavedKg} kg`}
+                  label="CO₂ avoided"
+                />
               </div>
               <BarChart
                 data={data.stats.dailyEnergy.map((d) => d.kwh)}
@@ -263,7 +283,7 @@ function LiveSessionCard({
   return (
     <Link
       href="/charging"
-      className="block rounded-[22px] bg-grid-green p-4 text-white shadow-[0_16px_34px_-22px_rgba(14,122,62,0.9)] lg:p-6"
+      className="block rounded-[26px] bg-grid-green p-5 text-white shadow-[0_18px_40px_-20px_rgba(5,150,105,0.85)] lg:p-6"
     >
       <div className="mb-3.5 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
@@ -369,25 +389,16 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="vg-card flex min-h-[76px] flex-col gap-2 p-3.5 transition-colors hover:border-faint-soft"
+      className="vg-card flex min-h-[84px] flex-col gap-2.5 p-4 transition-shadow hover:shadow-[var(--shadow-raised)]"
     >
       <span
-        className={`flex h-[30px] w-[30px] items-center justify-center rounded-[9px] font-display text-[13px] font-bold ${tint} ${fg}`}
+        className={`flex h-9 w-9 items-center justify-center rounded-full font-display text-[13px] font-bold ${tint} ${fg}`}
         aria-hidden
       >
         {glyph}
       </span>
       <span className="text-[13px] font-semibold text-ink">{label}</span>
     </Link>
-  );
-}
-
-function MiniStat({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <div className="font-display text-[19px] font-bold text-ink">{value}</div>
-      <div className="mt-0.5 text-[11.5px] text-faint">{label}</div>
-    </div>
   );
 }
 

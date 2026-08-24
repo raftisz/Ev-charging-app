@@ -105,7 +105,7 @@ export default function StationDetailPage({
         <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
           <div className="min-w-0 space-y-4">
             <div className="vg-card overflow-hidden">
-              <div className="relative h-40 bg-[linear-gradient(140deg,#16305E,#1A66F0_70%,#2E9B6B)] sm:h-48">
+              <div className="relative h-40 bg-[linear-gradient(140deg,#1e3a8a,#2563eb_65%,#10b981)] sm:h-48">
                 <svg
                   viewBox="0 0 600 200"
                   preserveAspectRatio="xMidYMid slice"
@@ -158,7 +158,7 @@ export default function StationDetailPage({
             </div>
 
             <div className="vg-card overflow-hidden">
-              <div className="flex items-center gap-3 border-b border-surface-alt px-4 py-3.5">
+              <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
                 <h3 className="flex-1 font-display text-[16px] font-semibold text-ink">
                   Chargers
                 </h3>
@@ -172,7 +172,7 @@ export default function StationDetailPage({
                 {station.chargers.map((charger) => (
                   <li
                     key={charger.id}
-                    className="flex flex-wrap items-center gap-3 border-b border-[#F5F7F9] px-4 py-3.5 last:border-0"
+                    className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3.5 last:border-0"
                   >
                     <span
                       className={clsx(
@@ -243,7 +243,7 @@ export default function StationDetailPage({
           </div>
 
           <div className="min-w-0 space-y-3.5">
-            <div className="h-[260px] overflow-hidden rounded-[16px] border border-line bg-white">
+            <div className="h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[var(--shadow-card)]">
               <StationMap stations={[station]} selectedId={station.id} />
             </div>
 
@@ -298,7 +298,7 @@ export default function StationDetailPage({
           {startError ? (
             <div
               role="alert"
-              className="rounded-xl border border-[#f5c2c2] bg-danger-tint px-3.5 py-2.5 text-[13px] font-medium text-danger-dark"
+              className="rounded-[14px] bg-danger-tint px-4 py-2.5 text-[13px] font-medium text-danger-dark"
             >
               {startError}
             </div>
@@ -334,7 +334,7 @@ export default function StationDetailPage({
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="border-r border-b border-surface-alt px-4 py-3.5 last:border-r-0">
+    <div className="border-r border-b border-line px-4 py-3.5 last:border-r-0">
       <div className="text-[11.5px] text-faint">{label}</div>
       <div className="mt-1 font-display text-[15px] font-semibold text-ink">{value}</div>
     </div>
@@ -343,7 +343,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-3 border-b border-surface-alt py-1.5 last:border-0">
+    <div className="flex justify-between gap-3 border-b border-line py-1.5 last:border-0">
       <dt className="text-faint">{label}</dt>
       <dd className="text-right font-medium text-ink">{value}</dd>
     </div>

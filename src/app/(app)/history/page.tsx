@@ -95,17 +95,17 @@ export default function HistoryPage() {
             />
           </div>
 
-          <div className="mt-4 mb-3 flex gap-1 rounded-xl bg-canvas p-1 lg:w-fit">
+          <div className="mt-4 mb-3 flex gap-1 rounded-full bg-surface-alt p-1 lg:w-fit">
             {FILTERS.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 aria-pressed={filter === f}
                 className={clsx(
-                  "flex-1 rounded-lg px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
+                  "flex-1 rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
                   filter === f
-                    ? "bg-white text-ink shadow-[0_1px_3px_rgba(18,22,28,0.16)]"
-                    : "text-muted",
+                    ? "bg-brand text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.9)]"
+                    : "text-muted hover:text-ink",
                 )}
               >
                 {f}
@@ -124,7 +124,7 @@ export default function HistoryPage() {
             <>
               {/* Table on desktop, cards on mobile */}
               <div className="vg-card hidden overflow-hidden lg:block">
-                <div className="grid grid-cols-[1.6fr_1fr_0.8fr_0.8fr_0.9fr] border-b border-surface-alt bg-[#FAFBFC] px-4 py-2.5">
+                <div className="grid grid-cols-[1.6fr_1fr_0.8fr_0.8fr_0.9fr] border-b border-line bg-surface px-4 py-2.5">
                   {["Station", "When", "Energy", "Amount", "Status"].map((c, i) => (
                     <span
                       key={c}
@@ -140,7 +140,7 @@ export default function HistoryPage() {
                 {filtered.map((s) => (
                   <div
                     key={s.id}
-                    className="grid grid-cols-[1.6fr_1fr_0.8fr_0.8fr_0.9fr] items-center border-b border-[#F5F7F9] px-4 py-3 last:border-0"
+                    className="grid grid-cols-[1.6fr_1fr_0.8fr_0.8fr_0.9fr] items-center border-b border-line px-4 py-3 last:border-0"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <span

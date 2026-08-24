@@ -51,14 +51,14 @@ export function AppShell({
   }
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-white px-3.5 py-5">
+    <div className="flex h-full flex-col bg-white px-4 py-6">
       <Link href={variant === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 px-2 pb-5">
         <BoltMark className="text-brand" />
         <span className="font-display text-[16px] font-bold tracking-[-0.01em] text-ink">
           Volt Grid
         </span>
         {variant === "admin" ? (
-          <span className="rounded-md bg-ink px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+          <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
             ADMIN
           </span>
         ) : null}
@@ -75,7 +75,7 @@ export function AppShell({
       {variant === "driver" ? (
         <Link
           href="/history"
-          className="mb-3 block rounded-[14px] bg-grid-green p-3.5 text-white transition-opacity hover:opacity-95"
+          className="mb-3 block rounded-[18px] bg-grid-green p-4 text-white shadow-[0_12px_26px_-16px_rgba(5,150,105,0.9)] transition-opacity hover:opacity-95"
         >
           <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
           <div className="font-display text-[20px] font-bold">{thb(user.walletBalance)}</div>
@@ -88,14 +88,14 @@ export function AppShell({
       {isAdmin ? (
         <Link
           href={variant === "admin" ? "/dashboard" : "/admin"}
-          className="mb-3 flex items-center justify-between rounded-xl border border-line px-3 py-2.5 text-[12.5px] font-semibold text-brand transition-colors hover:bg-brand-tint"
+          className="mb-3 flex items-center justify-between rounded-full bg-brand-tint px-4 py-2.5 text-[12.5px] font-semibold text-brand transition-colors hover:bg-[#d8e6ff]"
         >
           {variant === "admin" ? "Driver app" : "Admin console"}
           <span aria-hidden>→</span>
         </Link>
       ) : null}
 
-      <div className="flex items-center gap-2.5 rounded-xl border border-line p-2">
+      <div className="flex items-center gap-2.5 rounded-[18px] bg-surface p-2.5">
         <Avatar user={user} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-semibold text-ink">{user.fullName}</div>
@@ -106,7 +106,7 @@ export function AppShell({
           disabled={signingOut}
           title="Sign out"
           aria-label="Sign out"
-          className="rounded-lg px-2 py-1.5 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-alt hover:text-danger disabled:opacity-50"
+          className="rounded-full px-2.5 py-1.5 text-[11.5px] font-semibold text-muted transition-colors hover:bg-white hover:text-danger disabled:opacity-50"
         >
           Exit
         </button>
@@ -117,7 +117,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh bg-surface">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[238px] border-r border-line lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[238px] shadow-[10px_0_40px_-28px_rgba(30,58,138,0.4)] lg:block">
         {sidebar}
       </aside>
 
@@ -139,9 +139,9 @@ export function AppShell({
       ) : null}
 
       <div className="lg:pl-[238px]">
-        <header className="sticky top-0 z-30 flex h-[62px] items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur lg:h-[68px] lg:px-6">
+        <header className="sticky top-0 z-30 flex h-[62px] items-center gap-3 bg-canvas/85 px-4 backdrop-blur-md lg:h-[76px] lg:px-7">
           <button
-            className="-ml-1 flex h-9 w-9 items-center justify-center rounded-xl text-ink lg:hidden"
+            className="-ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-[0_4px_14px_-8px_rgba(30,58,138,0.5)] lg:hidden"
             onClick={() => setDrawer(true)}
             aria-label="Open menu"
           >
@@ -161,7 +161,7 @@ export function AppShell({
 
           <Link
             href="/stations"
-            className="hidden h-[38px] w-[300px] items-center gap-2.5 rounded-[11px] border border-line bg-surface px-3 text-[13.5px] text-faint transition-colors hover:border-faint-soft xl:flex"
+            className="hidden h-[42px] w-[300px] items-center gap-2.5 rounded-full bg-white px-4 text-[13.5px] text-faint shadow-[0_4px_14px_-8px_rgba(30,58,138,0.4)] transition-shadow hover:shadow-[0_8px_22px_-10px_rgba(30,58,138,0.45)] xl:flex"
           >
             <SearchIcon />
             Search stations, sessions, payments
@@ -170,7 +170,7 @@ export function AppShell({
           <Link
             href="/notifications"
             aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
-            className="relative flex h-[38px] w-[38px] items-center justify-center rounded-[11px] border border-line bg-white text-ink transition-colors hover:bg-surface-alt"
+            className="relative flex h-[42px] w-[42px] items-center justify-center rounded-full bg-white text-ink shadow-[0_4px_14px_-8px_rgba(30,58,138,0.4)] transition-shadow hover:shadow-[0_8px_22px_-10px_rgba(30,58,138,0.45)]"
           >
             <BellIcon size={16} />
             {unread > 0 ? (
@@ -179,7 +179,7 @@ export function AppShell({
           </Link>
         </header>
 
-        <main className="mx-auto w-full max-w-[1180px] px-4 pt-4 pb-28 lg:px-6 lg:pt-6 lg:pb-10">
+        <main className="mx-auto w-full max-w-[1200px] px-4 pt-3 pb-28 lg:px-7 lg:pt-2 lg:pb-10">
           {children}
         </main>
       </div>
@@ -194,8 +194,10 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={clsx(
-        "flex min-h-10 items-center gap-2.5 rounded-[10px] px-2.5 py-2.5 transition-colors",
-        active ? "bg-brand-tint text-brand" : "text-ink-soft hover:bg-surface-alt",
+        "flex min-h-11 items-center gap-3 rounded-full px-3.5 py-2.5 transition-colors",
+        active
+          ? "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.9)]"
+          : "text-ink-soft hover:bg-surface-alt",
       )}
     >
       <span className="w-5 text-center font-display text-[13px] font-bold" aria-hidden>
@@ -222,7 +224,7 @@ export function Avatar({ user, size = 32 }: { user: UserDTO; size?: number }) {
 
 function TabBar({ pathname }: { pathname: string }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-white/95 px-3 pt-2 pb-[max(env(safe-area-inset-bottom),14px)] backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 bg-white/95 px-3 pt-2.5 pb-[max(env(safe-area-inset-bottom),14px)] shadow-[0_-8px_30px_-16px_rgba(30,58,138,0.35)] backdrop-blur-md lg:hidden">
       {DRIVER_TABS.map((item) => {
         const active = isActive(pathname, item);
         return (

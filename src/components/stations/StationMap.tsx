@@ -8,10 +8,10 @@ import type { StationDTO } from "@/lib/types";
 import { ORIGIN } from "@/lib/geo";
 
 const STATUS_COLOR: Record<string, string> = {
-  AVAILABLE: "#12A150",
-  BUSY: "#E8871A",
-  OFFLINE: "#DC2626",
-  MAINTENANCE: "#8A94A6",
+  AVAILABLE: "#10B981",
+  BUSY: "#F59E0B",
+  OFFLINE: "#EF4444",
+  MAINTENANCE: "#94A3B8",
 };
 
 /**
@@ -68,7 +68,7 @@ export default function StationMap({
           radius: 7,
           color: "#fff",
           weight: 3,
-          fillColor: "#1A66F0",
+          fillColor: "#2563EB",
           fillOpacity: 1,
         })
           .bindTooltip("You are here", { direction: "top" })
@@ -80,24 +80,24 @@ export default function StationMap({
       markersRef.current.clear();
 
       for (const station of stations) {
-        const color = STATUS_COLOR[station.status] ?? "#8A94A6";
+        const color = STATUS_COLOR[station.status] ?? "#94A3B8";
         const icon = L.divIcon({
           className: "",
           iconSize: [34, 34],
           iconAnchor: [17, 17],
-          html: `<div style="width:34px;height:34px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 6px 14px -6px rgba(18,22,28,.7);display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px 'Space Grotesk',sans-serif">${station.availableCount}</div>`,
+          html: `<div style="width:34px;height:34px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 8px 18px -8px rgba(30,58,138,.7);display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px Poppins,sans-serif">${station.availableCount}</div>`,
         });
 
         const marker = L.marker([station.latitude, station.longitude], { icon })
           .addTo(map)
           .bindPopup(
             `<div style="min-width:190px">
-               <div style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C">${station.name}</div>
-               <div style="font-size:12px;color:#8A94A6;margin-top:3px">${station.address}</div>
-               <div style="font-size:12.5px;color:#5A6472;margin-top:7px">
+               <div style="font:600 14px Poppins,sans-serif;color:#0F172A">${station.name}</div>
+               <div style="font-size:12px;color:#94A3B8;margin-top:3px">${station.address}</div>
+               <div style="font-size:12.5px;color:#64748B;margin-top:7px">
                  ${station.availableCount} of ${station.chargerCount} free · ${kw(station.maxPowerKw)} · ${thb(station.pricePerKwh, 2)}/kWh
                </div>
-               <a href="/stations/${station.id}" style="display:inline-block;margin-top:9px;font:600 12.5px Inter;color:#1A66F0">View station →</a>
+               <a href="/stations/${station.id}" style="display:inline-block;margin-top:9px;font:600 12.5px Inter;color:#2563EB">View station →</a>
              </div>`,
           );
 
@@ -154,7 +154,7 @@ function MapLegend() {
   ] as const;
 
   return (
-    <div className="pointer-events-none absolute right-3 bottom-3 z-[500] rounded-xl border border-line bg-white/95 px-3 py-2.5 backdrop-blur">
+    <div className="pointer-events-none absolute right-3 bottom-3 z-[500] rounded-[16px] bg-white/95 px-3.5 py-3 shadow-[var(--shadow-card)] backdrop-blur">
       <div className="mb-1.5 text-[10.5px] font-semibold tracking-[0.06em] text-faint uppercase">
         Station status
       </div>

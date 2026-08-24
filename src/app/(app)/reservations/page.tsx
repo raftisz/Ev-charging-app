@@ -71,17 +71,17 @@ export default function ReservationsPage() {
       }
     >
       <div className="mb-4 flex items-center gap-2">
-        <div className="flex gap-1 rounded-xl bg-canvas p-1">
+        <div className="flex gap-1 rounded-full bg-surface-alt p-1">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               aria-pressed={tab === t.key}
               className={clsx(
-                "rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition-colors",
+                "rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors",
                 tab === t.key
-                  ? "bg-white text-ink shadow-[0_1px_3px_rgba(18,22,28,0.16)]"
-                  : "text-muted",
+                  ? "bg-brand text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.9)]"
+                  : "text-muted hover:text-ink",
               )}
             >
               {t.label}
@@ -119,7 +119,7 @@ export default function ReservationsPage() {
             return (
               <li key={r.id} className="vg-card p-4">
                 <div className="flex flex-wrap items-start gap-3">
-                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[13px] bg-brand-tint">
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[16px] bg-brand-tint">
                     <span className="font-display text-[17px] leading-none font-bold text-brand">
                       {new Date(r.startTime).getDate()}
                     </span>

@@ -8,7 +8,7 @@ export function Badge({
   className,
 }: {
   children: ReactNode;
-  tone?: "neutral" | "brand" | "green" | "amber" | "danger";
+  tone?: "neutral" | "brand" | "green" | "amber" | "danger" | "lilac";
   className?: string;
 }) {
   const tones = {
@@ -17,12 +17,13 @@ export function Badge({
     green: "bg-grid-green-tint text-grid-green",
     amber: "bg-amber-tint text-amber-dark",
     danger: "bg-danger-tint text-danger-dark",
+    lilac: "bg-lilac-tint text-lilac",
   } as const;
 
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11.5px] font-semibold whitespace-nowrap",
         tones[tone],
         className,
       )}

@@ -63,7 +63,7 @@ export default async function OnboardingPage() {
               </Button>
             </div>
 
-            <div className="mt-6 rounded-[14px] border border-line bg-white px-4 py-3.5 text-[12.5px] leading-relaxed text-muted">
+            <div className="vg-card mt-6 px-4 py-3.5 text-[12.5px] leading-relaxed text-muted">
               <span className="font-semibold text-ink">Demo accounts</span> · password{" "}
               <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-[11.5px]">
                 password123
@@ -76,7 +76,7 @@ export default async function OnboardingPage() {
           <div className="relative">
             <div className="absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-brand-tint via-white to-grid-green-tint opacity-70 blur-2xl" />
             <div className="vg-card overflow-hidden">
-              <div className="relative h-40 bg-[linear-gradient(140deg,#16305E,#1A66F0_70%,#2E9B6B)]">
+              <div className="relative h-40 bg-[linear-gradient(140deg,#1e3a8a,#2563eb_65%,#10b981)]">
                 <svg
                   viewBox="0 0 400 160"
                   preserveAspectRatio="xMidYMid slice"
@@ -93,7 +93,7 @@ export default async function OnboardingPage() {
                   <div className="text-[12.5px] text-white/80">100 kW and above</div>
                 </div>
               </div>
-              <ul className="divide-y divide-surface-alt">
+              <ul className="divide-y divide-line">
                 {points.map(([title, body]) => (
                   <li key={title} className="flex gap-3.5 px-4 py-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-brand-tint font-display text-[13px] font-bold text-brand">

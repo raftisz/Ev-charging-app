@@ -8,19 +8,23 @@ type Variant = "primary" | "secondary" | "tint" | "ghost" | "danger" | "green";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-dark",
+  primary:
+    "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.85)] hover:bg-brand-dark",
   secondary:
-    "bg-white text-ink border border-line-strong hover:border-faint-soft hover:bg-surface-alt",
-  tint: "bg-brand-tint text-brand hover:bg-[#dce6f5]",
+    "bg-white text-ink shadow-[0_4px_14px_-8px_rgba(30,58,138,0.4)] hover:bg-surface",
+  tint: "bg-brand-tint text-brand hover:bg-[#d8e6ff]",
   ghost: "bg-transparent text-muted hover:bg-surface-alt",
-  danger: "bg-danger text-white hover:bg-danger-dark",
-  green: "bg-grid-green text-white hover:bg-grid-green-dark",
+  danger:
+    "bg-danger text-white shadow-[0_8px_20px_-10px_rgba(239,68,68,0.8)] hover:bg-danger-dark",
+  green:
+    "bg-grid-green text-white shadow-[0_8px_20px_-10px_rgba(5,150,105,0.8)] hover:bg-grid-green-dark",
 };
 
+/* The concept uses capsules almost everywhere, so every size is pill-shaped. */
 const SIZES: Record<Size, string> = {
-  sm: "h-9 px-3 text-[13px] rounded-[10px]",
-  md: "h-11 px-4 text-[13.5px] rounded-xl",
-  lg: "h-[52px] px-5 text-[15px] rounded-[14px]",
+  sm: "h-9 px-4 text-[13px] rounded-full",
+  md: "h-11 px-5 text-[13.5px] rounded-full",
+  lg: "h-[52px] px-6 text-[15px] rounded-full",
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {

@@ -99,7 +99,7 @@ function Form() {
         </Button>
       </form>
 
-      <div className="mt-6 rounded-[14px] border border-line bg-white p-4">
+      <div className="mt-6 vg-card p-4">
         <p className="text-[12.5px] font-semibold text-muted">
           Demo accounts · password123
         </p>
@@ -109,7 +109,7 @@ function Form() {
               key={demo.email}
               type="button"
               onClick={() => applyDemo(demo.email)}
-              className="rounded-full border border-line-strong px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+              className="rounded-full bg-surface-alt px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {demo.label}
             </button>

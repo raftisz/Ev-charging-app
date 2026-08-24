@@ -101,7 +101,7 @@ export default function StationsPage() {
       <div className="space-y-3">
         <div className="flex gap-2.5">
           <div className="relative flex-1">
-            <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-faint">
+            <span className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-faint">
               <SearchIcon />
             </span>
             <input
@@ -109,13 +109,13 @@ export default function StationsPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or address"
               aria-label="Search stations"
-              className="vg-input pl-10"
+              className="vg-input vg-search"
             />
             {query ? (
               <button
                 onClick={() => setQuery("")}
                 aria-label="Clear search"
-                className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-surface-alt text-faint"
+                className="absolute top-1/2 right-4 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-surface-alt text-faint hover:text-ink"
               >
                 <CloseIcon size={11} />
               </button>
@@ -125,7 +125,7 @@ export default function StationsPage() {
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             aria-label="Sort stations"
-            className="w-[150px] shrink-0"
+            className="w-[150px] shrink-0 rounded-full"
           >
             <option value="distance">Nearest</option>
             <option value="price">Cheapest</option>
@@ -142,10 +142,10 @@ export default function StationsPage() {
               onClick={() => setFilter(f.key)}
               aria-pressed={filter === f.key}
               className={clsx(
-                "shrink-0 rounded-full border px-3.5 py-2 text-[12.5px] font-semibold transition-colors",
+                "shrink-0 rounded-full px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                 filter === f.key
-                  ? "border-ink bg-ink text-white"
-                  : "border-line bg-white text-muted hover:border-faint-soft",
+                  ? "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.9)]"
+                  : "bg-white text-muted shadow-[0_4px_14px_-10px_rgba(30,58,138,0.5)] hover:text-ink",
               )}
             >
               {f.label}
@@ -188,7 +188,7 @@ export default function StationsPage() {
 
         <div
           className={clsx(
-            "h-[calc(100dvh-260px)] min-h-[380px] overflow-hidden rounded-[16px] border border-line bg-white lg:sticky lg:top-[92px] lg:h-[calc(100dvh-140px)]",
+            "h-[calc(100dvh-260px)] min-h-[380px] overflow-hidden rounded-[22px] bg-white shadow-[var(--shadow-card)] lg:sticky lg:top-[100px] lg:h-[calc(100dvh-140px)]",
             !showMap && "hidden lg:block",
           )}
         >

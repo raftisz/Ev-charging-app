@@ -37,13 +37,13 @@ export function Modal({
       <button
         aria-label="Close dialog"
         onClick={onClose}
-        className="absolute inset-0 bg-ink/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-ink/40 backdrop-blur-[3px]"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] bg-white p-5 shadow-[0_24px_60px_-24px_rgba(18,22,28,0.55)] sm:max-w-lg sm:rounded-[22px] sm:p-6"
+        className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[28px] bg-white p-5 shadow-[0_30px_70px_-24px_rgba(30,58,138,0.45)] sm:max-w-lg sm:rounded-[26px] sm:p-6"
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line sm:hidden" />
         <h2 className="font-display text-[18px] font-semibold text-ink">{title}</h2>

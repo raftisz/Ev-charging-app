@@ -184,7 +184,7 @@ export default function AdminChargersPage() {
 
       {chargers.length ? (
         <div className="vg-card overflow-hidden">
-          <div className="hidden grid-cols-[0.6fr_2fr_1fr_1fr_1fr_auto] gap-3 border-b border-surface-alt bg-[#FAFBFC] px-4 py-2.5 lg:grid">
+          <div className="hidden grid-cols-[0.6fr_2fr_1fr_1fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
             {["Code", "Station", "Connector", "Power", "Status", ""].map((c) => (
               <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
@@ -195,7 +195,7 @@ export default function AdminChargersPage() {
             {chargers.map((c) => (
               <li
                 key={c.id}
-                className="grid gap-3 border-b border-[#F5F7F9] px-4 py-3.5 last:border-0 lg:grid-cols-[0.6fr_2fr_1fr_1fr_1fr_auto] lg:items-center"
+                className="grid gap-3 border-b border-line px-4 py-3.5 last:border-0 lg:grid-cols-[0.6fr_2fr_1fr_1fr_1fr_auto] lg:items-center"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-surface-alt font-display text-[12px] font-bold text-ink">
                   {c.chargerCode}

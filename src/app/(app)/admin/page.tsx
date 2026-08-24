@@ -7,7 +7,7 @@ import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
 import { dateTime, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
-import { BarChart, StatTile } from "@/components/ui/Stat";
+import { AreaChart, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 
 const STATION_TONE: Record<string, string> = {
@@ -62,10 +62,10 @@ export default function AdminOverviewPage() {
                     {thb(stats.revenue30d)} across {stats.revenueByDay.filter((d) => d.revenue > 0).length} active days
                   </span>
                 </div>
-                <BarChart
+                <AreaChart
                   data={stats.revenueByDay.map((d) => d.revenue)}
-                  height={110}
-                  accent="var(--color-brand)"
+                  height={130}
+                  ariaLabel="Revenue over the last 30 days"
                   labels={[
                     stats.revenueByDay[0]
                       ? new Date(stats.revenueByDay[0].date).toLocaleDateString("en-GB", {
@@ -79,7 +79,7 @@ export default function AdminOverviewPage() {
               </section>
 
               <section className="vg-card overflow-hidden">
-                <div className="flex items-center border-b border-surface-alt px-4 py-3.5">
+                <div className="flex items-center border-b border-line px-4 py-3.5">
                   <h2 className="flex-1 font-display text-[16px] font-semibold text-ink">
                     Live charging sessions
                   </h2>
@@ -92,7 +92,7 @@ export default function AdminOverviewPage() {
                     {data.activeSessions.map((s) => (
                       <li
                         key={s.id}
-                        className="flex flex-wrap items-center gap-3 border-b border-[#F5F7F9] px-4 py-3 last:border-0"
+                        className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 last:border-0"
                       >
                         <span className="relative flex h-2 w-2 shrink-0">
                           <span className="vg-pulse absolute inset-0 rounded-full bg-grid-green-bright" />
@@ -123,7 +123,7 @@ export default function AdminOverviewPage() {
               </section>
 
               <section className="vg-card overflow-hidden">
-                <div className="border-b border-surface-alt px-4 py-3.5">
+                <div className="border-b border-line px-4 py-3.5">
                   <h2 className="font-display text-[16px] font-semibold text-ink">
                     Recent activity
                   </h2>
@@ -132,9 +132,9 @@ export default function AdminOverviewPage() {
                   {data.recentSessions.map((s) => (
                     <li
                       key={s.id}
-                      className="flex items-center gap-3 border-b border-[#F5F7F9] px-4 py-3 last:border-0"
+                      className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-0"
                     >
-                      <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] bg-grid-green-tint font-display text-[12px] font-bold text-grid-green">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-grid-green-tint font-display text-[12px] font-bold text-grid-green">
                         ⚡
                       </span>
                       <div className="min-w-0 flex-1">
@@ -205,7 +205,7 @@ export default function AdminOverviewPage() {
                     <li key={s.id} className="flex items-center gap-2.5">
                       <span
                         className={clsx(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg font-display text-[11.5px] font-bold",
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-[11.5px] font-bold",
                           i === 0 ? "bg-brand text-white" : "bg-surface-alt text-muted",
                         )}
                       >
@@ -234,7 +234,7 @@ export default function AdminOverviewPage() {
                   <ul className="space-y-2.5">
                     {data.upcomingReservations.map((r) => (
                       <li key={r.id} className="flex items-start gap-2.5">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-brand-tint font-display text-[11px] font-bold text-brand">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-tint font-display text-[11px] font-bold text-brand">
                           {r.charger.chargerCode}
                         </span>
                         <div className="min-w-0 flex-1">

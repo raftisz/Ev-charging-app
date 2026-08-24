@@ -107,7 +107,7 @@ export default function AdminUsersPage() {
 
       {users.length ? (
         <div className="vg-card overflow-hidden">
-          <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.9fr_1fr_auto] gap-3 border-b border-surface-alt bg-[#FAFBFC] px-4 py-2.5 lg:grid">
+          <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.9fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
             {["User", "Role", "Sessions", "Wallet", "Joined", ""].map((c) => (
               <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
             {users.map((u) => (
               <li
                 key={u.id}
-                className="grid gap-2 border-b border-[#F5F7F9] px-4 py-3.5 last:border-0 lg:grid-cols-[2fr_1fr_0.8fr_0.9fr_1fr_auto] lg:items-center lg:gap-3"
+                className="grid gap-2 border-b border-line px-4 py-3.5 last:border-0 lg:grid-cols-[2fr_1fr_0.8fr_0.9fr_1fr_auto] lg:items-center lg:gap-3"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-tint font-display text-[12px] font-semibold text-brand">
@@ -210,12 +210,12 @@ export default function AdminUsersPage() {
               />
             </Field>
           </div>
-          <label className="flex items-center gap-3 rounded-xl border border-line px-3.5 py-3">
+          <label className="flex items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5">
             <input
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-              className="h-4 w-4 accent-[#1A66F0]"
+              className="h-4 w-4 accent-[#2563eb]"
             />
             <span className="flex-1">
               <span className="block text-[13.5px] font-semibold text-ink">Account active</span>

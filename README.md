@@ -4,9 +4,12 @@ A complete, working EV charging platform for the Bangkok network: drivers find a
 station, reserve a charger, run a live charging session, pay for it and review
 their history; operators and admins manage the network from a separate console.
 
-The UI follows the **Volt Grid** design reference (`design-reference/`): a light,
-card-based system built on Space Grotesk + Inter, a `#1A66F0` brand blue and a
-`#0E7A3E` green used for anything live.
+The UI follows `design-reference/evstations-dashboard-concept.jpg`: borderless
+white cards floating on a pale blue canvas, large corner radii, diffuse
+blue-tinted shadows, pastel stat tiles, capsule pills and segmented controls,
+Poppins headings over Inter body text, and soft blue area and bar charts. The
+information architecture — which screens exist and what each one shows — still
+comes from the original Volt Grid canvas in the same folder.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
 Prisma 7 · PostgreSQL · Leaflet + OpenStreetMap · JWT auth in an httpOnly cookie.
@@ -92,7 +95,7 @@ src/
   lib/                   # prisma client, auth, validation, formatting, API client
   proxy.ts               # route guard (Next 16's `middleware` successor)
 scripts/                 # api-test.mjs (REST) and ui-test.mjs (Playwright)
-design-reference/        # the Volt Grid design canvas this UI reproduces
+design-reference/        # the visual concept and the original Volt Grid canvas
 ```
 
 ---
