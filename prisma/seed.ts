@@ -18,11 +18,22 @@ import type {
 } from "../src/generated/prisma/enums";
 import { STATION_ROWS, type ConnectorName } from "./stations";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
+const url = process.env.DATABASE_URL;
+if (!url) {
   throw new Error("DATABASE_URL is not set. Copy .env.example to .env first.");
 }
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+
+// Mirror src/lib/prisma.ts: `?schema=` is Prisma's convention, not pg's.
+const parsed = new URL(url);
+const schema = parsed.searchParams.get("schema") ?? undefined;
+parsed.searchParams.delete("schema");
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg(
+    { connectionString: parsed.toString() },
+    schema ? { schema } : undefined,
+  ),
+});
 
 const CONNECTOR: Record<ConnectorName, ConnectorType> = {
   CCS2: "CCS2",

@@ -224,9 +224,21 @@ point it at this repository; it creates the database, creates the web service,
 wires `DATABASE_URL` between them and generates a `JWT_SECRET`.
 
 Note that Render's free plan allows only **one active free PostgreSQL per
-account**. If you already have one, reuse it rather than letting the blueprint
-create a second — a blueprint that tries fails with *cannot have more than one
-active free tier database*.
+account**, so a blueprint that creates one fails with *cannot have more than
+one active free tier database* if you already have any. Reuse the database you
+have instead — see **Sharing one database** below.
+
+### Sharing one database with another project
+
+Append `?schema=voltgrid` to `DATABASE_URL`:
+
+```
+postgresql://user:password@host:5432/dbname?schema=voltgrid
+```
+
+Volt Grid then creates and uses its own Postgres schema inside that database.
+The other project keeps `public` and the two never see each other's tables, so
+a single free instance can serve both.
 
 ### Render (manual), or any other Node host
 
@@ -236,7 +248,7 @@ Create a PostgreSQL database first, then a web service with:
 |---|---|
 | Build command | `npm ci && npm run build` |
 | Start command | `npm start` |
-| `DATABASE_URL` | the database's internal connection string |
+| `DATABASE_URL` | the database's internal connection string (add `?schema=voltgrid` to share it with another project) |
 | `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
 
 `npm start` runs `prisma migrate deploy` and then seeds an empty database

@@ -19,6 +19,8 @@ services:
     healthCheckPath: /login
     envVars:
       - key: DATABASE_URL
-        sync: false # paste the database's Internal Database URL
+        # Paste the database's Internal Database URL. To share one Postgres
+        # instance with another project, append `?schema=voltgrid`.
+        sync: false
       - key: JWT_SECRET
         generateValue: true
