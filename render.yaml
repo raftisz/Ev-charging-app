@@ -8,6 +8,7 @@
 #
 # `npm start` runs `prisma migrate deploy` and seeds an empty database before
 # serving, so the schema is always in place no matter how the host is set up.
+# (Vercel never runs `start`; it uses the `vercel-build` script instead.)
 services:
   - type: web
     name: volt-grid

@@ -240,6 +240,25 @@ Volt Grid then creates and uses its own Postgres schema inside that database.
 The other project keeps `public` and the two never see each other's tables, so
 a single free instance can serve both.
 
+### Vercel
+
+Vercel never runs `npm start` — it builds the app and serves it as functions —
+so the migration has to happen during the build. `package.json` provides a
+`vercel-build` script that Vercel picks up automatically:
+
+```
+prisma migrate deploy && tsx prisma/seed.ts --if-empty && next build
+```
+
+Import the repo in Vercel, add `DATABASE_URL` and `JWT_SECRET` under
+**Settings → Environment Variables**, and deploy. There is no build-command or
+start-command to configure.
+
+Vercel has no database of its own, so create one first — [Neon](https://neon.tech)
+has a free tier with no per-account instance limit. Use its **pooled**
+connection string (the host containing `-pooler`), which suits functions that
+open a connection per invocation.
+
 ### Render (manual), or any other Node host
 
 Create a PostgreSQL database first, then a web service with:
