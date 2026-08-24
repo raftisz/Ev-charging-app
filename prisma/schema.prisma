@@ -1,0 +1,229 @@
+// Volt Grid — EV charging network schema.
+//
+// Provider is SQLite so the demo runs with zero external services.
+// To move to PostgreSQL: change `provider` to "postgresql", point
+// DATABASE_URL at the server, swap the adapter in src/lib/prisma.ts
+// for @prisma/adapter-pg, then `npx prisma migrate dev`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  OPERATOR
+  ADMIN
+}
+
+enum StationStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+  MAINTENANCE
+}
+
+enum ChargerStatus {
+  AVAILABLE
+  CHARGING
+  RESERVED
+  OFFLINE
+  MAINTENANCE
+}
+
+enum ConnectorType {
+  CCS2
+  TYPE2
+  CHADEMO
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  STOPPED
+  FAULTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  SESSION
+  RESERVATION
+  PAYMENT
+  SYSTEM
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  role         Role     @default(USER)
+  avatarInit   String?
+  vehicleMake  String?
+  vehicleModel String?
+  vehiclePlate String?
+  batteryKwh   Float?
+  walletBalance Float   @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reservations  Reservation[]
+  sessions      ChargingSession[]
+  notifications Notification[]
+  favorites     Favorite[]
+}
+
+model Station {
+  id             Int           @id @default(autoincrement())
+  name           String
+  address        String
+  city           String        @default("Bangkok")
+  country        String        @default("Thailand")
+  latitude       Float
+  longitude      Float
+  operator       String        @default("Volt Grid")
+  status         StationStatus @default(AVAILABLE)
+  openingHours   String        @default("24 Hours")
+  pricePerKwh    Float
+  rating         Float         @default(4.5)
+  reviewCount    Int           @default(0)
+  amenities      String        @default("")
+  imageHue       Int           @default(220)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  chargers     Charger[]
+  reservations Reservation[]
+  sessions     ChargingSession[]
+  favorites    Favorite[]
+
+  @@index([status])
+}
+
+model Charger {
+  id          Int           @id @default(autoincrement())
+  stationId   Int
+  chargerCode String
+  status      ChargerStatus @default(AVAILABLE)
+  powerKw     Float
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  station      Station           @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  connectors   Connector[]
+  reservations Reservation[]
+  sessions     ChargingSession[]
+
+  @@unique([stationId, chargerCode])
+  @@index([status])
+}
+
+model Connector {
+  id        Int           @id @default(autoincrement())
+  chargerId Int
+  type      ConnectorType
+  powerKw   Float
+
+  charger Charger @relation(fields: [chargerId], references: [id], onDelete: Cascade)
+}
+
+model Reservation {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  stationId Int
+  chargerId Int
+  startTime DateTime
+  endTime   DateTime
+  status    ReservationStatus @default(CONFIRMED)
+  estimatedKwh Float          @default(0)
+  reservationFee Float        @default(20)
+  estimatedCost  Float        @default(0)
+  note      String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station Station          @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  charger Charger          @relation(fields: [chargerId], references: [id], onDelete: Cascade)
+  session ChargingSession?
+
+  @@index([userId, status])
+  @@index([chargerId, startTime])
+}
+
+model ChargingSession {
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  stationId     Int
+  chargerId     Int
+  reservationId Int?          @unique
+  status        SessionStatus @default(ACTIVE)
+  startTime     DateTime      @default(now())
+  endTime       DateTime?
+  startPercent  Int           @default(20)
+  currentPercent Int          @default(20)
+  targetPercent Int           @default(80)
+  energyKwh     Float         @default(0)
+  powerKw       Float         @default(0)
+  pricePerKwh   Float
+  cost          Float         @default(0)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station     Station      @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  charger     Charger      @relation(fields: [chargerId], references: [id], onDelete: Cascade)
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+
+  @@index([userId, status])
+  @@index([status])
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String
+  isRead    Boolean           @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  stationId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stationId])
+}

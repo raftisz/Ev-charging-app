@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="./station-data.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#EDEFF2;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1A66F0;text-decoration:none}a:hover{color:#154FBF}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes vgpulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:.05;transform:scale(1.9)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:0 0 60px">
+
+  <div style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:16px;padding:14px 24px;background:rgba(237,239,242,.9);backdrop-filter:blur(12px);border-bottom:1px solid #DFE3E8">
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"/></svg>
+      <span style="font:700 15px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.01em">Volt Grid</span>
+      <span style="font:500 12px Inter;color:#8A94A6">UI system · v2</span>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:4px;padding:4px;background:#E2E6EB;border-radius:10px">
+      <button onClick="{{ nav.viewMobile }}" style="border:0;cursor:pointer;padding:7px 14px;border-radius:7px;font:600 12.5px Inter;background:{{ vw.mobileBg }};color:{{ vw.mobileFg }};box-shadow:{{ vw.mobileSh }}">Mobile</button>
+      <button onClick="{{ nav.viewDesktop }}" style="border:0;cursor:pointer;padding:7px 14px;border-radius:7px;font:600 12.5px Inter;background:{{ vw.deskBg }};color:{{ vw.deskFg }};box-shadow:{{ vw.deskSh }}">Desktop</button>
+      <button onClick="{{ nav.viewSystem }}" style="border:0;cursor:pointer;padding:7px 14px;border-radius:7px;font:600 12.5px Inter;background:{{ vw.sysBg }};color:{{ vw.sysFg }};box-shadow:{{ vw.sysSh }}">Foundations</button>
+    </div>
+  </div>
+
+  <sc-if value="{{ V.mobile }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:22px 24px 0">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;max-width:760px;margin:0 auto 22px">
+      <sc-for list="{{ screenChips }}" as="c" hint-placeholder-count="14">
+        <button onClick="{{ c.go }}" style="border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};cursor:pointer;padding:5px 11px;border-radius:999px;font:600 11.5px Inter">{{ c.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;padding:0 24px">
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+
+    <sc-if value="{{ S.onboarding }}">
+      <div style="position:relative;height:874px;background:#fff">
+        <div style="position:absolute;inset:0 0 44% 0;background:linear-gradient(150deg,#1A3A73,#1A66F0 55%,#2E9B6B)">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;opacity:.24">
+            <path d="M0 250h400M0 210h400" stroke="#fff" stroke-width="1"/>
+            <rect x="60" y="120" width="46" height="130" rx="10" fill="#fff" opacity=".5"/>
+            <rect x="150" y="100" width="46" height="150" rx="10" fill="#fff" opacity=".35"/>
+            <rect x="240" y="140" width="46" height="110" rx="10" fill="#fff" opacity=".45"/>
+            <path d="M188 30l-26 40h18l-4 30 28-40h-18l2-30Z" fill="#fff"/>
+          </svg>
+          <image-slot id="onb-hero" shape="rect" placeholder="EV charging bay photo (optional)"></image-slot>
+        </div>
+        <div style="position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(#0B1220AA,transparent);pointer-events:none"></div>
+        <div style="position:absolute;top:62px;left:22px;display:flex;align-items:center;gap:8px;pointer-events:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#fff"/></svg>
+          <span style="font:700 15px 'Space Grotesk',sans-serif;color:#fff">Volt Grid</span>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;top:56%;background:#fff;border-radius:28px 28px 0 0;padding:30px 24px 40px;display:flex;flex-direction:column">
+          <div style="display:flex;gap:6px;margin-bottom:22px"><div style="width:22px;height:5px;border-radius:99px;background:#1A66F0"></div><div style="width:5px;height:5px;border-radius:99px;background:#D5DAE2"></div><div style="width:5px;height:5px;border-radius:99px;background:#D5DAE2"></div></div>
+          <h1 style="margin:0 0 12px;font:700 30px/1.15 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em;text-wrap:pretty">Charging that<br>plans itself</h1>
+          <p style="margin:0;font:400 15.5px/1.55 Inter;color:#5A6472;text-wrap:pretty">Volt Grid watches 14 stations across Bangkok and tells you where to plug in, when it is free, and what it will cost.</p>
+          <div style="flex:1"></div>
+          <button onClick="{{ nav.login }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#1A66F0;color:#fff;font:600 16px Inter;cursor:pointer;box-shadow:0 8px 20px -8px rgba(26,102,240,.6)">Get started</button>
+          <button onClick="{{ nav.login }}" style="width:100%;height:50px;margin-top:10px;border:0;background:none;color:#5A6472;font:600 14.5px Inter;cursor:pointer">I already have an account</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.login }}">
+      <div style="min-height:874px;background:#fff;padding:96px 26px 30px;display:flex;flex-direction:column">
+        <div style="width:46px;height:46px;border-radius:14px;background:#EAF1FE;display:flex;align-items:center;justify-content:center;margin-bottom:26px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"/></svg>
+        </div>
+        <h1 style="margin:0 0 6px;font:700 27px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Welcome back</h1>
+        <p style="margin:0 0 30px;font:400 15px Inter;color:#5A6472">Sign in to keep charging.</p>
+        <label style="font:600 12.5px Inter;color:#12161C;margin-bottom:7px">Email</label>
+        <div style="height:52px;border:1.5px solid #1A66F0;border-radius:13px;padding:0 15px;display:flex;align-items:center;font:400 15px Inter;color:#12161C;background:#fff;box-shadow:0 0 0 4px rgba(26,102,240,.12)">user1@example.com</div>
+        <label style="font:600 12.5px Inter;color:#12161C;margin:18px 0 7px">Password</label>
+        <div style="height:52px;border:1.5px solid #E1E5EB;border-radius:13px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;font:400 15px Inter;color:#12161C">
+          <span style="letter-spacing:.18em;color:#5A6472">•••••••••••</span>
+          <span style="font:600 12.5px Inter;color:#1A66F0">Show</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 26px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="width:20px;height:20px;border-radius:6px;background:#1A66F0;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M1.5 6.4 4.3 9 10.5 2.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <span style="font:500 14px Inter;color:#12161C">Remember me</span>
+          </div>
+          <span style="font:600 13.5px Inter;color:#1A66F0">Forgot password?</span>
+        </div>
+        <button onClick="{{ nav.home }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#1A66F0;color:#fff;font:600 16px Inter;cursor:pointer;box-shadow:0 8px 20px -8px rgba(26,102,240,.6)">Sign in</button>
+        <p style="margin:22px 0 0;text-align:center;font:400 14px Inter;color:#5A6472">New to Volt Grid? <span onClick="{{ nav.register }}" style="color:#1A66F0;font-weight:600;cursor:pointer">Create an account</span></p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.register }}">
+      <div style="min-height:874px;background:#fff;padding:78px 26px 30px">
+        <button onClick="{{ nav.login }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-bottom:20px"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+        <h1 style="margin:0 0 6px;font:700 26px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Create your account</h1>
+        <p style="margin:0 0 26px;font:400 14.5px Inter;color:#5A6472">Takes about a minute.</p>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ regFields }}" as="f" hint-placeholder-count="5">
+            <div>
+              <label style="display:block;font:600 12.5px Inter;color:#12161C;margin-bottom:7px">{{ f.label }}</label>
+              <div style="height:52px;border:1.5px solid #E1E5EB;border-radius:13px;padding:0 15px;display:flex;align-items:center;font:400 15px Inter;color:{{ f.color }}">{{ f.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;margin:20px 0 22px">
+          <div style="width:20px;height:20px;border-radius:6px;background:#1A66F0;flex:none;display:flex;align-items:center;justify-content:center;margin-top:1px"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M1.5 6.4 4.3 9 10.5 2.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+          <span style="font:400 13.5px/1.5 Inter;color:#5A6472">I agree to the Volt Grid terms of service and privacy policy.</span>
+        </div>
+        <button onClick="{{ nav.home }}" style="width:100%;height:54px;border:0;border-radius:15px;background:#1A66F0;color:#fff;font:600 16px Inter;cursor:pointer;box-shadow:0 8px 20px -8px rgba(26,102,240,.6)">Create account</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.home }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:56px 0 96px">
+        <div style="padding:12px 20px 16px;display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:99px;background:#EAF1FE;flex:none;display:flex;align-items:center;justify-content:center;font:600 14px 'Space Grotesk',sans-serif;color:#1A66F0">SP</div>
+          <div style="flex:1">
+            <div style="font:400 13px Inter;color:#8A94A6">Good afternoon</div>
+            <div style="font:600 17px 'Space Grotesk',sans-serif;color:#12161C">Somchai P.</div>
+          </div>
+          <button onClick="{{ nav.notifications }}" style="position:relative;width:40px;height:40px;border:1px solid #E6E9EE;border-radius:13px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="#12161C" stroke-width="1.8" stroke-linecap="round"/><path d="M10.3 21a2 2 0 0 0 3.4 0" stroke="#12161C" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:99px;background:#DC2626;border:2px solid #fff"></span>
+          </button>
+        </div>
+
+        <div style="padding:0 20px">
+          <div onClick="{{ nav.charging }}" style="cursor:pointer;background:#0E7A3E;border-radius:22px;padding:18px;color:#fff;box-shadow:0 14px 30px -16px rgba(14,122,62,.9)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+              <span style="position:relative;display:flex;width:8px;height:8px"><span style="position:absolute;inset:0;border-radius:99px;background:#A7F3C6;animation:vgpulse 1.8s infinite"></span><span style="position:relative;width:8px;height:8px;border-radius:99px;background:#A7F3C6"></span></span>
+              <span style="font:600 12px Inter;letter-spacing:.08em;text-transform:uppercase;color:#BEEBD1">Charging now</span>
+              <div style="flex:1"></div>
+              <span style="font:500 12px Inter;color:#BEEBD1">Fast · {{ sess.speed }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px">
+              <div style="position:relative;width:78px;height:78px;flex:none">
+                <svg width="78" height="78" viewBox="0 0 78 78"><circle cx="39" cy="39" r="33" stroke="rgba(255,255,255,.22)" stroke-width="8" fill="none"/><circle cx="39" cy="39" r="33" stroke="#7DE8AC" stroke-width="8" fill="none" stroke-linecap="round" transform="rotate(-90 39 39)" style="stroke-dasharray:207.3;stroke-dashoffset:{{ ring.homeOff }}"/></svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <span style="font:700 20px 'Space Grotesk',sans-serif">{{ pct.value }}</span>
+                  <span style="font:500 10px Inter;color:#BEEBD1;margin-top:-2px">percent</span>
+                </div>
+              </div>
+              <div style="flex:1">
+                <div style="font:600 16px 'Space Grotesk',sans-serif;margin-bottom:3px">{{ sess.station }}</div>
+                <div style="font:400 13px Inter;color:#BEEBD1;margin-bottom:12px">{{ sess.chargerShort }} · started 14:32</div>
+                <div style="display:flex;gap:16px">
+                  <div><div style="font:700 15px 'Space Grotesk',sans-serif">{{ pct.mins }} min</div><div style="font:400 11.5px Inter;color:#BEEBD1">to 80%</div></div>
+                  <div><div style="font:700 15px 'Space Grotesk',sans-serif">{{ pct.kwh }} kWh</div><div style="font:400 11.5px Inter;color:#BEEBD1">delivered</div></div>
+                  <div><div style="font:700 15px 'Space Grotesk',sans-serif">฿{{ pct.cost }}</div><div style="font:400 11.5px Inter;color:#BEEBD1">so far</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:16px 20px 4px">
+          <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
+            <button onClick="{{ q.go }}" style="border:1px solid #E6E9EE;background:#fff;border-radius:16px;padding:13px 4px 11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;min-height:76px">
+              <span style="width:34px;height:34px;border-radius:11px;background:{{ q.tint }};display:flex;align-items:center;justify-content:center;font:700 14px 'Space Grotesk',sans-serif;color:{{ q.fg }}">{{ q.glyph }}</span>
+              <span style="font:600 11.5px Inter;color:#12161C">{{ q.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding:20px 20px 12px">
+          <h2 style="margin:0;font:600 17px 'Space Grotesk',sans-serif;color:#12161C">Recommended for you</h2>
+          <span onClick="{{ nav.stations }}" style="font:600 13px Inter;color:#1A66F0;cursor:pointer">All 14</span>
+        </div>
+        <div style="display:flex;gap:12px;overflow-x:auto;padding:0 20px 4px">
+          <sc-for list="{{ recommended }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.open }}" style="cursor:pointer;flex:none;width:226px;background:#fff;border:1px solid #E6E9EE;border-radius:18px;overflow:hidden">
+              <div style="height:96px;position:relative;background:linear-gradient(140deg,#16305E,#1A66F0 70%,#2E9B6B);overflow:hidden">
+                <svg viewBox="0 0 226 96" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;opacity:.24">
+                  <rect x="24" y="34" width="28" height="62" rx="7" fill="#fff" opacity=".5"/>
+                  <rect x="78" y="24" width="28" height="72" rx="7" fill="#fff" opacity=".35"/>
+                  <rect x="132" y="42" width="28" height="54" rx="7" fill="#fff" opacity=".45"/>
+                  <rect x="186" y="30" width="28" height="66" rx="7" fill="#fff" opacity=".3"/>
+                </svg>
+                <span style="position:absolute;left:9px;bottom:9px;background:rgba(255,255,255,.94);border-radius:99px;padding:4px 9px;font:600 11px Inter;color:{{ r.badgeFg }}">{{ r.badge }}</span>
+              </div>
+              <div style="padding:12px 13px 14px">
+                <div style="font:600 14.5px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:5px">{{ r.name }}</div>
+                <div style="font:400 12.5px Inter;color:#8A94A6;margin-bottom:10px">{{ r.meta }}</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="width:7px;height:7px;border-radius:99px;background:{{ r.dot }}"></span>
+                  <span style="font:600 12.5px Inter;color:{{ r.dot }}">{{ r.status }}</span>
+                  <div style="flex:1"></div>
+                  <span style="font:600 13px 'Space Grotesk',sans-serif;color:#12161C">฿{{ r.price }}<span style="font:400 11px Inter;color:#8A94A6">/kWh</span></span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="padding:22px 20px 0">
+          <h2 style="margin:0 0 12px;font:600 17px 'Space Grotesk',sans-serif;color:#12161C">Next reservation</h2>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+            <div style="display:flex;gap:14px;align-items:center">
+              <div style="width:52px;height:52px;border-radius:14px;background:#EAF1FE;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none">
+                <span style="font:700 17px 'Space Grotesk',sans-serif;color:#1A66F0;line-height:1">25</span>
+                <span style="font:600 10px Inter;color:#1A66F0">AUG</span>
+              </div>
+              <div style="flex:1">
+                <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C">Siam Green Station</div>
+                <div style="font:400 13px Inter;color:#5A6472;margin-top:2px">14:30 – 15:15 · Charger A1 · 120 kW</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:9px;margin-top:14px">
+              <button style="flex:1;height:42px;border:1px solid #E1E5EB;background:#fff;border-radius:12px;font:600 13.5px Inter;color:#12161C;cursor:pointer">Directions</button>
+              <button onClick="{{ nav.reserve }}" style="flex:1;height:42px;border:0;background:#EAF1FE;border-radius:12px;font:600 13.5px Inter;color:#1A66F0;cursor:pointer">Change</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:22px 20px 0">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+            <h2 style="margin:0;font:600 17px 'Space Grotesk',sans-serif;color:#12161C">This month</h2>
+            <span onClick="{{ nav.history }}" style="font:600 13px Inter;color:#1A66F0;cursor:pointer">History</span>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;display:grid;grid-template-columns:1fr 1fr">
+            <sc-for list="{{ monthStats }}" as="m" hint-placeholder-count="4">
+              <div style="padding:15px 16px;border-right:1px solid #F1F3F6;border-bottom:1px solid #F1F3F6">
+                <div style="font:700 20px 'Space Grotesk',sans-serif;color:#12161C">{{ m.value }}</div>
+                <div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ m.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:9px 12px 26px;display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ tabbar }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:48px">
+            <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+            <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.stations }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:56px 0 96px">
+        <div style="padding:12px 20px 0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <h1 style="margin:0;font:700 25px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em;flex:1">Stations</h1>
+            <button onClick="{{ nav.map }}" style="height:38px;padding:0 14px;border:1px solid #E6E9EE;background:#fff;border-radius:12px;cursor:pointer;font:600 13px Inter;color:#12161C;display:flex;align-items:center;gap:7px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="#1A66F0" stroke-width="2"/><circle cx="12" cy="10" r="2.4" fill="#1A66F0"/></svg>Map
+            </button>
+          </div>
+          <div style="height:46px;background:#fff;border:1px solid #E6E9EE;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 14px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#8A94A6" stroke-width="2"></circle><path d="m16.5 16.5 4 4" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"></path></svg>
+            <input value="{{ list.query }}" onChange="{{ list.onSearch }}" placeholder="Search station, area or road" style="flex:1;min-width:0;border:0;outline:none;background:none;font:400 14.5px Inter;color:#12161C">
+            <button onClick="{{ list.onClear }}" style="display:{{ list.clearShow }};align-items:center;justify-content:center;width:22px;height:22px;border:0;border-radius:99px;background:#EDEFF2;cursor:pointer;font:600 12px Inter;color:#5A6472;flex:none">×</button>
+          </div>
+          <div style="display:flex;gap:7px;overflow-x:auto;padding:13px 0 3px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+              <button onClick="{{ f.go }}" style="flex:none;border:1px solid {{ f.bd }};background:{{ f.bg }};color:{{ f.fg }};cursor:pointer;height:34px;padding:0 13px;border-radius:999px;font:600 12.5px Inter">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 2px 10px">
+            <span style="font:400 12.5px Inter;color:#8A94A6">{{ list.summary }}</span>
+            <span style="font:600 12.5px Inter;color:#1A66F0">Sort</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:0 20px">
+          <sc-if value="{{ list.empty }}">
+            <div style="border:1px dashed #D5DAE2;border-radius:16px;padding:26px 20px;text-align:center">
+              <div style="font:600 14.5px Inter;color:#12161C;margin-bottom:4px">No stations match</div>
+              <div style="font:400 13px/1.5 Inter;color:#8A94A6;margin-bottom:14px">Try a different name or clear the filters.</div>
+              <button onClick="{{ list.onClear }}" style="height:40px;padding:0 16px;border:1px solid #E1E5EB;background:#fff;border-radius:12px;font:600 13.5px Inter;color:#1A66F0;cursor:pointer">Clear search</button>
+            </div>
+          </sc-if>
+          <sc-for list="{{ list.items }}" as="s" hint-placeholder-count="6">
+            <div onClick="{{ s.open }}" style="cursor:pointer;background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:13px;display:flex;gap:13px">
+              <div style="width:74px;height:74px;border-radius:14px;background:{{ s.imgBg }};flex:none;display:flex;align-items:center;justify-content:center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="{{ s.imgFg }}"/></svg>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:flex-start;gap:8px">
+                  <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;flex:1">{{ s.name }}</div>
+                  <div style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C;white-space:nowrap">฿{{ s.price }}<span style="font:400 10.5px Inter;color:#8A94A6">/kWh</span></div>
+                </div>
+                <div style="font:400 12.5px Inter;color:#8A94A6;margin:3px 0 9px">{{ s.meta }}</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:5px;background:{{ s.pillBg }};border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:{{ s.pillFg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ s.pillFg }}"></span>{{ s.status }}</span>
+                  <span style="background:#F1F3F6;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#5A6472">{{ s.kw }} kW</span>
+                  <span style="background:#F1F3F6;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#5A6472">{{ s.connector }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:9px 12px 26px;display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ tabbar }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:48px">
+            <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+            <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.map }}">
+      <div style="position:relative;height:874px;background:#E9EDF1;overflow:hidden">
+        <iframe src="map.html?mode=mobile" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+        <div style="position:absolute;top:54px;left:16px;right:16px;z-index:20">
+          <div style="height:48px;background:#fff;border-radius:15px;display:flex;align-items:center;gap:10px;padding:0 14px;box-shadow:0 6px 20px -8px rgba(18,22,28,.3)">
+            <button onClick="{{ nav.stations }}" style="border:0;background:none;padding:0;cursor:pointer;display:flex"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <span style="font:400 14.5px Inter;color:#5A6472;flex:1">Bangkok · within 8 km</span>
+            <span style="font:600 12.5px Inter;color:#1A66F0">List</span>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:10px;overflow-x:auto">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+              <button onClick="{{ f.go }}" style="flex:none;border:1px solid {{ f.bdMap }};background:{{ f.bgMap }};color:{{ f.fgMap }};cursor:pointer;height:32px;padding:0 12px;border-radius:999px;font:600 12px Inter;box-shadow:0 2px 8px -4px rgba(18,22,28,.4)">{{ f.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:30;background:#fff;border-radius:24px 24px 0 0;padding:10px 18px 34px;box-shadow:0 -8px 30px -10px rgba(18,22,28,.28)">
+          <div style="width:40px;height:4px;border-radius:99px;background:#DCE0E6;margin:0 auto 14px"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="background:#EAF1FE;color:#1A66F0;border-radius:999px;padding:4px 10px;font:600 11.5px Inter">Selected</span>
+            <span style="font:400 12.5px Inter;color:#8A94A6;white-space:nowrap">{{ sel.dist }} · {{ sel.eta }}</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:56px;height:56px;border-radius:14px;background:#DCE6F5;flex:none;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"/></svg></div>
+            <div style="flex:1">
+              <div style="font:600 16.5px 'Space Grotesk',sans-serif;color:#12161C">{{ sel.name }}</div>
+              <div style="font:400 13px Inter;color:#8A94A6;margin:3px 0 8px">{{ sel.address }}</div>
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="display:flex;align-items:center;gap:5px;background:{{ sel.pillBg }};border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:{{ sel.pillFg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ sel.pillFg }}"></span>{{ sel.status }}</span>
+                <span style="background:#F1F3F6;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#5A6472">{{ sel.kw }} kW</span>
+                <span style="font:600 13.5px 'Space Grotesk',sans-serif;color:#12161C;margin-left:auto">฿{{ sel.price }}<span style="font:400 11px Inter;color:#8A94A6">/kWh</span></span>
+              </div>
+            </div>
+          </div>
+          <div style="background:#F4F6F8;border-radius:12px;padding:10px 12px;margin:13px 0;font:500 12.5px Inter;color:#5A6472">Usually available at this time — 9 of the last 10 Tuesdays.</div>
+          <div style="display:flex;gap:9px">
+            <button onClick="{{ nav.detail }}" style="flex:1;height:48px;border:1px solid #E1E5EB;background:#fff;border-radius:14px;font:600 14.5px Inter;color:#12161C;cursor:pointer">Details</button>
+            <button onClick="{{ nav.reserve }}" style="flex:1.4;height:48px;border:0;background:#1A66F0;border-radius:14px;font:600 14.5px Inter;color:#fff;cursor:pointer">Reserve</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.detail }}">
+      <div style="min-height:874px;background:#F4F6F8;padding-bottom:104px">
+        <div style="position:relative;height:250px;background:linear-gradient(150deg,#16305E,#1A66F0 60%,#2E9B6B);overflow:hidden">
+          <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;opacity:.22">
+            <rect x="40" y="90" width="52" height="160" rx="12" fill="#fff" opacity=".5"></rect>
+            <rect x="130" y="70" width="52" height="180" rx="12" fill="#fff" opacity=".35"></rect>
+            <rect x="220" y="105" width="52" height="145" rx="12" fill="#fff" opacity=".45"></rect>
+            <rect x="310" y="85" width="52" height="165" rx="12" fill="#fff" opacity=".3"></rect>
+          </svg>
+          <image-slot id="{{ sel.slot }}" shape="rect" placeholder="Station photo"></image-slot>
+          <div style="position:absolute;top:56px;left:16px;right:16px;display:flex;justify-content:space-between">
+            <button onClick="{{ nav.map }}" style="width:40px;height:40px;border:0;border-radius:13px;background:rgba(255,255,255,.94);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18)"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <button onClick="{{ nav.toggleFav }}" style="width:40px;height:40px;border:0;border-radius:13px;background:rgba(255,255,255,.94);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.18)"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-9.6A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7 2.8c0 5-7 9.6-7 9.6Z" fill="{{ fav.fill }}" stroke="{{ fav.stroke }}" stroke-width="1.8"/></svg></button>
+          </div>
+        </div>
+        <div style="background:#F4F6F8;border-radius:24px 24px 0 0;margin-top:-22px;position:relative;padding:20px 20px 0">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <h1 style="margin:0;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em;flex:1">{{ sel.name }}</h1>
+            <span style="display:flex;align-items:center;gap:5px;background:{{ sel.pillBg }};border-radius:999px;padding:6px 11px;font:600 12px Inter;color:{{ sel.pillFg }};margin-top:3px"><span style="width:6px;height:6px;border-radius:99px;background:{{ sel.pillFg }}"></span>{{ sel.status }}</span>
+          </div>
+          <div style="font:400 13.5px Inter;color:#8A94A6;margin:6px 0 14px">{{ sel.address }}</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <sc-for list="{{ sel.facts }}" as="f" hint-placeholder-count="4">
+              <div style="flex:1;background:#fff;border:1px solid #E6E9EE;border-radius:14px;padding:11px 10px">
+                <div style="font:700 15px 'Space Grotesk',sans-serif;color:#12161C">{{ f.value }}</div>
+                <div style="font:400 11px Inter;color:#8A94A6;margin-top:2px">{{ f.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#E4F6EC;border:1px solid #C8EBD8;border-radius:16px;padding:13px 14px;display:flex;gap:11px;margin-bottom:20px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9" stroke="#0E7A3E" stroke-width="1.8"/><path d="M12 7.5v5l3 2" stroke="#0E7A3E" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <div><div style="font:600 13.5px Inter;color:#0B5D30">Best time to arrive: 14:30</div><div style="font:400 12.5px/1.45 Inter;color:#2C7A50;margin-top:2px">Two 180 kW bays usually free then. Queue peaks 18:00–20:00.</div></div>
+          </div>
+          <h2 style="margin:0 0 11px;font:600 16.5px 'Space Grotesk',sans-serif;color:#12161C">Chargers</h2>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:22px">
+            <sc-for list="{{ sel.chargers }}" as="c" hint-placeholder-count="4">
+              <div style="background:#fff;border:1px solid {{ c.bd }};border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+                <div style="width:40px;height:40px;border-radius:12px;background:{{ c.tint }};display:flex;align-items:center;justify-content:center;font:700 14px 'Space Grotesk',sans-serif;color:{{ c.fg }}">{{ c.code }}</div>
+                <div style="flex:1">
+                  <div style="font:600 14.5px Inter;color:#12161C">{{ c.power }} kW · {{ c.connector }}</div>
+                  <div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ c.note }}</div>
+                </div>
+                <span style="font:600 12.5px Inter;color:{{ c.fg }}">{{ c.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <h2 style="margin:0 0 11px;font:600 16.5px 'Space Grotesk',sans-serif;color:#12161C">Amenities</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px">
+            <sc-for list="{{ sel.amenities }}" as="a" hint-placeholder-count="4">
+              <span style="background:#fff;border:1px solid #E6E9EE;border-radius:999px;padding:8px 13px;font:500 13px Inter;color:#12161C">{{ a.label }}</span>
+            </sc-for>
+          </div>
+          <h2 style="margin:0 0 11px;font:600 16.5px 'Space Grotesk',sans-serif;color:#12161C">Reviews</h2>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ sel.reviews }}" as="r" hint-placeholder-count="2">
+              <div style="background:#fff;border:1px solid #E6E9EE;border-radius:16px;padding:14px">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+                  <div style="width:28px;height:28px;border-radius:99px;background:#EAF1FE;display:flex;align-items:center;justify-content:center;font:600 11.5px Inter;color:#1A66F0">{{ r.initials }}</div>
+                  <span style="font:600 13.5px Inter;color:#12161C">{{ r.name }}</span>
+                  <span style="font:600 12px Inter;color:#E8871A;margin-left:auto">{{ r.stars }}</span>
+                </div>
+                <p style="margin:0;font:400 13px/1.5 Inter;color:#5A6472">{{ r.text }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:12px 18px 30px;display:flex;align-items:center;gap:12px">
+        <div><div style="font:700 18px 'Space Grotesk',sans-serif;color:#12161C">฿{{ sel.price }}<span style="font:400 12px Inter;color:#8A94A6">/kWh</span></div><div style="font:400 11.5px Inter;color:#8A94A6">≈ ฿{{ sel.estCost }} for 45 min</div></div>
+        <button style="width:48px;height:48px;border:1px solid #E1E5EB;background:#fff;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11 21 3l-8 18-2-7-8-3Z" stroke="#12161C" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+        <button onClick="{{ nav.reserve }}" style="flex:1;height:48px;border:0;background:#1A66F0;border-radius:14px;font:600 15px Inter;color:#fff;cursor:pointer;box-shadow:0 8px 18px -8px rgba(26,102,240,.6)">Reserve charger</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.reserve }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:74px 0 116px">
+        <div style="padding:0 20px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <button onClick="{{ nav.detail }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <h1 style="margin:0;font:700 22px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Reserve</h1>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:16px;padding:13px;display:flex;align-items:center;gap:12px;margin-bottom:22px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#DCE6F5;display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"/></svg></div>
+            <div style="flex:1"><div style="font:600 14.5px 'Space Grotesk',sans-serif;color:#12161C">{{ sel.name }}</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ sel.dist }} · {{ sel.kw }} kW max</div></div>
+            <span onClick="{{ nav.stations }}" style="font:600 12.5px Inter;color:#1A66F0;cursor:pointer">Change</span>
+          </div>
+
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">1 · Date</div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:22px">
+            <sc-for list="{{ res.days }}" as="d" hint-placeholder-count="7">
+              <button onClick="{{ d.go }}" style="flex:none;width:56px;height:66px;border:1.5px solid {{ d.bd }};background:{{ d.bg }};border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+                <span style="font:500 11.5px Inter;color:{{ d.fg2 }}">{{ d.dow }}</span>
+                <span style="font:700 17px 'Space Grotesk',sans-serif;color:{{ d.fg }}">{{ d.num }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6">2 · Time</span>
+            <span style="background:#E4F6EC;color:#0B5D30;border-radius:999px;padding:3px 8px;font:600 10.5px Inter">Best slots highlighted</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:22px">
+            <sc-for list="{{ res.slots }}" as="t" hint-placeholder-count="12">
+              <button onClick="{{ t.go }}" style="height:44px;border:1.5px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};border-radius:12px;cursor:pointer;font:600 13.5px Inter;position:relative;opacity:{{ t.op }}">{{ t.label }}
+                <span style="position:absolute;top:-6px;right:-4px;background:#0E7A3E;color:#fff;border-radius:999px;padding:2px 6px;font:600 9px Inter;display:{{ t.bestShow }}">Best</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">3 · Duration</div>
+          <div style="display:flex;gap:8px;margin-bottom:22px">
+            <sc-for list="{{ res.durations }}" as="d" hint-placeholder-count="4">
+              <button onClick="{{ d.go }}" style="flex:1;height:44px;border:1.5px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.fg }};border-radius:12px;cursor:pointer;font:600 13.5px Inter">{{ d.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">4 · Charger &amp; vehicle</div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:16px;overflow:hidden;margin-bottom:22px">
+            <div style="padding:14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F1F3F6">
+              <div style="width:38px;height:38px;border-radius:11px;background:#E4F6EC;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:#0E7A3E">{{ res.chargerCode }}</div>
+              <div style="flex:1"><div style="font:600 14px Inter;color:#12161C">{{ res.charger }}</div><div style="font:400 12px Inter;color:#12A150;margin-top:2px">Available at your slot</div></div>
+              <span style="font:600 12.5px Inter;color:#1A66F0">Change</span>
+            </div>
+            <div style="padding:14px;display:flex;align-items:center;gap:12px">
+              <div style="width:38px;height:38px;border-radius:11px;background:#EAF1FE;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 14h16l-2-5H6l-2 5Zm0 0v4h16v-4" stroke="#1A66F0" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+              <div style="flex:1"><div style="font:600 14px Inter;color:#12161C">Tesla Model 3 · 75 kWh</div><div style="font:400 12px Inter;color:#8A94A6;margin-top:2px">กท-1234 · CCS2</div></div>
+              <span style="font:600 12.5px Inter;color:#1A66F0">Change</span>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+            <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:12px">Estimated cost</div>
+            <sc-for list="{{ res.lines }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font:400 13.5px Inter;color:#5A6472"><span>{{ l.label }}</span><span style="color:#12161C;font-weight:500">{{ l.value }}</span></div>
+            </sc-for>
+            <div style="height:1px;background:#F1F3F6;margin:10px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14.5px Inter;color:#12161C">Total estimate</span><span style="font:700 22px 'Space Grotesk',sans-serif;color:#12161C">฿{{ res.total }}</span></div>
+            <div style="font:400 12px/1.5 Inter;color:#8A94A6;margin-top:8px">Charged on actual energy delivered. Charger is held 15 minutes past your slot.</div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:12px 18px 30px">
+        <div style="font:400 12.5px Inter;color:#5A6472;margin-bottom:9px;text-align:center">{{ res.summary }}</div>
+        <button onClick="{{ nav.charging }}" style="width:100%;height:52px;border:0;background:#1A66F0;border-radius:15px;font:600 16px Inter;color:#fff;cursor:pointer;box-shadow:0 8px 20px -8px rgba(26,102,240,.6)">Confirm reservation</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.charging }}">
+      <div style="min-height:874px;background:#0B1F14;padding:66px 0 96px">
+        <div style="padding:0 22px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px">
+            <button onClick="{{ nav.home }}" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <div style="flex:1"><div style="font:600 15px 'Space Grotesk',sans-serif;color:#fff">{{ sess.station }}</div><div style="font:400 12.5px Inter;color:#8FB9A2">{{ sess.charger }}</div></div>
+          </div>
+          <div style="display:flex;justify-content:center;margin-bottom:8px">
+            <div style="position:relative;width:250px;height:250px">
+              <svg width="250" height="250" viewBox="0 0 250 250"><circle cx="125" cy="125" r="104" stroke="rgba(255,255,255,.12)" stroke-width="16" fill="none"/><circle cx="125" cy="125" r="104" stroke="#3DDC84" stroke-width="16" fill="none" stroke-linecap="round" transform="rotate(-90 125 125)" style="stroke-dasharray:653.5;stroke-dashoffset:{{ ring.off }}"/></svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div style="display:flex;align-items:center;gap:6px;background:rgba(61,220,132,.16);border-radius:999px;padding:4px 10px;margin-bottom:10px">
+                  <span style="width:6px;height:6px;border-radius:99px;background:#3DDC84"></span>
+                  <span style="font:600 11px Inter;color:#8FE8B4;letter-spacing:.04em">CHARGING</span>
+                </div>
+                <div style="font:700 62px/1 'Space Grotesk',sans-serif;color:#fff;letter-spacing:-.03em">{{ pct.value }}<span style="font-size:26px">%</span></div>
+                <div style="font:400 13px Inter;color:#8FB9A2;margin-top:6px">battery · target 80%</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;font:500 14px Inter;color:#8FE8B4;margin-bottom:24px">{{ pct.mins }} minutes to target · done around {{ pct.eta }}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <sc-for list="{{ chargeTiles }}" as="c" hint-placeholder-count="4">
+              <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 15px">
+                <div style="font:500 11.5px Inter;color:#8FB9A2;margin-bottom:6px">{{ c.label }}</div>
+                <div style="font:700 22px 'Space Grotesk',sans-serif;color:#fff">{{ c.value }}</div>
+                <div style="font:400 11.5px Inter;color:#6E9C82;margin-top:3px">{{ c.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:rgba(61,220,132,.1);border:1px solid rgba(61,220,132,.28);border-radius:16px;padding:14px;display:flex;gap:11px;margin-bottom:16px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex:none;margin-top:1px"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#3DDC84"/></svg>
+            <div><div style="font:600 13.5px Inter;color:#C6F5D9">Smart charging is on</div><div style="font:400 12.5px/1.45 Inter;color:#8FB9A2;margin-top:2px">We taper to 40 kW after 80% to protect the pack. Tap to charge to 100% instead.</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.05);border-radius:16px;padding:14px 16px;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;font:500 12px Inter;color:#8FB9A2;margin-bottom:8px"><span>14:32 start</span><span>15:20 target</span></div>
+            <div style="height:6px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden"><div style="height:100%;border-radius:99px;background:#3DDC84;width:{{ pct.width }}"></div></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button style="flex:1;height:52px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);border-radius:15px;font:600 15px Inter;color:#fff;cursor:pointer">Pause</button>
+            <button onClick="{{ nav.payment }}" style="flex:1;height:52px;border:1px solid rgba(255,107,107,.5);background:rgba(220,38,38,.16);border-radius:15px;font:600 15px Inter;color:#FF9C9C;cursor:pointer">Stop charging</button>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(11,31,20,.92);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.1);padding:9px 12px 26px;display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ tabbarDark }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:48px">
+            <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+            <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.history }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:66px 0 96px">
+        <div style="padding:0 20px">
+          <h1 style="margin:0 0 16px;font:700 25px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Activity</h1>
+          <div style="display:flex;gap:4px;padding:4px;background:#E4E8ED;border-radius:12px;margin-bottom:18px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.go }}" style="flex:1;border:0;height:36px;border-radius:9px;background:{{ t.bg }};color:{{ t.fg }};font:600 13px Inter;cursor:pointer;box-shadow:{{ t.sh }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px;margin-bottom:18px">
+            <div style="font:400 12.5px Inter;color:#8A94A6;margin-bottom:12px">August 2026</div>
+            <div style="display:flex;gap:20px;margin-bottom:14px">
+              <div><div style="font:700 24px 'Space Grotesk',sans-serif;color:#12161C">143 <span style="font:500 13px Inter;color:#8A94A6">kWh</span></div><div style="font:400 12px Inter;color:#8A94A6">energy</div></div>
+              <div><div style="font:700 24px 'Space Grotesk',sans-serif;color:#12161C">฿1,248</div><div style="font:400 12px Inter;color:#8A94A6">spent</div></div>
+              <div><div style="font:700 24px 'Space Grotesk',sans-serif;color:#0E7A3E">38 <span style="font:500 13px Inter;color:#8A94A6">kg</span></div><div style="font:400 12px Inter;color:#8A94A6">CO₂ avoided</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:52px">
+              <sc-for list="{{ bars }}" as="b" hint-placeholder-count="14">
+                <div style="flex:1;border-radius:4px 4px 0 0;background:{{ b.color }};height:{{ b.h }}"></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ historyItems }}" as="h" hint-placeholder-count="5">
+              <div style="background:#fff;border:1px solid #E6E9EE;border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center">
+                <div style="width:40px;height:40px;border-radius:12px;background:{{ h.tint }};display:flex;align-items:center;justify-content:center;flex:none;font:700 13px 'Space Grotesk',sans-serif;color:{{ h.fg }}">{{ h.glyph }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:600 14.5px Inter;color:#12161C">{{ h.title }}</div>
+                  <div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ h.meta }}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font:700 14.5px 'Space Grotesk',sans-serif;color:#12161C">{{ h.amount }}</div>
+                  <div style="font:600 11.5px Inter;color:{{ h.fg }};margin-top:2px">{{ h.status }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:9px 12px 26px;display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ tabbar }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:48px">
+            <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+            <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.payment }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:74px 0 116px">
+        <div style="padding:0 20px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+            <button onClick="{{ nav.charging }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <h1 style="margin:0;font:700 22px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Payment</h1>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:20px;padding:20px;margin-bottom:16px">
+            <div style="font:400 13px Inter;color:#8A94A6">Session total</div>
+            <div style="font:700 42px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.03em;margin:2px 0 16px">฿{{ pay.total }}</div>
+            <sc-for list="{{ pay.lines }}" as="l" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font:400 13.5px Inter;color:#5A6472"><span>{{ l.label }}</span><span style="color:#12161C;font-weight:500">{{ l.value }}</span></div>
+            </sc-for>
+          </div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">Pay with</div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px">
+            <sc-for list="{{ pay.methods }}" as="m" hint-placeholder-count="3">
+              <div onClick="{{ m.go }}" style="cursor:pointer;background:#fff;border:1.5px solid {{ m.bd }};border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:{{ m.sh }}">
+                <div style="width:40px;height:40px;border-radius:12px;background:{{ m.tint }};display:flex;align-items:center;justify-content:center;font:700 12.5px 'Space Grotesk',sans-serif;color:{{ m.fg }}">{{ m.glyph }}</div>
+                <div style="flex:1"><div style="font:600 14.5px Inter;color:#12161C">{{ m.label }}</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ m.sub }}</div></div>
+                <div style="width:22px;height:22px;border-radius:99px;border:2px solid {{ m.radioBd }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:99px;background:{{ m.radioFill }}"></span></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#EAF1FE;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m12 3 2.6 5.7 6.4.7-4.8 4.2 1.4 6.4L12 16.8 6.4 20l1.4-6.4L3 9.4l6.4-.7L12 3Z" fill="#1A66F0"/></svg>
+            <span style="font:500 13px Inter;color:#154FBF">This payment earns 32 reward points.</span>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:12px 18px 30px">
+        <button onClick="{{ nav.paid }}" style="width:100%;height:52px;border:0;background:#1A66F0;border-radius:15px;font:600 16px Inter;color:#fff;cursor:pointer;box-shadow:0 8px 20px -8px rgba(26,102,240,.6)">Pay ฿{{ pay.total }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.paid }}">
+      <div style="min-height:874px;background:#fff;padding:120px 26px 40px;display:flex;flex-direction:column;align-items:center">
+        <div style="width:88px;height:88px;border-radius:99px;background:#E4F6EC;display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M4 12.6 9.2 18 20 6.6" stroke="#0E7A3E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1 style="margin:0 0 8px;font:700 26px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Payment complete</h1>
+        <p style="margin:0 0 30px;font:400 15px/1.5 Inter;color:#5A6472;text-align:center">฿{{ pay.total }} paid from your Volt Grid wallet. Receipt sent to somchai@example.com.</p>
+        <div style="width:100%;background:#F4F6F8;border-radius:18px;padding:18px;margin-bottom:auto">
+          <sc-for list="{{ pay.receipt }}" as="r" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font:400 13.5px Inter;color:#5A6472"><span>{{ r.label }}</span><span style="color:#12161C;font-weight:500">{{ r.value }}</span></div>
+          </sc-for>
+        </div>
+        <button onClick="{{ nav.home }}" style="width:100%;height:52px;border:0;background:#1A66F0;border-radius:15px;font:600 16px Inter;color:#fff;cursor:pointer;margin-top:26px">Back to home</button>
+        <button onClick="{{ nav.history }}" style="width:100%;height:48px;border:0;background:none;font:600 14.5px Inter;color:#5A6472;cursor:pointer;margin-top:6px">View in history</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.notifications }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:66px 0 96px">
+        <div style="padding:0 20px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+            <button onClick="{{ nav.home }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <h1 style="margin:0;font:700 22px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em;flex:1">Notifications</h1>
+            <span style="font:600 12.5px Inter;color:#1A66F0">Mark all read</span>
+          </div>
+          <sc-for list="{{ notifGroups }}" as="g" hint-placeholder-count="2">
+            <div style="margin-bottom:18px">
+              <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">{{ g.label }}</div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+                  <div style="background:{{ n.bg }};border:1px solid {{ n.bd }};border-radius:16px;padding:14px;display:flex;gap:12px">
+                    <div style="width:38px;height:38px;border-radius:12px;background:{{ n.tint }};flex:none;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ n.fg }}">{{ n.glyph }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;align-items:baseline;gap:8px"><div style="font:600 14px Inter;color:#12161C;flex:1">{{ n.title }}</div><span style="font:400 11.5px Inter;color:#8A94A6;white-space:nowrap">{{ n.time }}</span></div>
+                      <p style="margin:3px 0 0;font:400 13px/1.45 Inter;color:#5A6472">{{ n.body }}</p>
+                      <button style="display:{{ n.actionShow }};margin-top:10px;height:34px;padding:0 13px;border:1px solid #E1E5EB;background:#fff;border-radius:10px;font:600 12.5px Inter;color:#1A66F0;cursor:pointer">{{ n.action }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.profile }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:66px 0 96px">
+        <div style="padding:0 20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h1 style="margin:0;font:700 25px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Profile</h1>
+            <button onClick="{{ nav.settings }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="#12161C" stroke-width="1.8"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" stroke="#12161C" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:20px;padding:18px;margin-bottom:12px;display:flex;align-items:center;gap:14px">
+            <div style="width:62px;height:62px;border-radius:99px;background:#EAF1FE;flex:none;display:flex;align-items:center;justify-content:center;font:600 21px 'Space Grotesk',sans-serif;color:#1A66F0">SP</div>
+            <div style="flex:1"><div style="font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Somchai P.</div><div style="font:400 13px Inter;color:#8A94A6;margin-top:2px">user1@example.com</div></div>
+            <span style="font:600 12.5px Inter;color:#1A66F0">Edit</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <div style="flex:1;background:#0E7A3E;border-radius:18px;padding:16px;color:#fff">
+              <div style="font:400 12.5px Inter;color:#BEEBD1;margin-bottom:6px">Wallet balance</div>
+              <div style="font:700 24px 'Space Grotesk',sans-serif">฿1,420</div>
+              <div style="font:600 12px Inter;color:#BEEBD1;margin-top:10px">Top up →</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+              <div style="font:400 12.5px Inter;color:#8A94A6;margin-bottom:6px">Reward points</div>
+              <div style="font:700 24px 'Space Grotesk',sans-serif;color:#12161C">318</div>
+              <div style="font:600 12px Inter;color:#1A66F0;margin-top:10px">Redeem →</div>
+            </div>
+          </div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">My vehicles</div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:15px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:12px;background:#EAF1FE;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 14h16l-2-5H6l-2 5Zm0 0v4h16v-4" stroke="#1A66F0" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+              <div style="flex:1"><div style="font:600 14.5px Inter;color:#12161C">Tesla Model 3 · 2023</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">75 kWh · CCS2 · กท-1234</div></div>
+              <span style="background:#E4F6EC;color:#0B5D30;border-radius:999px;padding:4px 9px;font:600 11px Inter">Default</span>
+            </div>
+            <button style="width:100%;height:42px;margin-top:12px;border:1px dashed #CFD6DE;background:none;border-radius:12px;font:600 13px Inter;color:#5A6472;cursor:pointer">+ Add vehicle</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;overflow:hidden">
+            <sc-for list="{{ profileRows }}" as="r" hint-placeholder-count="5">
+              <div onClick="{{ r.go }}" style="cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F1F3F6;min-height:52px">
+                <span style="width:30px;height:30px;border-radius:9px;background:#F1F3F6;display:flex;align-items:center;justify-content:center;font:700 12px 'Space Grotesk',sans-serif;color:#5A6472">{{ r.glyph }}</span>
+                <span style="flex:1;font:500 14.5px Inter;color:{{ r.color }}">{{ r.label }}</span>
+                <span style="font:400 13px Inter;color:#8A94A6">{{ r.detail }}</span>
+                <svg width="7" height="12" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="#C4CBD4" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid #E6E9EE;padding:9px 12px 26px;display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ tabbar }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:48px">
+            <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+            <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ S.settings }}">
+      <div style="min-height:874px;background:#F4F6F8;padding:66px 0 40px">
+        <div style="padding:0 20px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+            <button onClick="{{ nav.profile }}" style="width:38px;height:38px;border:1px solid #E6E9EE;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1 1.5 7.5l6 6.5" stroke="#12161C" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+            <h1 style="margin:0;font:700 22px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Settings</h1>
+          </div>
+          <sc-for list="{{ settingGroups }}" as="g" hint-placeholder-count="3">
+            <div style="margin-bottom:20px">
+              <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">{{ g.label }}</div>
+              <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;overflow:hidden">
+                <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                  <div onClick="{{ r.go }}" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F1F3F6;min-height:56px">
+                    <div style="flex:1"><div style="font:500 14.5px Inter;color:{{ r.color }}">{{ r.label }}</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px;display:{{ r.subShow }}">{{ r.sub }}</div></div>
+                    <span style="font:400 13.5px Inter;color:#8A94A6;display:{{ r.valueShow }}">{{ r.value }}</span>
+                    <div style="display:{{ r.toggleShow }};width:46px;height:28px;border-radius:99px;background:{{ r.track }};padding:3px;flex:none">
+                      <div style="width:22px;height:22px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transform:translateX({{ r.knob }});transition:transform .18s ease"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+  </x-import>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ V.desktop }}">
+  <div style="padding:22px 24px 40px;display:flex;justify-content:center;overflow-x:auto">
+    <div style="width:1400px;flex:none;height:900px;background:#F4F6F8;border:1px solid #DFE3E8;border-radius:16px;overflow:hidden;display:flex;box-shadow:0 18px 50px -30px rgba(18,22,28,.5)">
+
+      <div style="width:238px;flex:none;background:#fff;border-right:1px solid #E6E9EE;display:flex;flex-direction:column;padding:20px 14px">
+        <div style="display:flex;align-items:center;gap:9px;padding:0 8px 22px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"></path></svg>
+          <span style="font:700 16px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.01em">Volt Grid</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ deskNav }}" as="n" hint-placeholder-count="6">
+            <button onClick="{{ n.go }}" style="border:0;background:{{ n.bg }};cursor:{{ n.cursor }};display:flex;align-items:center;gap:11px;padding:10px 10px;border-radius:10px;text-align:left;min-height:40px">
+              <span style="width:20px;font:700 13px 'Space Grotesk',sans-serif;color:{{ n.fg }}">{{ n.glyph }}</span>
+              <span style="font-family:Inter;font-size:14px;font-weight:{{ n.weight }};color:{{ n.fg }}">{{ n.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="flex:1"></div>
+        <div style="background:#0E7A3E;border-radius:14px;padding:14px;color:#fff;margin-bottom:12px">
+          <div style="font:400 12px Inter;color:#BEEBD1;margin-bottom:5px">Wallet balance</div>
+          <div style="font:700 20px 'Space Grotesk',sans-serif">฿1,420</div>
+          <div style="font:600 11.5px Inter;color:#BEEBD1;margin-top:8px">Top up →</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;border:1px solid #E6E9EE">
+          <div style="width:32px;height:32px;border-radius:99px;background:#EAF1FE;flex:none;display:flex;align-items:center;justify-content:center;font:600 12px 'Space Grotesk',sans-serif;color:#1A66F0">SP</div>
+          <div style="min-width:0"><div style="font:600 13px Inter;color:#12161C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Somchai P.</div><div style="font:400 11.5px Inter;color:#8A94A6">user1@example.com</div></div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+        <div style="height:68px;flex:none;background:#fff;border-bottom:1px solid #E6E9EE;display:flex;align-items:center;gap:16px;padding:0 24px">
+          <div>
+            <div style="font:600 17px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.01em">{{ deskTitle }}</div>
+            <div style="font:400 12.5px Inter;color:#8A94A6;margin-top:1px">{{ deskSub }}</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="width:300px;height:38px;background:#F4F6F8;border:1px solid #E6E9EE;border-radius:11px;display:flex;align-items:center;gap:9px;padding:0 12px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#8A94A6" stroke-width="2"></circle><path d="m16.5 16.5 4 4" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"></path></svg>
+            <span style="font:400 13.5px Inter;color:#8A94A6">Search stations, sessions, payments</span>
+          </div>
+          <button style="position:relative;width:38px;height:38px;border:1px solid #E6E9EE;border-radius:11px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="#12161C" stroke-width="1.8" stroke-linecap="round"></path><path d="M10.3 21a2 2 0 0 0 3.4 0" stroke="#12161C" stroke-width="1.8" stroke-linecap="round"></path></svg>
+            <span style="position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:99px;background:#DC2626;border:2px solid #fff"></span>
+          </button>
+        </div>
+
+        <sc-if value="{{ D.dashboard }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px 28px;display:grid;grid-template-columns:1fr 340px;gap:18px;align-content:start">
+
+          <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+            <div style="background:#0E7A3E;border-radius:20px;padding:22px 24px;color:#fff;display:flex;gap:26px;align-items:center;box-shadow:0 16px 34px -22px rgba(14,122,62,.9)">
+              <div style="position:relative;width:132px;height:132px;flex:none">
+                <svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" stroke="rgba(255,255,255,.2)" stroke-width="12" fill="none"></circle><circle cx="66" cy="66" r="56" stroke="#7DE8AC" stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 66 66)" style="stroke-dasharray:351.9;stroke-dashoffset:{{ ring.deskOff }}"></circle></svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <span style="font:700 34px 'Space Grotesk',sans-serif">{{ pct.value }}<span style="font-size:16px">%</span></span>
+                  <span style="font:500 11px Inter;color:#BEEBD1">target 80%</span>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <span style="position:relative;display:flex;width:8px;height:8px"><span style="position:absolute;inset:0;border-radius:99px;background:#A7F3C6;animation:vgpulse 1.8s infinite"></span><span style="position:relative;width:8px;height:8px;border-radius:99px;background:#A7F3C6"></span></span>
+                  <span style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#BEEBD1">Charging now</span>
+                </div>
+                <div style="font:700 22px 'Space Grotesk',sans-serif;letter-spacing:-.01em">{{ sess.station }}</div>
+                <div style="font:400 13px Inter;color:#BEEBD1;margin:4px 0 16px">{{ sess.charger }} · started 14:32</div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                  <sc-for list="{{ chargeTiles }}" as="c" hint-placeholder-count="4">
+                    <div>
+                      <div style="font:400 11.5px Inter;color:#BEEBD1;margin-bottom:3px">{{ c.label }}</div>
+                      <div style="font:700 19px 'Space Grotesk',sans-serif">{{ c.value }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;flex:none">
+                <button onClick="{{ nav.deskSession }}" style="height:40px;padding:0 16px;border:0;border-radius:12px;background:#fff;color:#0B5D30;font:600 13.5px Inter;cursor:pointer">Open session</button>
+                <button style="height:40px;padding:0 16px;border:1px solid rgba(255,255,255,.35);border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font:600 13.5px Inter;cursor:pointer">Stop</button>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+                <h2 style="margin:0;font:600 16px 'Space Grotesk',sans-serif;color:#12161C">Suggested for your next charge</h2>
+                <span style="font:400 12.5px Inter;color:#8A94A6">ranked by distance, price and live availability</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <sc-for list="{{ recommended }}" as="r" hint-placeholder-count="3">
+                  <div onClick="{{ r.open }}" style="cursor:pointer;background:#fff;border:1px solid #E6E9EE;border-radius:16px;padding:15px 16px">
+                    <span style="display:inline-block;background:#F4F6F8;border-radius:999px;padding:4px 9px;font:600 11px Inter;color:{{ r.badgeFg }};margin-bottom:10px">{{ r.badge }}</span>
+                    <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C">{{ r.name }}</div>
+                    <div style="font:400 12.5px Inter;color:#8A94A6;margin:4px 0 12px">{{ r.meta }}</div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="width:7px;height:7px;border-radius:99px;background:{{ r.dot }}"></span>
+                      <span style="font:600 12.5px Inter;color:{{ r.dot }}">{{ r.status }}</span>
+                      <span style="margin-left:auto;font:600 14px 'Space Grotesk',sans-serif;color:#12161C">฿{{ r.price }}<span style="font:400 11px Inter;color:#8A94A6">/kWh</span></span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;overflow:hidden">
+              <div style="display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid #F1F3F6">
+                <h2 style="margin:0;font:600 16px 'Space Grotesk',sans-serif;color:#12161C;flex:1">Recent activity</h2>
+                <span style="font:600 12.5px Inter;color:#1A66F0;cursor:pointer">View all</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.6fr 1fr .8fr .8fr .8fr;padding:9px 18px;background:#FAFBFC;border-bottom:1px solid #F1F3F6">
+                <sc-for list="{{ deskCols }}" as="c" hint-placeholder-count="5">
+                  <span style="font:600 11px Inter;letter-spacing:.06em;text-transform:uppercase;color:#8A94A6;text-align:{{ c.align }}">{{ c.label }}</span>
+                </sc-for>
+              </div>
+              <sc-for list="{{ deskRows }}" as="r" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:1.6fr 1fr .8fr .8fr .8fr;align-items:center;padding:12px 18px;border-bottom:1px solid #F5F7F9">
+                  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <span style="width:30px;height:30px;border-radius:9px;background:{{ r.tint }};display:flex;align-items:center;justify-content:center;font:700 12px 'Space Grotesk',sans-serif;color:{{ r.fg }};flex:none">{{ r.glyph }}</span>
+                    <span style="font:500 13.5px Inter;color:#12161C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.station }}</span>
+                  </div>
+                  <span style="font:400 13px Inter;color:#5A6472">{{ r.when }}</span>
+                  <span style="font:400 13px Inter;color:#5A6472;text-align:right">{{ r.energy }}</span>
+                  <span style="font:600 13.5px 'Space Grotesk',sans-serif;color:#12161C;text-align:right">{{ r.amount }}</span>
+                  <span style="text-align:right"><span style="background:{{ r.tint }};color:{{ r.fg }};border-radius:999px;padding:4px 10px;font:600 11.5px Inter">{{ r.status }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <sc-for list="{{ deskActions }}" as="a" hint-placeholder-count="4">
+                <button onClick="{{ a.go }}" style="border:1px solid #E6E9EE;background:#fff;border-radius:14px;padding:14px 12px;cursor:pointer;display:flex;flex-direction:column;gap:8px;text-align:left;min-height:76px">
+                  <span style="width:30px;height:30px;border-radius:9px;background:{{ a.tint }};display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ a.fg }}">{{ a.glyph }}</span>
+                  <span style="font:600 13px Inter;color:#12161C">{{ a.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+              <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:12px">Next reservation</div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <div style="width:48px;height:48px;border-radius:13px;background:#EAF1FE;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none">
+                  <span style="font:700 16px 'Space Grotesk',sans-serif;color:#1A66F0;line-height:1">25</span>
+                  <span style="font:600 9.5px Inter;color:#1A66F0">AUG</span>
+                </div>
+                <div style="min-width:0"><div style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C">Siam Green Station</div><div style="font:400 12.5px Inter;color:#5A6472;margin-top:2px">14:30 – 15:15 · Charger A1</div></div>
+              </div>
+              <div style="background:#EAF1FE;border-radius:10px;padding:9px 11px;margin-top:12px;font:500 12px/1.45 Inter;color:#154FBF">Reminder set for 14:00. Charger is held 15 minutes past your slot.</div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+              <div style="display:flex;align-items:baseline;margin-bottom:12px"><div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;flex:1">This month</div><span style="font:400 12px Inter;color:#8A94A6">August</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;margin-bottom:14px">
+                <sc-for list="{{ monthStats }}" as="m" hint-placeholder-count="4">
+                  <div><div style="font:700 19px 'Space Grotesk',sans-serif;color:#12161C">{{ m.value }}</div><div style="font:400 11.5px Inter;color:#8A94A6;margin-top:1px">{{ m.label }}</div></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:4px;height:56px">
+                <sc-for list="{{ bars }}" as="b" hint-placeholder-count="14">
+                  <div style="flex:1;border-radius:3px 3px 0 0;background:{{ b.color }};height:{{ b.h }}"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:7px;font:400 11px Inter;color:#8A94A6"><span>1 Aug</span><span>25 Aug</span></div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+              <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:11px">Network status</div>
+              <sc-for list="{{ netStatus }}" as="n" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:9px;padding:6px 0">
+                  <span style="width:7px;height:7px;border-radius:99px;background:{{ n.dot }}"></span>
+                  <span style="font:400 13px Inter;color:#5A6472;flex:1">{{ n.label }}</span>
+                  <span style="font:600 13px 'Space Grotesk',sans-serif;color:#12161C">{{ n.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ D.stations }}">
+        <div style="flex:1;display:flex;min-height:0">
+          <div style="width:410px;flex:none;border-right:1px solid #E6E9EE;background:#fff;display:flex;flex-direction:column">
+            <div style="padding:16px 18px 12px;border-bottom:1px solid #F1F3F6">
+              <div style="height:40px;background:#F4F6F8;border:1px solid #E6E9EE;border-radius:11px;display:flex;align-items:center;gap:9px;padding:0 12px;margin-bottom:11px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#8A94A6" stroke-width="2"></circle><path d="m16.5 16.5 4 4" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"></path></svg>
+                <input value="{{ list.query }}" onChange="{{ list.onSearch }}" placeholder="Search station, area or road" style="flex:1;min-width:0;border:0;outline:none;background:none;font:400 13.5px Inter;color:#12161C">
+                <button onClick="{{ list.onClear }}" style="display:{{ list.clearShow }};align-items:center;justify-content:center;width:20px;height:20px;border:0;border-radius:99px;background:#E4E8ED;cursor:pointer;font:600 11px Inter;color:#5A6472;flex:none">×</button>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+                  <button onClick="{{ f.go }}" style="border:1px solid {{ f.bd }};background:{{ f.bg }};color:{{ f.fg }};cursor:pointer;height:30px;padding:0 11px;border-radius:999px;font:600 12px Inter">{{ f.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:11px">
+                <span style="font:400 12px Inter;color:#8A94A6">{{ list.summary }}</span>
+                <span style="font:600 12px Inter;color:#1A66F0;cursor:pointer">Sort</span>
+              </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:12px 18px 20px;display:flex;flex-direction:column;gap:9px">
+              <sc-if value="{{ list.empty }}">
+                <div style="border:1px dashed #D5DAE2;border-radius:14px;padding:24px 18px;text-align:center">
+                  <div style="font:600 14px Inter;color:#12161C;margin-bottom:4px">No stations match</div>
+                  <div style="font:400 12.5px/1.5 Inter;color:#8A94A6;margin-bottom:13px">Try a different name or clear the filters.</div>
+                  <button onClick="{{ list.onClear }}" style="height:38px;padding:0 15px;border:1px solid #E1E5EB;background:#fff;border-radius:11px;font:600 13px Inter;color:#1A66F0;cursor:pointer">Clear search</button>
+                </div>
+              </sc-if>
+              <sc-for list="{{ list.items }}" as="s" hint-placeholder-count="8">
+                <div onClick="{{ s.focus }}" style="cursor:pointer;border:1.5px solid {{ s.selBd }};box-shadow:{{ s.selSh }};border-radius:14px;padding:12px;display:flex;gap:12px;background:#fff">
+                  <div style="width:56px;height:56px;border-radius:12px;background:{{ s.imgBg }};flex:none;display:flex;align-items:center;justify-content:center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="{{ s.imgFg }}"></path></svg>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;gap:8px;align-items:flex-start">
+                      <span style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C;flex:1">{{ s.name }}</span>
+                      <span style="font:600 13.5px 'Space Grotesk',sans-serif;color:#12161C;white-space:nowrap">฿{{ s.price }}<span style="font:400 10px Inter;color:#8A94A6">/kWh</span></span>
+                    </div>
+                    <div style="font:400 12px Inter;color:#8A94A6;margin:3px 0 8px">{{ s.meta }}</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="display:flex;align-items:center;gap:5px;background:{{ s.pillBg }};border-radius:999px;padding:3px 8px;font:600 11px Inter;color:{{ s.pillFg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ s.pillFg }}"></span>{{ s.status }}</span>
+                      <span style="background:#F1F3F6;border-radius:999px;padding:3px 8px;font:600 11px Inter;color:#5A6472">{{ s.kw }} kW</span>
+                      <span style="background:#F1F3F6;border-radius:999px;padding:3px 8px;font:600 11px Inter;color:#5A6472">{{ s.connector }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex:1;position:relative;min-width:0;background:#E9EDF1">
+            <iframe src="map.html" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+            <div style="position:absolute;top:16px;right:16px;width:330px;background:#fff;border-radius:16px;padding:16px;box-shadow:0 10px 30px -12px rgba(18,22,28,.35)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+                <span style="background:#EAF1FE;color:#1A66F0;border-radius:999px;padding:3px 9px;font:600 11px Inter">Selected</span>
+                <span style="font:400 12px Inter;color:#8A94A6">{{ sel.dist }} · {{ sel.eta }} drive</span>
+              </div>
+              <div style="font:600 16px 'Space Grotesk',sans-serif;color:#12161C">{{ sel.name }}</div>
+              <div style="font:400 12.5px Inter;color:#8A94A6;margin:3px 0 11px">{{ sel.address }}</div>
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px">
+                <span style="display:flex;align-items:center;gap:5px;background:{{ sel.pillBg }};border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:{{ sel.pillFg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ sel.pillFg }}"></span>{{ sel.status }}</span>
+                <span style="background:#F1F3F6;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#5A6472">{{ sel.kw }} kW</span>
+                <span style="margin-left:auto;font:600 14px 'Space Grotesk',sans-serif;color:#12161C">฿{{ sel.price }}<span style="font:400 10.5px Inter;color:#8A94A6">/kWh</span></span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:13px">
+                <sc-for list="{{ sel.chargers }}" as="c" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;background:#F8F9FB;border-radius:11px;padding:9px 11px">
+                    <span style="width:28px;height:28px;border-radius:9px;background:{{ c.tint }};display:flex;align-items:center;justify-content:center;font:700 11.5px 'Space Grotesk',sans-serif;color:{{ c.fg }}">{{ c.code }}</span>
+                    <span style="flex:1;font:500 12.5px Inter;color:#12161C">{{ c.power }} kW · {{ c.connector }}</span>
+                    <span style="font:600 11.5px Inter;color:{{ c.fg }}">{{ c.status }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button style="flex:1;height:40px;border:1px solid #E1E5EB;background:#fff;border-radius:11px;font:600 13px Inter;color:#12161C;cursor:pointer">Directions</button>
+                <button onClick="{{ nav.deskReserve }}" style="flex:1.3;height:40px;border:0;background:#1A66F0;border-radius:11px;font:600 13px Inter;color:#fff;cursor:pointer">Reserve charger</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ D.reserve }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px 28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <sc-for list="{{ deskSteps }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.go }}" style="border:0;background:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0 10px 0 0">
+                <span style="width:24px;height:24px;border-radius:99px;background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center;font:600 12px 'Space Grotesk',sans-serif">{{ s.num }}</span>
+                <span style="font-family:Inter;font-size:13px;font-weight:{{ s.weight }};color:{{ s.text }}">{{ s.label }}</span>
+                <span style="width:22px;height:1px;background:#DDE1E7;margin-left:6px"></span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+              <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+                <div style="width:52px;height:52px;border-radius:14px;background:#DCE6F5;flex:none;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"></path></svg></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:600 17px 'Space Grotesk',sans-serif;color:#12161C">{{ sel.name }}</div>
+                  <div style="font:400 12.5px Inter;color:#8A94A6;margin-top:3px">{{ sel.address }} · {{ sel.dist }} · {{ sel.kw }} kW max</div>
+                </div>
+                <span style="display:flex;align-items:center;gap:5px;background:{{ sel.pillBg }};border-radius:999px;padding:5px 10px;font:600 11.5px Inter;color:{{ sel.pillFg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ sel.pillFg }}"></span>{{ sel.status }}</span>
+                <button onClick="{{ nav.deskStations }}" style="height:38px;padding:0 14px;border:1px solid #E1E5EB;background:#fff;border-radius:11px;font:600 13px Inter;color:#12161C;cursor:pointer">Change</button>
+              </div>
+
+              <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:20px">
+                <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:12px">1 · Date</div>
+                <div style="display:flex;gap:9px;margin-bottom:24px">
+                  <sc-for list="{{ res.days }}" as="d" hint-placeholder-count="7">
+                    <button onClick="{{ d.go }}" style="flex:1;height:68px;border:1.5px solid {{ d.bd }};background:{{ d.bg }};border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+                      <span style="font:500 11.5px Inter;color:{{ d.fg2 }}">{{ d.dow }}</span>
+                      <span style="font:700 18px 'Space Grotesk',sans-serif;color:{{ d.fg }}">{{ d.num }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                  <span style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6">2 · Time</span>
+                  <span style="background:#E4F6EC;color:#0B5D30;border-radius:999px;padding:3px 9px;font:600 10.5px Inter">Quietest slots highlighted</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:24px">
+                  <sc-for list="{{ res.slots }}" as="t" hint-placeholder-count="12">
+                    <button onClick="{{ t.go }}" style="height:46px;border:1.5px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};border-radius:12px;cursor:pointer;font:600 14px Inter;position:relative;opacity:{{ t.op }}">{{ t.label }}
+                      <span style="position:absolute;top:-7px;right:-4px;background:#0E7A3E;color:#fff;border-radius:999px;padding:2px 7px;font:600 9px Inter;display:{{ t.bestShow }}">Best</span>
+                    </button>
+                  </sc-for>
+                </div>
+
+                <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:12px">3 · Duration</div>
+                <div style="display:flex;gap:9px;margin-bottom:24px">
+                  <sc-for list="{{ res.durations }}" as="d" hint-placeholder-count="4">
+                    <button onClick="{{ d.go }}" style="flex:1;height:46px;border:1.5px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.fg }};border-radius:12px;cursor:pointer;font:600 14px Inter">{{ d.label }}</button>
+                  </sc-for>
+                </div>
+
+                <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:12px">4 · Charger</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px">
+                  <sc-for list="{{ sel.chargers }}" as="c" hint-placeholder-count="4">
+                    <div style="border:1px solid {{ c.bd }};border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px">
+                      <span style="width:36px;height:36px;border-radius:11px;background:{{ c.tint }};display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ c.fg }};flex:none">{{ c.code }}</span>
+                      <div style="flex:1;min-width:0">
+                        <div style="font:600 13.5px Inter;color:#12161C">{{ c.power }} kW · {{ c.connector }}</div>
+                        <div style="font:400 11.5px Inter;color:#8A94A6;margin-top:2px">{{ c.note }}</div>
+                      </div>
+                      <span style="font:600 11.5px Inter;color:{{ c.fg }}">{{ c.status }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:20px;position:sticky;top:0">
+              <div style="font:600 16px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:14px">Summary</div>
+              <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;font:400 13.5px Inter;color:#5A6472"><span>Station</span><span style="color:#12161C;font-weight:500;text-align:right">{{ sel.name }}</span></div>
+                <div style="display:flex;justify-content:space-between;font:400 13.5px Inter;color:#5A6472"><span>When</span><span style="color:#12161C;font-weight:500">{{ res.summary }}</span></div>
+                <div style="display:flex;justify-content:space-between;font:400 13.5px Inter;color:#5A6472"><span>Vehicle</span><span style="color:#12161C;font-weight:500">Tesla Model 3</span></div>
+              </div>
+              <div style="height:1px;background:#F1F3F6;margin-bottom:14px"></div>
+              <sc-for list="{{ res.lines }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;padding:6px 0;font:400 13px Inter;color:#5A6472"><span>{{ l.label }}</span><span style="color:#12161C;font-weight:500">{{ l.value }}</span></div>
+              </sc-for>
+              <div style="height:1px;background:#F1F3F6;margin:12px 0"></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span style="font:600 14.5px Inter;color:#12161C">Total estimate</span><span style="font:700 24px 'Space Grotesk',sans-serif;color:#12161C">฿{{ res.total }}</span></div>
+              <div style="font:400 12px/1.5 Inter;color:#8A94A6;margin-bottom:16px">Charged on energy actually delivered. The charger is held 15 minutes past your slot.</div>
+              <button onClick="{{ nav.deskPay }}" style="width:100%;height:48px;border:0;background:#1A66F0;border-radius:14px;font:600 15px Inter;color:#fff;cursor:pointer;box-shadow:0 8px 18px -8px rgba(26,102,240,.6)">Continue to payment</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ D.pay }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px 28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <sc-for list="{{ deskSteps }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.go }}" style="border:0;background:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0 10px 0 0">
+                <span style="width:24px;height:24px;border-radius:99px;background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center;font:600 12px 'Space Grotesk',sans-serif">{{ s.num }}</span>
+                <span style="font-family:Inter;font-size:13px;font-weight:{{ s.weight }};color:{{ s.text }}">{{ s.label }}</span>
+                <span style="width:22px;height:1px;background:#DDE1E7;margin-left:6px"></span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start">
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:20px">
+              <div style="font:600 16px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:4px">Pay with</div>
+              <div style="font:400 13px Inter;color:#8A94A6;margin-bottom:16px">Charged when the session ends, on energy actually delivered.</div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+                <sc-for list="{{ pay.methods }}" as="m" hint-placeholder-count="3">
+                  <div onClick="{{ m.go }}" style="cursor:pointer;border:1.5px solid {{ m.bd }};border-radius:15px;padding:15px 16px;display:flex;align-items:center;gap:13px;box-shadow:{{ m.sh }}">
+                    <div style="width:42px;height:42px;border-radius:12px;background:{{ m.tint }};display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk',sans-serif;color:{{ m.fg }};flex:none">{{ m.glyph }}</div>
+                    <div style="flex:1"><div style="font:600 14.5px Inter;color:#12161C">{{ m.label }}</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px">{{ m.sub }}</div></div>
+                    <div style="width:22px;height:22px;border-radius:99px;border:2px solid {{ m.radioBd }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:99px;background:{{ m.radioFill }}"></span></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Billing</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                  <label style="display:block;font:600 12px Inter;color:#12161C;margin-bottom:6px">Name on receipt</label>
+                  <div style="height:46px;border:1.5px solid #E1E5EB;border-radius:12px;padding:0 14px;display:flex;align-items:center;font:400 14px Inter;color:#12161C">Somchai Patchara</div>
+                </div>
+                <div>
+                  <label style="display:block;font:600 12px Inter;color:#12161C;margin-bottom:6px">Receipt email</label>
+                  <div style="height:46px;border:1.5px solid #E1E5EB;border-radius:12px;padding:0 14px;display:flex;align-items:center;font:400 14px Inter;color:#12161C">user1@example.com</div>
+                </div>
+              </div>
+              <div style="background:#EAF1FE;border-radius:13px;padding:13px 15px;display:flex;align-items:center;gap:10px;margin-top:16px">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m12 3 2.6 5.7 6.4.7-4.8 4.2 1.4 6.4L12 16.8 6.4 20l1.4-6.4L3 9.4l6.4-.7L12 3Z" fill="#1A66F0"></path></svg>
+                <span style="font:500 13px Inter;color:#154FBF">This payment earns 32 reward points.</span>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:20px;position:sticky;top:0">
+              <div style="font:400 13px Inter;color:#8A94A6">Amount due</div>
+              <div style="font:700 40px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.03em;margin:2px 0 16px">฿{{ pay.total }}</div>
+              <sc-for list="{{ pay.lines }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;padding:6px 0;font:400 13px Inter;color:#5A6472"><span>{{ l.label }}</span><span style="color:#12161C;font-weight:500;text-align:right">{{ l.value }}</span></div>
+              </sc-for>
+              <div style="height:1px;background:#F1F3F6;margin:14px 0"></div>
+              <button onClick="{{ nav.deskSession }}" style="width:100%;height:48px;border:0;background:#1A66F0;border-radius:14px;font:600 15px Inter;color:#fff;cursor:pointer;box-shadow:0 8px 18px -8px rgba(26,102,240,.6)">Pay ฿{{ pay.total }}</button>
+              <button onClick="{{ nav.deskReserve }}" style="width:100%;height:44px;margin-top:8px;border:0;background:none;font:600 13.5px Inter;color:#5A6472;cursor:pointer">Back to reservation</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ D.settings }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px 28px">
+          <div style="max-width:720px;display:flex;flex-direction:column;gap:18px">
+            <sc-for list="{{ settingGroups }}" as="g" hint-placeholder-count="4">
+              <div>
+                <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">{{ g.label }}</div>
+                <div style="background:#fff;border:1px solid #E6E9EE;border-radius:16px;overflow:hidden">
+                  <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                    <div onClick="{{ r.go }}" style="cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #F1F3F6;min-height:56px">
+                      <div style="flex:1"><div style="font:500 14.5px Inter;color:{{ r.color }}">{{ r.label }}</div><div style="font:400 12.5px Inter;color:#8A94A6;margin-top:2px;display:{{ r.subShow }}">{{ r.sub }}</div></div>
+                      <span style="font:400 13.5px Inter;color:#8A94A6;display:{{ r.valueShow }}">{{ r.value }}</span>
+                      <div style="display:{{ r.toggleShow }};width:46px;height:28px;border-radius:99px;background:{{ r.track }};padding:3px;flex:none">
+                        <div style="width:22px;height:22px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transform:translateX({{ r.knob }});transition:transform .18s ease"></div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ D.session }}">
+        <div style="flex:1;overflow-y:auto;padding:22px 24px 28px;display:grid;grid-template-columns:1fr 360px;gap:18px;align-content:start">
+          <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+            <div style="background:#0B1F14;border-radius:22px;padding:26px;display:flex;gap:30px;align-items:center">
+              <div style="position:relative;width:210px;height:210px;flex:none">
+                <svg width="210" height="210" viewBox="0 0 210 210"><circle cx="105" cy="105" r="88" stroke="rgba(255,255,255,.12)" stroke-width="14" fill="none"></circle><circle cx="105" cy="105" r="88" stroke="#3DDC84" stroke-width="14" fill="none" stroke-linecap="round" transform="rotate(-90 105 105)" style="stroke-dasharray:552.9;stroke-dashoffset:{{ ring.sessOff }}"></circle></svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <div style="display:flex;align-items:center;gap:6px;background:rgba(61,220,132,.16);border-radius:999px;padding:4px 10px;margin-bottom:9px">
+                    <span style="width:6px;height:6px;border-radius:99px;background:#3DDC84"></span>
+                    <span style="font:600 10.5px Inter;color:#8FE8B4;letter-spacing:.05em">CHARGING</span>
+                  </div>
+                  <div style="font:700 52px/1 'Space Grotesk',sans-serif;color:#fff;letter-spacing:-.03em">{{ pct.value }}<span style="font-size:22px">%</span></div>
+                  <div style="font:400 12px Inter;color:#8FB9A2;margin-top:5px">target 80%</div>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font:700 24px 'Space Grotesk',sans-serif;color:#fff;letter-spacing:-.01em">{{ sess.station }}</div>
+                <div style="font:400 13.5px Inter;color:#8FB9A2;margin:5px 0 20px">{{ sess.charger }}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <sc-for list="{{ chargeTiles }}" as="c" hint-placeholder-count="4">
+                    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px 15px">
+                      <div style="font:500 11.5px Inter;color:#8FB9A2;margin-bottom:5px">{{ c.label }}</div>
+                      <div style="font:700 21px 'Space Grotesk',sans-serif;color:#fff">{{ c.value }}</div>
+                      <div style="font:400 11px Inter;color:#6E9C82;margin-top:2px">{{ c.sub }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:18px">
+              <div style="display:flex;align-items:baseline;margin-bottom:14px">
+                <h2 style="margin:0;font:600 16px 'Space Grotesk',sans-serif;color:#12161C;flex:1">Charging curve</h2>
+                <span style="font:400 12px Inter;color:#8A94A6">taper begins at 80%</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:5px;height:110px">
+                <sc-for list="{{ curve }}" as="c" hint-placeholder-count="20">
+                  <div style="flex:1;border-radius:4px 4px 0 0;background:{{ c.color }};height:{{ c.h }}"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:9px;font:400 11.5px Inter;color:#8A94A6"><span>14:32</span><span>now · {{ sess.speed }}</span><span>15:20 est.</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:16px">
+              <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:11px">Session</div>
+              <sc-for list="{{ sessInfo }}" as="i" hint-placeholder-count="6">
+                <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F5F7F9;font:400 13px Inter;color:#5A6472"><span>{{ i.label }}</span><span style="color:#12161C;font-weight:500">{{ i.value }}</span></div>
+              </sc-for>
+            </div>
+            <div style="background:#E4F6EC;border:1px solid #C8EBD8;border-radius:16px;padding:14px">
+              <div style="font:600 13.5px Inter;color:#0B5D30;margin-bottom:3px">Smart charging is on</div>
+              <div style="font:400 12.5px/1.5 Inter;color:#2C7A50">Speed tapers to 40 kW after 80% to protect the pack. You can override and charge to 100%.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <button style="height:46px;border:1px solid #E1E5EB;background:#fff;border-radius:13px;font:600 14px Inter;color:#12161C;cursor:pointer">Pause charging</button>
+              <button style="height:46px;border:1px solid #E1E5EB;background:#fff;border-radius:13px;font:600 14px Inter;color:#12161C;cursor:pointer">Charge to 100%</button>
+              <button style="height:46px;border:1px solid #F5C2C2;background:#FDF0F0;border-radius:13px;font:600 14px Inter;color:#C22B2B;cursor:pointer">Stop and pay</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ V.system }}">
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 60px">
+
+    <div style="margin-bottom:26px">
+      <h1 style="margin:0 0 6px;font:700 30px 'Space Grotesk',sans-serif;color:#12161C;letter-spacing:-.02em">Foundations</h1>
+      <p style="margin:0;max-width:660px;font:400 15px/1.6 Inter;color:#5A6472;text-wrap:pretty">The tokens and components used by the Volt Grid mobile app and web console. Values are literal so they can be lifted straight into CSS variables or a theme file.</p>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px;margin-bottom:16px">
+      <h2 style="margin:0 0 4px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Colour</h2>
+      <p style="margin:0 0 18px;font:400 13.5px Inter;color:#8A94A6">Two hues carry the product: blue for navigation and intent, green for energy and success. Everything else is neutral.</p>
+      <sc-for list="{{ fdn.colorGroups }}" as="g" hint-placeholder-count="3">
+        <div style="margin-bottom:18px">
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:10px">{{ g.label }}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px">
+            <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="5">
+              <div style="border:1px solid #EDF0F3;border-radius:12px;overflow:hidden">
+                <div style="height:56px;background:{{ c.hex }};border-bottom:1px solid #EDF0F3"></div>
+                <div style="padding:9px 11px">
+                  <div style="font:600 13px Inter;color:#12161C">{{ c.name }}</div>
+                  <div style="font:500 11.5px 'Space Grotesk',sans-serif;color:#8A94A6;margin-top:2px">{{ c.hex }}</div>
+                  <div style="font:400 11px/1.4 Inter;color:#98A2B3;margin-top:4px">{{ c.use }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px">
+        <h2 style="margin:0 0 4px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Typography</h2>
+        <p style="margin:0 0 18px;font:400 13.5px Inter;color:#8A94A6">Space Grotesk for headings, names and every number a driver reads at a glance. Inter for body, labels and controls.</p>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ fdn.type }}" as="t" hint-placeholder-count="7">
+            <div style="display:flex;align-items:baseline;gap:16px;border-bottom:1px solid #F4F6F8;padding-bottom:12px">
+              <div style="width:150px;flex:none">
+                <div style="font:600 12.5px Inter;color:#12161C">{{ t.name }}</div>
+                <div style="font:400 11px Inter;color:#8A94A6;margin-top:2px">{{ t.spec }}</div>
+              </div>
+              <div style="flex:1;min-width:0;font-family:{{ t.family }};font-size:{{ t.size }};font-weight:{{ t.weight }};line-height:{{ t.lh }};letter-spacing:{{ t.ls }};color:#12161C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.sample }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px">
+          <h2 style="margin:0 0 4px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Spacing</h2>
+          <p style="margin:0 0 16px;font:400 13.5px Inter;color:#8A94A6">4px base unit. Card padding 16, screen gutter 20 on mobile and 24 on desktop.</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ fdn.space }}" as="s" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="width:44px;font:600 12px 'Space Grotesk',sans-serif;color:#12161C">{{ s.value }}</span>
+                <span style="height:10px;border-radius:3px;background:#B9D0F6;width:{{ s.value }}"></span>
+                <span style="font:400 11.5px Inter;color:#8A94A6">{{ s.use }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px">
+          <h2 style="margin:0 0 16px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Radius &amp; elevation</h2>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ fdn.radius }}" as="r" hint-placeholder-count="4">
+              <div style="text-align:center">
+                <div style="width:74px;height:56px;background:#F4F6F8;border:1px solid #E1E5EB;border-radius:{{ r.value }};box-shadow:{{ r.shadow }}"></div>
+                <div style="font:600 11.5px Inter;color:#12161C;margin-top:6px">{{ r.value }}</div>
+                <div style="font:400 10.5px Inter;color:#8A94A6">{{ r.use }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px;margin-bottom:16px">
+      <h2 style="margin:0 0 4px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Components</h2>
+      <p style="margin:0 0 20px;font:400 13.5px Inter;color:#8A94A6">Every control in the prototype, at the size it ships.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:22px">
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Buttons</div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+            <button style="height:48px;padding:0 22px;border:0;border-radius:14px;background:#1A66F0;color:#fff;font:600 15px Inter;cursor:pointer;box-shadow:0 8px 18px -8px rgba(26,102,240,.6)">Primary</button>
+            <button style="height:48px;padding:0 22px;border:1px solid #E1E5EB;border-radius:14px;background:#fff;color:#12161C;font:600 15px Inter;cursor:pointer">Secondary</button>
+            <button style="height:48px;padding:0 22px;border:0;border-radius:14px;background:#EAF1FE;color:#1A66F0;font:600 15px Inter;cursor:pointer">Tonal</button>
+            <button style="height:48px;padding:0 22px;border:1px solid #F5C2C2;border-radius:14px;background:#FDF0F0;color:#C22B2B;font:600 15px Inter;cursor:pointer">Destructive</button>
+            <button style="height:48px;padding:0 22px;border:0;border-radius:14px;background:#EDEFF2;color:#A9B2BF;font:600 15px Inter">Disabled</button>
+            <button style="height:40px;padding:0 16px;border:1px solid #E1E5EB;border-radius:12px;background:#fff;color:#12161C;font:600 13.5px Inter;cursor:pointer">Compact</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Inputs, search, select</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="height:50px;border:1.5px solid #E1E5EB;border-radius:13px;padding:0 15px;display:flex;align-items:center;font:400 14.5px Inter;color:#8A94A6">Rest — placeholder</div>
+            <div style="height:50px;border:1.5px solid #1A66F0;border-radius:13px;padding:0 15px;display:flex;align-items:center;font:400 14.5px Inter;color:#12161C;box-shadow:0 0 0 4px rgba(26,102,240,.12)">Focus — user1@example.com</div>
+            <div style="height:50px;border:1.5px solid #DC2626;border-radius:13px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;font:400 14.5px Inter;color:#12161C">
+              <span>Error — wrong password</span><span style="font:600 12px Inter;color:#DC2626">Required</span>
+            </div>
+            <div style="height:46px;background:#F4F6F8;border:1px solid #E6E9EE;border-radius:12px;display:flex;align-items:center;gap:9px;padding:0 13px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#8A94A6" stroke-width="2"></circle><path d="m16.5 16.5 4 4" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"></path></svg>
+              <span style="font:400 14px Inter;color:#8A94A6">Search station, area or road</span>
+            </div>
+            <div style="height:46px;border:1px solid #E1E5EB;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;font:500 14px Inter;color:#12161C">Nearest first<svg width="11" height="7" viewBox="0 0 12 8"><path d="M1 1.5 6 6.5l5-5" stroke="#5A6472" stroke-width="2" fill="none" stroke-linecap="round"></path></svg></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Badges &amp; status</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <sc-for list="{{ fdn.badges }}" as="b" hint-placeholder-count="5">
+              <span style="display:flex;align-items:center;gap:6px;background:{{ b.bg }};color:{{ b.fg }};border-radius:999px;padding:5px 11px;font:600 12px Inter"><span style="width:6px;height:6px;border-radius:99px;background:{{ b.fg }}"></span>{{ b.label }}</span>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="background:#F1F3F6;color:#5A6472;border-radius:999px;padding:5px 11px;font:600 12px Inter">180 kW</span>
+            <span style="background:#F1F3F6;color:#5A6472;border-radius:999px;padding:5px 11px;font:600 12px Inter">CCS2</span>
+            <span style="background:#12161C;color:#fff;border-radius:999px;padding:5px 11px;font:600 12px Inter">Filter selected</span>
+            <span style="background:#fff;color:#5A6472;border:1px solid #E6E9EE;border-radius:999px;padding:5px 11px;font:600 12px Inter">Filter rest</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Navigation &amp; tabs</div>
+          <div style="border:1px solid #E6E9EE;border-radius:14px;padding:9px 12px;display:grid;grid-template-columns:repeat(5,1fr);margin-bottom:10px">
+            <sc-for list="{{ fdn.tabbar }}" as="t" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+                <span style="font:700 13px 'Space Grotesk',sans-serif;color:{{ t.color }}">{{ t.glyph }}</span>
+                <span style="font:600 10.5px Inter;color:{{ t.color }}">{{ t.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:4px;padding:4px;background:#E4E8ED;border-radius:12px">
+            <span style="flex:1;text-align:center;padding:8px 0;border-radius:9px;background:#fff;font:600 13px Inter;color:#12161C;box-shadow:0 1px 3px rgba(18,22,28,.16)">Reservations</span>
+            <span style="flex:1;text-align:center;padding:8px 0;font:600 13px Inter;color:#5A6472">Charging</span>
+            <span style="flex:1;text-align:center;padding:8px 0;font:600 13px Inter;color:#5A6472">Payments</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Station card</div>
+          <div style="background:#fff;border:1px solid #E6E9EE;border-radius:18px;padding:13px;display:flex;gap:13px">
+            <div style="width:74px;height:74px;border-radius:14px;background:#DCE6F5;flex:none;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#1A66F0"></path></svg></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;gap:8px"><span style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;flex:1">Rama IX Power Station</span><span style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C">฿9.10<span style="font:400 10.5px Inter;color:#8A94A6">/kWh</span></span></div>
+              <div style="font:400 12.5px Inter;color:#8A94A6;margin:3px 0 9px">6.9 km · ★ 4.8 · 24 Hours</div>
+              <div style="display:flex;gap:6px">
+                <span style="display:flex;align-items:center;gap:5px;background:#E4F6EC;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#0E7A3E"><span style="width:6px;height:6px;border-radius:99px;background:#0E7A3E"></span>5 of 5 free</span>
+                <span style="background:#F1F3F6;border-radius:999px;padding:4px 9px;font:600 11.5px Inter;color:#5A6472">180 kW</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Toast &amp; modal</div>
+          <div style="background:#12161C;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px;margin-bottom:10px">
+            <span style="width:24px;height:24px;border-radius:99px;background:rgba(61,220,132,.2);display:flex;align-items:center;justify-content:center;font:700 12px 'Space Grotesk',sans-serif;color:#3DDC84">✓</span>
+            <span style="flex:1;font:500 13.5px Inter;color:#fff">Reservation confirmed for 14:30</span>
+            <span style="font:600 12.5px Inter;color:#8FE8B4">Undo</span>
+          </div>
+          <div style="border:1px solid #E6E9EE;border-radius:16px;padding:16px;background:#fff;box-shadow:0 12px 30px -18px rgba(18,22,28,.5)">
+            <div style="font:600 15px 'Space Grotesk',sans-serif;color:#12161C;margin-bottom:5px">Stop charging?</div>
+            <div style="font:400 13px/1.5 Inter;color:#5A6472;margin-bottom:13px">Your car is at 62%. Stopping now ends the session and charges ฿282.</div>
+            <div style="display:flex;gap:8px"><button style="flex:1;height:40px;border:1px solid #E1E5EB;background:#fff;border-radius:11px;font:600 13.5px Inter;color:#12161C;cursor:pointer">Keep charging</button><button style="flex:1;height:40px;border:0;background:#DC2626;border-radius:11px;font:600 13.5px Inter;color:#fff;cursor:pointer">Stop</button></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Loading, empty, error</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="border:1px solid #E6E9EE;border-radius:14px;padding:13px;display:flex;gap:12px">
+              <div style="width:56px;height:56px;border-radius:12px;background:#EDEFF2"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:7px;justify-content:center">
+                <div style="height:11px;width:64%;border-radius:5px;background:#EDEFF2"></div>
+                <div style="height:9px;width:44%;border-radius:5px;background:#F2F4F6"></div>
+                <div style="height:9px;width:78%;border-radius:5px;background:#F2F4F6"></div>
+              </div>
+            </div>
+            <div style="border:1px dashed #D5DAE2;border-radius:14px;padding:20px;text-align:center">
+              <div style="font:600 14px Inter;color:#12161C;margin-bottom:4px">No stations match these filters</div>
+              <div style="font:400 12.5px Inter;color:#8A94A6">Try clearing "Fast 100 kW+" or widening the radius.</div>
+            </div>
+            <div style="border:1px solid #F5C2C2;background:#FDF0F0;border-radius:14px;padding:14px;display:flex;gap:11px">
+              <span style="width:24px;height:24px;border-radius:99px;background:#F8DADA;display:flex;align-items:center;justify-content:center;font:700 12px 'Space Grotesk',sans-serif;color:#C22B2B;flex:none">!</span>
+              <div><div style="font:600 13.5px Inter;color:#8E1F1F">Could not load stations</div><div style="font:400 12.5px Inter;color:#B04141;margin-top:2px">Check your connection and retry.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Map components</div>
+          <div style="background:#EDF1F5;border:1px solid #E1E5EB;border-radius:14px;padding:16px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(18,22,28,.2);font:600 11.5px Inter;color:#12161C"><span style="width:7px;height:7px;border-radius:99px;background:#12A150"></span>5 free · 180kW</div>
+              <div style="width:2px;height:8px;background:rgba(18,22,28,.3)"></div>
+              <span style="font:400 10.5px Inter;color:#8A94A6;margin-top:4px">Marker</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#1A66F0;box-shadow:0 4px 14px rgba(26,102,240,.45);font:600 11.5px Inter;color:#fff"><span style="width:7px;height:7px;border-radius:99px;background:#fff"></span>2 free · 120kW</div>
+              <div style="width:2px;height:8px;background:rgba(18,22,28,.3)"></div>
+              <span style="font:400 10.5px Inter;color:#8A94A6;margin-top:4px">Selected</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(18,22,28,.2);font:600 11.5px Inter;color:#12161C"><span style="width:7px;height:7px;border-radius:99px;background:#98A2B3"></span>All in use</div>
+              <div style="width:2px;height:8px;background:rgba(18,22,28,.3)"></div>
+              <span style="font:400 10.5px Inter;color:#8A94A6;margin-top:4px">Unavailable</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div style="width:16px;height:16px;border-radius:50%;background:#1A66F0;border:3px solid #fff;box-shadow:0 0 0 8px rgba(26,102,240,.16)"></div>
+              <span style="font:400 10.5px Inter;color:#8A94A6;margin-top:6px">You</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="width:32px;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(18,22,28,.14);overflow:hidden">
+                <div style="height:32px;display:flex;align-items:center;justify-content:center;font:400 17px Inter;color:#12161C;border-bottom:1px solid #E6E9EE">+</div>
+                <div style="height:32px;display:flex;align-items:center;justify-content:center;font:400 17px Inter;color:#12161C">−</div>
+              </div>
+              <span style="font:400 10.5px Inter;color:#8A94A6;margin-top:4px">Zoom</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;background:#fff;border:1px solid #E6E9EE;border-radius:14px 14px 0 0;padding:10px 14px 14px;box-shadow:0 -6px 20px -14px rgba(18,22,28,.4)">
+            <div style="width:40px;height:4px;border-radius:99px;background:#DCE0E6;margin:0 auto 10px"></div>
+            <div style="font:600 14px 'Space Grotesk',sans-serif;color:#12161C">Bottom sheet — station preview</div>
+            <div style="font:400 12px Inter;color:#8A94A6;margin-top:3px">Drag handle, selected badge, then actions</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font:600 11.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:#8A94A6;margin-bottom:11px">Charging components</div>
+          <div style="background:#0B1F14;border-radius:16px;padding:16px;display:flex;gap:16px;align-items:center">
+            <div style="position:relative;width:92px;height:92px;flex:none">
+              <svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="38" stroke="rgba(255,255,255,.14)" stroke-width="9" fill="none"></circle><circle cx="46" cy="46" r="38" stroke="#3DDC84" stroke-width="9" fill="none" stroke-linecap="round" transform="rotate(-90 46 46)" style="stroke-dasharray:238.8;stroke-dashoffset:90.7"></circle></svg>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 21px 'Space Grotesk',sans-serif;color:#fff">62%</div>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:6px;background:rgba(61,220,132,.16);border-radius:999px;padding:4px 10px;width:fit-content;margin-bottom:9px"><span style="width:6px;height:6px;border-radius:99px;background:#3DDC84"></span><span style="font:600 10.5px Inter;color:#8FE8B4;letter-spacing:.05em">CHARGING</span></div>
+              <div style="font:500 11.5px Inter;color:#8FB9A2">Energy delivered</div>
+              <div style="font:700 20px 'Space Grotesk',sans-serif;color:#fff">31.0 kWh</div>
+              <div style="height:6px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:10px;overflow:hidden"><div style="height:100%;width:78%;border-radius:99px;background:#3DDC84"></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E1E5EB;border-radius:18px;padding:22px">
+      <h2 style="margin:0 0 4px;font:600 18px 'Space Grotesk',sans-serif;color:#12161C">Responsive rules</h2>
+      <p style="margin:0 0 16px;font:400 13.5px Inter;color:#8A94A6">Mobile is the primary surface. Desktop adds persistent navigation and side-by-side context rather than stretching the phone layout.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <sc-for list="{{ fdn.responsive }}" as="r" hint-placeholder-count="3">
+          <div style="border:1px solid #EDF0F3;border-radius:14px;padding:15px">
+            <div style="font:600 14.5px 'Space Grotesk',sans-serif;color:#12161C">{{ r.name }}</div>
+            <div style="font:600 11.5px 'Space Grotesk',sans-serif;color:#1A66F0;margin:3px 0 9px">{{ r.range }}</div>
+            <sc-for list="{{ r.rules }}" as="l" hint-placeholder-count="4">
+              <div style="font:400 12.5px/1.6 Inter;color:#5A6472">{{ l.text }}</div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+const BLUE='#1A66F0', GREEN='#12A150', DGREEN='#0E7A3E', AMBER='#E8871A', GRAY='#98A2B3';
+
+// Station data comes from station-data.js (mirrors ev-charging-network seed data).
+function allStations(){ return (window.VG && window.VG.STATIONS) || []; }
+function byId(id){ return (window.VG && window.VG.byId(id)) || null; }
+function nearest(n){ return allStations().slice().sort((a,b)=>a.distance_km-b.distance_km).slice(0,n); }
+
+class Component extends DCLogic {
+  state = {
+    view:'mobile', screen:'home', dscreen:'dashboard', stationId:8, pct:62,
+    filter:'All', query:'', resDay:2, resSlot:'14:30', resDur:45, payMethod:'wallet',
+    tab:'Charging', fav:true,
+    toggles:{push:true, remind:true, autostop:true, smart:true, dark:false, receipts:true}
+  };
+
+  componentDidMount(){
+    if (!window.VG) {
+      this.dataPoll = setInterval(() => {
+        if (window.VG) { clearInterval(this.dataPoll); this.forceUpdate(); }
+      }, 120);
+    }
+    this.timer = setInterval(()=>{
+      this.setState(s => ({ pct: s.pct >= 80 ? 80 : s.pct + 1 }));
+    }, 4000);
+    this.onMsg = e => {
+      const d = e.data || {};
+      if (d.vg === 'select') this.setState({ stationId: d.id });
+      if (d.vg === 'ready') {
+        const send = m => { try { e.source.postMessage(m, '*'); } catch(err){} };
+        send({ vg:'filter', value: this.state.filter });
+        send({ vg:'search', value: this.state.query });
+        send({ vg:'focus', id: this.state.stationId });
+      }
+    };
+    addEventListener('message', this.onMsg);
+  }
+  componentWillUnmount(){ clearInterval(this.timer); clearInterval(this.dataPoll); removeEventListener('message', this.onMsg); }
+
+  go(screen){ return () => this.setState({ screen }); }
+  set(patch){ return () => this.setState(patch); }
+  toggle(key){ return () => this.setState(s => ({ toggles: Object.assign({}, s.toggles, { [key]: !s.toggles[key] }) })); }
+
+  station(){ return byId(this.state.stationId); }
+
+  post(msg){
+    const f = document.querySelectorAll('iframe[src^="map.html"]');
+    for (let i = 0; i < f.length; i++) { try { f[i].contentWindow.postMessage(msg, '*'); } catch(e){} }
+  }
+  pick(id){ return () => { this.setState({ stationId: id }); this.post({ vg:'focus', id }); }; }
+  setFilter(value){ return () => { this.setState({ filter: value }); this.post({ vg:'filter', value }); }; }
+
+  search(e){
+    const value = e.target.value;
+    this.setState({ query: value });
+    this.post({ vg:'search', value });
+  }
+  clearSearch(){
+    this.setState({ query:'' });
+    this.post({ vg:'search', value:'' });
+  }
+
+  filtered(){
+    const f = this.state.filter, q = this.state.query.trim().toLowerCase();
+    let list = allStations().slice().sort((a,b)=>a.distance_km-b.distance_km);
+    if (q) list = list.filter(s => s.name.toLowerCase().indexOf(q) >= 0 || s.address.toLowerCase().indexOf(q) >= 0);
+    if (f === 'Available now') return list.filter(s => s.is_open && s.available_count > 0);
+    if (f === 'Fast 100 kW+') return list.filter(s => s.max_power_kw >= 100);
+    if (f === 'Best value') return list.filter(s => s.price_per_kwh <= 8.5);
+    if (f === 'Favourites') return list.filter(s => [1,8,11,17].indexOf(s.id) >= 0);
+    return list;
+  }
+
+  statusOf(s){
+    if (!s) return { status:'—', pillBg:'#F1F3F6', pillFg:'#5A6472', dot:GRAY };
+    if (!s.is_open) return { status:'Closed', pillBg:'#F1F3F6', pillFg:'#5A6472', dot:GRAY };
+    const n = s.available_count, t = s.charger_count;
+    if (n === 0) return { status:'All ' + t + ' in use', pillBg:'#F1F3F6', pillFg:'#5A6472', dot:GRAY };
+    if (n / t > 0.4) return { status: n + ' of ' + t + ' free', pillBg:'#E4F6EC', pillFg:DGREEN, dot:GREEN };
+    return { status: n + ' of ' + t + ' free', pillBg:'#FDF1E3', pillFg:'#A85D0B', dot:AMBER };
+  }
+
+  renderVals(){
+    const st = this.state;
+    const s = this.station() || { name:'—', address:'', price_per_kwh:0, max_power_kw:0, rating:0,
+      available_count:0, charger_count:0, distance_km:0, eta_min:0, amenities:'', opening_hours:'', chargers:[], is_open:true };
+    const stat = this.statusOf(this.station());
+    const pct = st.pct;
+    const kwh = (pct * 0.42 + 5).toFixed(1);
+    const cost = Math.round(kwh * s.price_per_kwh);
+    const mins = Math.max(0, Math.round((80 - pct) * 1.35));
+    const screens = ['onboarding','login','register','home','stations','map','detail','reserve','charging','history','payment','paid','notifications','profile','settings'];
+    const S = {}; screens.forEach(k => S[k] = st.screen === k);
+
+    const chipLabels = [['onboarding','Onboarding'],['login','Login'],['register','Register'],['home','Dashboard'],['stations','Stations'],['map','Map'],['detail','Station detail'],['reserve','Reservation'],['charging','Charging'],['history','History'],['payment','Payment'],['paid','Paid'],['notifications','Notifications'],['profile','Profile'],['settings','Settings']];
+
+    const tabItems = [['home','Home','⌂'],['stations','Stations','◎'],['charging','Charging','⚡'],['history','Activity','≡'],['profile','Profile','◍']];
+    const activeTab = ({detail:'stations', map:'stations', reserve:'stations', payment:'charging', paid:'charging', notifications:'home', settings:'profile'})[st.screen] || st.screen;
+
+    const bestSlots = ['14:30','15:00'];
+    const takenSlots = ['12:00','13:00','18:30'];
+    const slots = ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','18:00','18:30'];
+
+    const freeC = this.freeCharger(s);
+    const sessS = byId(8) || s;
+    const sessC = this.freeCharger(sessS);
+    const sessSpeed = Math.min(118, sessS.max_power_kw);
+    const sessKwh = (pct * 0.42 + 5).toFixed(1);
+    const sessCost = Math.round(sessKwh * sessS.price_per_kwh);
+    const energy = st.resDur / 60 * 28;
+    const resEnergyCost = energy * s.price_per_kwh;
+    const total = (resEnergyCost + 20).toFixed(0);
+
+    return {
+      S,
+      V: { mobile: st.view === 'mobile', desktop: st.view === 'desktop', system: st.view === 'system' },
+      vw: {
+        mobileBg: st.view==='mobile' ? '#fff' : 'transparent', mobileFg: st.view==='mobile' ? '#12161C':'#5A6472', mobileSh: st.view==='mobile' ? '0 1px 3px rgba(18,22,28,.16)':'none',
+        deskBg: st.view==='desktop' ? '#fff' : 'transparent', deskFg: st.view==='desktop' ? '#12161C':'#5A6472', deskSh: st.view==='desktop' ? '0 1px 3px rgba(18,22,28,.16)':'none',
+        sysBg: st.view==='system' ? '#fff' : 'transparent', sysFg: st.view==='system' ? '#12161C':'#5A6472', sysSh: st.view==='system' ? '0 1px 3px rgba(18,22,28,.16)':'none'
+      },
+      nav: {
+        viewMobile: this.set({view:'mobile'}), viewDesktop: this.set({view:'desktop'}), viewSystem: this.set({view:'system'}),
+        login: this.go('login'), register: this.go('register'), home: this.go('home'), stations: this.go('stations'),
+        map: this.go('map'), detail: this.go('detail'), reserve: this.go('reserve'), charging: this.go('charging'),
+        history: this.go('history'), payment: this.go('payment'), paid: this.go('paid'), profile: this.go('profile'),
+        settings: this.go('settings'), notifications: this.go('notifications'),
+        deskSession: this.set({dscreen:'session'}),
+        deskStations: this.set({dscreen:'stations'}),
+        deskReserve: this.set({dscreen:'reserve'}),
+        deskPay: this.set({dscreen:'pay'}),
+        toggleFav: () => this.setState(x => ({ fav: !x.fav }))
+      },
+      D: {
+        dashboard: st.dscreen==='dashboard', stations: st.dscreen==='stations', session: st.dscreen==='session',
+        reserve: st.dscreen==='reserve', pay: st.dscreen==='pay', settings: st.dscreen==='settings'
+      },
+      deskNav: [
+        ['dashboard','Dashboard','⌂'], ['stations','Stations & map','◎'], ['session','Charging session','⚡'],
+        ['reserve','Reservations','▦'], ['pay','Payments','฿'], ['settings','Settings','⚙']
+      ].map(([k,label,glyph]) => {
+        const live = true;
+        const on = st.dscreen === k;
+        return { label, glyph, go: live ? this.set({dscreen:k}) : (()=>{}),
+          bg: on ? '#EAF1FE' : 'transparent', fg: on ? BLUE : (live ? '#3C4757' : '#A9B2BF'),
+          weight: on ? '600' : '500', cursor: live ? 'pointer' : 'default' };
+      }),
+      deskTitle: ({dashboard:'Dashboard', stations:'Stations & map', session:'Charging session',
+        reserve:'Reserve a charger', pay:'Payment', settings:'Settings'})[st.dscreen] || 'Dashboard',
+      deskSub: ({
+        dashboard:'Tuesday 25 August · Bangkok network',
+        stations: allStations().length + ' stations in the Bangkok network',
+        session:'Live session · started 14:32',
+        reserve: s.name,
+        pay:'Session #1042 · ' + sessS.name,
+        settings:'Account, charging and app preferences'
+      })[st.dscreen] || '',
+      deskSteps: (() => {
+        const order = ['stations','reserve','pay','session'];
+        const at = order.indexOf(st.dscreen);
+        return [['stations','Station'],['reserve','Reservation'],['pay','Payment'],['session','Charging']].map(([k,label],i) => ({
+          label, num: String(i + 1), go: this.set({dscreen:k}),
+          bg: i === at ? BLUE : (at > i ? '#E4F6EC' : '#EDEFF2'),
+          fg: i === at ? '#fff' : (at > i ? DGREEN : '#8A94A6'),
+          text: i === at ? '#12161C' : '#8A94A6',
+          weight: i === at ? '600' : '500'
+        }));
+      })(),
+      screenChips: chipLabels.map(([k,label]) => ({
+        label, go: this.go(k),
+        bg: st.screen===k ? '#12161C' : '#fff', fg: st.screen===k ? '#fff' : '#5A6472',
+        bd: st.screen===k ? '#12161C' : '#DDE1E7'
+      })),
+      tabbar: tabItems.map(([k,label,glyph]) => ({ label, glyph, go: this.go(k), color: activeTab===k ? BLUE : '#98A2B3' })),
+      tabbarDark: tabItems.map(([k,label,glyph]) => ({ label, glyph, go: this.go(k), color: activeTab===k ? '#3DDC84' : 'rgba(255,255,255,.45)' })),
+
+      pct: { value: pct, kwh: sessKwh, cost: sessCost, mins, width: pct/80*100 + '%', eta: '15:2' + (mins % 9) },
+      ring: {
+        off: (653.5 * (1 - pct/100)).toFixed(1),
+        homeOff: (207.3 * (1 - pct/100)).toFixed(1),
+        deskOff: (351.9 * (1 - pct/100)).toFixed(1),
+        sessOff: (552.9 * (1 - pct/100)).toFixed(1)
+      },
+
+      regFields: [
+        {label:'Full name', value:'Somchai Patchara', color:'#12161C'},
+        {label:'Email', value:'somchai@example.com', color:'#12161C'},
+        {label:'Phone', value:'081 234 5678', color:'#12161C'},
+        {label:'Password', value:'•••••••••••', color:'#5A6472'},
+        {label:'Confirm password', value:'•••••••••••', color:'#5A6472'}
+      ],
+
+      quickActions: [
+        {label:'Find', glyph:'◎', tint:'#EAF1FE', fg:BLUE, go:this.go('map')},
+        {label:'Reserve', glyph:'▦', tint:'#EAF1FE', fg:BLUE, go:this.go('reserve')},
+        {label:'Scan', glyph:'⬒', tint:'#E4F6EC', fg:DGREEN, go:this.go('charging')},
+        {label:'Wallet', glyph:'฿', tint:'#F1F3F6', fg:'#5A6472', go:this.go('payment')}
+      ],
+      recommended: this.recommendations(),
+      monthStats: [
+        {value:'143 kWh', label:'Energy charged'}, {value:'฿1,248', label:'Spent'},
+        {value:'12', label:'Sessions'}, {value:'38 kg', label:'CO₂ avoided'}
+      ],
+
+      filters: ['All','Available now','Fast 100 kW+','Best value','Favourites'].map(label => ({
+        label, go: this.setFilter(label),
+        bg: st.filter===label ? '#12161C' : '#fff', fg: st.filter===label ? '#fff':'#5A6472', bd: st.filter===label ? '#12161C':'#E6E9EE',
+        bgMap: st.filter===label ? '#12161C' : '#fff', fgMap: st.filter===label ? '#fff':'#12161C', bdMap: st.filter===label ? '#12161C':'#fff'
+      })),
+      list: {
+        count: allStations().length, shown: this.filtered().length,
+        items: this.filtered().map(x => this.card(x)),
+        empty: this.filtered().length === 0,
+        query: st.query,
+        onSearch: e => this.search(e),
+        onClear: () => this.clearSearch(),
+        clearShow: st.query ? 'flex' : 'none',
+        summary: (st.query || st.filter !== 'All')
+          ? this.filtered().length + ' of ' + allStations().length + ' stations match'
+          : allStations().length + ' stations · nearest first'
+      },
+      fdn: {
+        colorGroups: [
+          {label:'Brand', items:[
+            {name:'Primary', hex:'#1A66F0', use:'Actions, links, selected state'},
+            {name:'Primary hover', hex:'#154FBF', use:'Pressed and hover'},
+            {name:'Primary tint', hex:'#EAF1FE', use:'Tonal buttons, icon wells'},
+            {name:'Energy', hex:'#0E7A3E', use:'Charging surfaces, wallet'},
+            {name:'Energy bright', hex:'#3DDC84', use:'Progress on dark'}
+          ]},
+          {label:'Neutral', items:[
+            {name:'Background', hex:'#F4F6F8', use:'App canvas'},
+            {name:'Surface', hex:'#FFFFFF', use:'Cards, sheets, bars'},
+            {name:'Surface dark', hex:'#0B1F14', use:'Live charging screen'},
+            {name:'Border', hex:'#E6E9EE', use:'Card and divider strokes'},
+            {name:'Text', hex:'#12161C', use:'Primary text and figures'},
+            {name:'Text muted', hex:'#5A6472', use:'Body and secondary'},
+            {name:'Text subtle', hex:'#8A94A6', use:'Labels, meta, captions'}
+          ]},
+          {label:'Status', items:[
+            {name:'Success', hex:'#12A150', use:'Available chargers'},
+            {name:'Success deep', hex:'#0E7A3E', use:'Success text on tint'},
+            {name:'Warning', hex:'#E8871A', use:'Limited availability'},
+            {name:'Error', hex:'#DC2626', use:'Failures, stop, destructive'},
+            {name:'Neutral status', hex:'#98A2B3', use:'Closed, offline, in use'}
+          ]}
+        ],
+        type: [
+          {name:'Display', spec:'Space Grotesk 700 · 30/1.15', family:"'Space Grotesk',sans-serif", size:'30px', weight:'700', lh:'1.15', ls:'-.02em', sample:'Charging that plans itself'},
+          {name:'Page title', spec:'Space Grotesk 700 · 25/1.2', family:"'Space Grotesk',sans-serif", size:'25px', weight:'700', lh:'1.2', ls:'-.02em', sample:'Stations'},
+          {name:'Section', spec:'Space Grotesk 600 · 17/1.3', family:"'Space Grotesk',sans-serif", size:'17px', weight:'600', lh:'1.3', ls:'0', sample:'Recommended for you'},
+          {name:'Card title', spec:'Space Grotesk 600 · 15/1.3', family:"'Space Grotesk',sans-serif", size:'15px', weight:'600', lh:'1.3', ls:'0', sample:'Rama IX Power Station'},
+          {name:'Statistic', spec:'Space Grotesk 700 · 22/1', family:"'Space Grotesk',sans-serif", size:'22px', weight:'700', lh:'1', ls:'-.01em', sample:'฿1,248 · 143 kWh · 62%'},
+          {name:'Body', spec:'Inter 400 · 15/1.55', family:'Inter,sans-serif', size:'15px', weight:'400', lh:'1.55', ls:'0', sample:'Two 180 kW bays are usually free at this time.'},
+          {name:'Body small', spec:'Inter 400 · 13/1.5', family:'Inter,sans-serif', size:'13px', weight:'400', lh:'1.5', ls:'0', sample:'Charger A1 · 180 kW CCS2 · free now'},
+          {name:'Label', spec:'Inter 600 · 12.5', family:'Inter,sans-serif', size:'12.5px', weight:'600', lh:'1.4', ls:'0', sample:'Payment method'},
+          {name:'Overline', spec:'Inter 600 · 11.5 · .08em caps', family:'Inter,sans-serif', size:'11.5px', weight:'600', lh:'1.4', ls:'.08em', sample:'1 · DATE'}
+        ],
+        space: [
+          {value:'4px', use:'icon to label'}, {value:'8px', use:'chips, pill rows'},
+          {value:'12px', use:'inside cards'}, {value:'16px', use:'card padding'},
+          {value:'20px', use:'mobile gutter'}, {value:'24px', use:'desktop gutter'},
+          {value:'32px', use:'section breaks'}
+        ],
+        radius: [
+          {value:'10px', use:'chips, pills', shadow:'none'},
+          {value:'14px', use:'buttons, inputs', shadow:'none'},
+          {value:'18px', use:'cards', shadow:'0 1px 2px rgba(18,22,28,.05)'},
+          {value:'24px', use:'sheets', shadow:'0 -8px 30px -14px rgba(18,22,28,.4)'}
+        ],
+        badges: [
+          {label:'5 of 5 free', bg:'#E4F6EC', fg:'#0E7A3E'},
+          {label:'1 of 4 free', bg:'#FDF1E3', fg:'#A85D0B'},
+          {label:'All 4 in use', bg:'#F1F3F6', fg:'#5A6472'},
+          {label:'Charging', bg:'#E4F6EC', fg:'#0E7A3E'},
+          {label:'Failed', bg:'#FDF0F0', fg:'#C22B2B'}
+        ],
+        tabbar: [
+          {label:'Home', glyph:'⌂', color:'#1A66F0'}, {label:'Stations', glyph:'◎', color:'#98A2B3'},
+          {label:'Charging', glyph:'⚡', color:'#98A2B3'}, {label:'Activity', glyph:'≡', color:'#98A2B3'},
+          {label:'Profile', glyph:'◍', color:'#98A2B3'}
+        ],
+        responsive: [
+          {name:'Mobile', range:'< 768px', rules:[
+            {text:'Single column, 20px gutter'}, {text:'Bottom tab bar, 5 destinations'},
+            {text:'Map fills the screen, station preview in a bottom sheet'},
+            {text:'Sticky action bar for the primary button'}
+          ]},
+          {name:'Tablet', range:'768 – 1180px', rules:[
+            {text:'Two-column dashboard, 24px gutter'}, {text:'Rail navigation replaces the tab bar'},
+            {text:'Map and list split 55 / 45'}, {text:'Sheets become anchored panels'}
+          ]},
+          {name:'Desktop', range:'> 1180px', rules:[
+            {text:'238px sidebar, persistent'}, {text:'Content max 1400px, centred'},
+            {text:'Station list fixed at 410px beside a live map'},
+            {text:'Tables replace stacked activity cards'}
+          ]}
+        ]
+      },
+      deskCols: [
+        {label:'Station', align:'left'}, {label:'When', align:'left'}, {label:'Energy', align:'right'},
+        {label:'Amount', align:'right'}, {label:'Status', align:'right'}
+      ],
+      deskRows: [
+        {station:'Rama IX Power Station', when:'22 Aug · 14:32', energy:'33.4 kWh', amount:'฿304', status:'Completed', glyph:'⚡', tint:'#E4F6EC', fg:DGREEN},
+        {station:'Siam Green Station', when:'19 Aug · 09:15', energy:'21.0 kWh', amount:'฿172', status:'Completed', glyph:'⚡', tint:'#E4F6EC', fg:DGREEN},
+        {station:'Thonglor Premium Charge', when:'16 Aug · 18:00', energy:'—', amount:'฿240', status:'Cancelled', glyph:'▦', tint:'#F1F3F6', fg:'#8A94A6'},
+        {station:'Sukhumvit Supercharge Hub', when:'13 Aug · 20:40', energy:'28.6 kWh', amount:'฿272', status:'Completed', glyph:'⚡', tint:'#E4F6EC', fg:DGREEN},
+        {station:'Wallet top-up · PromptPay', when:'10 Aug · 08:02', energy:'—', amount:'+฿1,000', status:'Paid', glyph:'฿', tint:'#EAF1FE', fg:BLUE}
+      ],
+      deskActions: [
+        {label:'Find a station', glyph:'◎', tint:'#EAF1FE', fg:BLUE, go:this.set({dscreen:'stations'})},
+        {label:'Reserve a slot', glyph:'▦', tint:'#EAF1FE', fg:BLUE, go:this.set({dscreen:'stations'})},
+        {label:'Live session', glyph:'⚡', tint:'#E4F6EC', fg:DGREEN, go:this.set({dscreen:'session'})},
+        {label:'Top up wallet', glyph:'฿', tint:'#F1F3F6', fg:'#5A6472', go:()=>{}}
+      ],
+      netStatus: (() => {
+        const all = allStations();
+        const open = all.filter(x => x.is_open);
+        const free = all.reduce((n,x) => n + x.available_count, 0);
+        const total = all.reduce((n,x) => n + x.charger_count, 0);
+        const fast = all.filter(x => x.max_power_kw >= 100).length;
+        return [
+          {label:'Chargers free now', value: free + ' / ' + total, dot: GREEN},
+          {label:'Stations open', value: open.length + ' / ' + all.length, dot: BLUE},
+          {label:'Sites with 100 kW+', value: String(fast), dot: AMBER}
+        ];
+      })(),
+      sessInfo: [
+        {label:'Session', value:'#1042'},
+        {label:'Started', value:'22 Aug · 14:32'},
+        {label:'Vehicle', value:'Tesla Model 3 · 75 kWh'},
+        {label:'Connector', value: sessC.connector_type},
+        {label:'Rate', value:'฿' + sessS.price_per_kwh.toFixed(2) + ' / kWh'},
+        {label:'Payment', value:'Volt Grid wallet'}
+      ],
+      curve: Array.from({length:20}, (_,i) => {
+        const p = i / 19;
+        const v = p < 0.55 ? 40 + p * 130 : 112 - (p - 0.55) * 150;
+        const past = p <= pct / 100;
+        return { h: Math.max(10, Math.round(v * 0.62)) + 'px', color: past ? DGREEN : '#DDE3EA' };
+      }),
+      sel: this.selected(),
+      fav: { fill: st.fav ? '#DC2626' : 'none', stroke: st.fav ? '#DC2626' : '#12161C' },
+
+      res: {
+        days: [['Sun','23'],['Mon','24'],['Tue','25'],['Wed','26'],['Thu','27'],['Fri','28'],['Sat','29']].map(([dow,num],i)=>({
+          dow, num, go: this.set({resDay:i}),
+          bg: st.resDay===i ? BLUE : '#fff', bd: st.resDay===i ? BLUE : '#E6E9EE',
+          fg: st.resDay===i ? '#fff' : '#12161C', fg2: st.resDay===i ? 'rgba(255,255,255,.75)' : '#8A94A6'
+        })),
+        slots: slots.map(label => {
+          const taken = takenSlots.indexOf(label) >= 0;
+          const on = st.resSlot === label;
+          const best = bestSlots.indexOf(label) >= 0;
+          return {
+            label, go: taken ? (()=>{}) : this.set({resSlot:label}),
+            bg: on ? BLUE : (taken ? '#F1F3F6' : (best ? '#E4F6EC' : '#fff')),
+            bd: on ? BLUE : (best && !taken ? '#9FDCBB' : '#E6E9EE'),
+            fg: on ? '#fff' : (taken ? '#B5BCC6' : (best ? DGREEN : '#12161C')),
+            op: taken ? '.7' : '1', bestShow: best && !on ? 'block' : 'none'
+          };
+        }),
+        durations: [30,45,60,90].map(d => ({
+          label: d + ' min', go: this.set({resDur:d}),
+          bg: st.resDur===d ? BLUE : '#fff', bd: st.resDur===d ? BLUE : '#E6E9EE', fg: st.resDur===d ? '#fff' : '#12161C'
+        })),
+        lines: [
+          {label:'Estimated energy · ' + st.resDur + ' min at ' + s.max_power_kw + ' kW', value: energy.toFixed(1) + ' kWh'},
+          {label:'Rate', value:'฿' + s.price_per_kwh.toFixed(2) + ' / kWh'},
+          {label:'Energy', value:'฿' + resEnergyCost.toFixed(0)},
+          {label:'Reservation fee', value:'฿20'}
+        ],
+        total,
+        charger: 'Charger ' + freeC.charger_code + ' · ' + freeC.power_kw + ' kW ' + freeC.connector_type,
+        chargerCode: freeC.charger_code,
+        summary: 'Tue 25 Aug · ' + st.resSlot + ' · ' + st.resDur + ' min · Charger ' + freeC.charger_code
+      },
+
+      sess: {
+        station: sessS.name,
+        chargerShort: 'Charger ' + sessC.charger_code,
+        charger: 'Charger ' + sessC.charger_code + ' · ' + sessC.connector_type + ' · session #1042',
+        speed: sessSpeed + ' kW', peak: sessS.max_power_kw + ' kW',
+        kwh: sessKwh, cost: sessCost, rate: '฿' + sessS.price_per_kwh.toFixed(2)
+      },
+
+      chargeTiles: [
+        {label:'Time to target', value: mins + ' min', sub:'at current speed'},
+        {label:'Energy delivered', value: sessKwh + ' kWh', sub:'of 33 kWh planned'},
+        {label:'Charging speed', value: sessSpeed + ' kW', sub:'peak ' + sessS.max_power_kw + ' kW'},
+        {label:'Cost so far', value:'฿' + sessCost, sub:'฿' + sessS.price_per_kwh.toFixed(2) + ' / kWh'}
+      ],
+
+      tabs: ['Reservations','Charging','Payments'].map(label => ({
+        label, go: this.set({tab:label}),
+        bg: st.tab===label ? '#fff' : 'transparent', fg: st.tab===label ? '#12161C' : '#5A6472',
+        sh: st.tab===label ? '0 1px 3px rgba(18,22,28,.16)' : 'none'
+      })),
+      bars: [12,28,20,44,36,52,30,18,40,48,26,38,22,46].map(h => ({
+        h: h + 'px', color: h > 42 ? DGREEN : '#BFE3CD'
+      })),
+      historyItems: [
+        {glyph:'⚡', title:'Rama IX Power Station', meta:'22 Aug · 14:32 · 33.4 kWh · 48 min', amount:'฿304', status:'Completed', tint:'#E4F6EC', fg:DGREEN},
+        {glyph:'⚡', title:'Siam Green Station', meta:'19 Aug · 09:15 · 21.0 kWh · 32 min', amount:'฿172', status:'Completed', tint:'#E4F6EC', fg:DGREEN},
+        {glyph:'▦', title:'Thonglor Premium Charge', meta:'16 Aug · 18:00 · Charger B2', amount:'฿240', status:'Cancelled', tint:'#F1F3F6', fg:'#8A94A6'},
+        {glyph:'⚡', title:'Sukhumvit Supercharge Hub', meta:'13 Aug · 20:40 · 28.6 kWh · 24 min', amount:'฿272', status:'Completed', tint:'#E4F6EC', fg:DGREEN},
+        {glyph:'฿', title:'Wallet top-up', meta:'10 Aug · 08:02 · PromptPay', amount:'+฿1,000', status:'Paid', tint:'#EAF1FE', fg:BLUE}
+      ],
+
+      pay: {
+        total: '304',
+        lines: [
+          {label:'Energy · 33.4 kWh', value:'฿304'},
+          {label:'Session', value:'48 min at 118 kW avg'},
+          {label:'Reservation fee', value:'฿20 waived'},
+          {label:'Station', value:sessS.name}
+        ],
+        methods: [
+          {key:'wallet', label:'Volt Grid wallet', sub:'฿1,420 available', glyph:'฿', tint:'#E4F6EC', fg:DGREEN},
+          {key:'card', label:'Credit card', sub:'Visa •••• 4242', glyph:'▭', tint:'#EAF1FE', fg:BLUE},
+          {key:'promptpay', label:'PromptPay QR', sub:'Scan to pay in your bank app', glyph:'⬒', tint:'#F1F3F6', fg:'#5A6472'}
+        ].map(m => Object.assign({}, m, {
+          go: this.set({payMethod:m.key}),
+          bd: st.payMethod===m.key ? BLUE : '#E6E9EE',
+          sh: st.payMethod===m.key ? '0 0 0 4px rgba(26,102,240,.12)' : 'none',
+          radioBd: st.payMethod===m.key ? BLUE : '#CFD6DE',
+          radioFill: st.payMethod===m.key ? BLUE : 'transparent'
+        })),
+        receipt: [
+          {label:'Paid with', value:'Volt Grid wallet'},
+          {label:'New balance', value:'฿1,116'},
+          {label:'Reward points', value:'+32'},
+          {label:'Receipt no.', value:'VG-2026-1042'}
+        ]
+      },
+
+      notifGroups: [
+        {label:'Today', items:[
+          {glyph:'✓', title:'Charging complete', body:'Rama IX Power Station reached 80%. 33.4 kWh delivered, ฿304 due.', time:'2m', tint:'#E4F6EC', fg:DGREEN, bg:'#fff', bd:'#C8EBD8', action:'Pay now', actionShow:'inline-flex'},
+          {glyph:'!', title:'Charger B2 went offline', body:'Your 18:00 reservation at Thonglor was moved to charger A3, same price.', time:'1h', tint:'#FDF1E3', fg:'#A85D0B', bg:'#fff', bd:'#F3DDBE', action:'Review change', actionShow:'inline-flex'},
+          {glyph:'◎', title:'Cheaper station nearby', body:'Ari Neighborhood is ฿1.90/kWh less than your usual stop, 5.4 km away.', time:'3h', tint:'#EAF1FE', fg:BLUE, bg:'#fff', bd:'#E6E9EE', action:'See station', actionShow:'inline-flex'}
+        ]},
+        {label:'Yesterday', items:[
+          {glyph:'▦', title:'Reservation in 30 minutes', body:'Siam Green Station, charger A1. Held 15 minutes past 14:30.', time:'Tue', tint:'#EAF1FE', fg:BLUE, bg:'#fff', bd:'#E6E9EE', action:'', actionShow:'none'},
+          {glyph:'฿', title:'Payment received', body:'฿172 paid from wallet. 17 reward points added.', time:'Tue', tint:'#F1F3F6', fg:'#5A6472', bg:'#fff', bd:'#E6E9EE', action:'', actionShow:'none'}
+        ]}
+      ],
+
+      profileRows: [
+        {label:'Payment methods', detail:'3 saved', glyph:'▭', color:'#12161C', go:this.go('payment')},
+        {label:'Favourite stations', detail:'4', glyph:'♥', color:'#12161C', go:this.go('stations')},
+        {label:'Charging history', detail:'', glyph:'≡', color:'#12161C', go:this.go('history')},
+        {label:'Notifications', detail:'', glyph:'◔', color:'#12161C', go:this.go('notifications')},
+        {label:'Help & support', detail:'', glyph:'?', color:'#12161C', go:this.go('settings')},
+        {label:'Sign out', detail:'', glyph:'⏎', color:'#DC2626', go:this.go('login')}
+      ],
+
+      settingGroups: [
+        {label:'Notifications', rows:[
+          this.row('Push notifications','Charging, reservations, payments','push'),
+          this.row('Reservation reminders','30 minutes before your slot','remind')
+        ]},
+        {label:'Charging', rows:[
+          this.row('Stop at 80%','Protects long-term battery health','autostop'),
+          this.row('Smart charging','Taper speed and pick off-peak windows','smart'),
+          this.value('Default vehicle','Tesla Model 3'),
+          this.value('Preferred connector','CCS2')
+        ]},
+        {label:'App', rows:[
+          this.row('Dark mode','Follows charging screen styling','dark'),
+          this.row('Email receipts','Sent after every payment','receipts'),
+          this.value('Language','English'),
+          this.value('Currency','THB ฿')
+        ]},
+        {label:'Account', rows:[
+          this.value('Change password',''),
+          Object.assign(this.value('Delete account',''), {color:'#DC2626'})
+        ]}
+      ]
+    };
+  }
+
+  card(x){
+    const t = this.statusOf(x);
+    return Object.assign({}, t, {
+      name: x.name, price: x.price_per_kwh.toFixed(2), kw: x.max_power_kw,
+      connector: x.chargers.length ? x.chargers[0].connector_type : 'CCS2',
+      meta: x.distance_km + ' km · ★ ' + x.rating + ' · ' + x.opening_hours,
+      imgBg: x.available_count === 0 ? '#EEF0F3' : '#DCE6F5',
+      imgFg: x.available_count === 0 ? '#98A2B3' : BLUE,
+      selBd: x.id === this.state.stationId ? BLUE : '#E6E9EE',
+      selSh: x.id === this.state.stationId ? '0 0 0 3px rgba(26,102,240,.14)' : 'none',
+      open: () => { this.setState({ stationId: x.id, screen: 'detail' }); },
+      focus: this.pick(x.id)
+    });
+  }
+
+  freeCharger(x){
+    const c = (x.chargers || []).filter(c => c.is_available)[0];
+    return c || (x.chargers || [])[0] || { charger_code:'A1', connector_type:'CCS2', power_kw:60 };
+  }
+
+  recommendations(){
+    const open = allStations().filter(s => s.is_open && s.available_count > 0);
+    const byDist = open.slice().sort((a,b) => a.distance_km - b.distance_km);
+    const closest = byDist[0];
+    const fast = open.slice().sort((a,b) => b.max_power_kw - a.max_power_kw || a.distance_km - b.distance_km)[0];
+    const cheap = open.slice().sort((a,b) => a.price_per_kwh - b.price_per_kwh)[0];
+    const avg = open.length ? open.reduce((n,s) => n + s.price_per_kwh, 0) / open.length : 0;
+    const picks = [
+      [closest, 'Closest available', BLUE],
+      [fast, 'Fastest nearby', '#A85D0B'],
+      [cheap, cheap ? '฿' + (avg - cheap.price_per_kwh).toFixed(2) + ' below average' : 'Best price', DGREEN]
+    ];
+    const seen = {};
+    return picks.filter(p => p[0] && !seen[p[0].id] && (seen[p[0].id] = true)).map(([x, badge, badgeFg]) => {
+      const t = this.statusOf(x);
+      return {
+        name: x.name, badge, badgeFg,
+        meta: x.distance_km + ' km · ' + x.max_power_kw + ' kW · ★ ' + x.rating,
+        price: x.price_per_kwh.toFixed(2), status: t.status, dot: t.dot,
+        slot: 'rec-' + x.id,
+        open: () => this.setState({ stationId: x.id, screen: 'detail' })
+      };
+    });
+  }
+
+  selected(){
+    const x = this.station();
+    const stat = this.statusOf(x);
+    if (!x) return Object.assign({}, stat, { name:'—', address:'', facts:[], chargers:[], amenities:[], reviews:[] });
+    return Object.assign({}, stat, {
+      id: x.id, slot: 'station-' + x.id, name: x.name, address: x.address + ' · ' + x.opening_hours,
+      dist: x.distance_km + ' km', eta: x.eta_min + ' min',
+      price: x.price_per_kwh.toFixed(2), kw: x.max_power_kw,
+      estCost: Math.round(x.price_per_kwh * 21),
+      description: x.description,
+      facts: [
+        { value: x.distance_km + ' km', label:'away' },
+        { value: x.max_power_kw + ' kW', label:'max speed' },
+        { value: '★ ' + x.rating, label:'rating' },
+        { value: x.available_count + '/' + x.charger_count, label:'free now' }
+      ],
+      chargers: x.chargers.map(c => ({
+        code: c.charger_code, power: c.power_kw, connector: c.connector_type,
+        note: c.is_available ? 'Free now · start immediately' : 'In use · frees around 14:10',
+        status: c.is_available ? 'Available' : 'Busy',
+        tint: c.is_available ? '#E4F6EC' : '#FDF1E3',
+        fg: c.is_available ? DGREEN : '#A85D0B',
+        bd: c.is_available ? '#C8EBD8' : '#E6E9EE'
+      })),
+      amenities: x.amenities.split(',').map(a => ({ label: a.trim() })),
+      reviews: [
+        {initials:'NK', name:'Nuttapong K.', stars:'★★★★★', text:'All bays working and the lounge is open late. Charged 20 to 80 percent in under half an hour.'},
+        {initials:'PS', name:'Ploy S.', stars:'★★★★☆', text:'Easy to find from the main road. Gets busy after work, so I reserve ahead now.'}
+      ]
+    });
+  }
+
+  row(label, sub, key){
+    const on = this.state.toggles[key];
+    return { label, sub, subShow:'block', color:'#12161C', value:'', valueShow:'none',
+      toggleShow:'flex', track: on ? '#12A150' : '#D5DAE2', knob: on ? '18px' : '0px', go: this.toggle(key) };
+  }
+  value(label, value){
+    return { label, sub:'', subShow:'none', color:'#12161C', value, valueShow:'block',
+      toggleShow:'none', track:'#D5DAE2', knob:'0px', go: () => {} };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Volt Grid map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="station-data.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:#EDEFF2;font-family:Inter,system-ui,sans-serif}
+  #map{position:absolute;inset:0}
+  .leaflet-tile-pane{filter:saturate(.6) brightness(1.05) contrast(.95)}
+  .leaflet-control-attribution{font-size:9px;background:rgba(255,255,255,.72)}
+  .leaflet-control-zoom{border:none!important;box-shadow:0 2px 10px rgba(18,22,28,.14)}
+  .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;color:#12161C!important;border-color:#E6E9EE!important}
+  .vg-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .vg-bub{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#fff;
+    box-shadow:0 2px 8px rgba(18,22,28,.2);font:600 11.5px Inter,sans-serif;color:#12161C;white-space:nowrap}
+  .vg-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .vg-tail{width:2px;height:8px;background:rgba(18,22,28,.3)}
+  .vg-pin.sel .vg-bub{background:#1A66F0;color:#fff;box-shadow:0 4px 14px rgba(26,102,240,.45);transform:scale(1.06)}
+  .vg-pin.sel .vg-dot{background:#fff!important}
+  .vg-me{width:16px;height:16px;border-radius:50%;background:#1A66F0;border:3px solid #fff;box-shadow:0 0 0 8px rgba(26,102,240,.16),0 2px 6px rgba(0,0,0,.2)}
+  .vg-note{position:absolute;left:10px;bottom:10px;z-index:500;background:rgba(255,255,255,.9);border:1px solid #E1E5EB;
+    border-radius:8px;padding:5px 9px;font:500 10px Inter,sans-serif;color:#5A6472;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="vg-note">Prototype map — sample station data, not a live API feed</div>
+<script>
+const params = new URLSearchParams(location.search);
+const compact = params.get('mode') === 'mobile';
+const STATIONS = window.VG.STATIONS;
+const ME = [window.VG.ORIGIN.lat, window.VG.ORIGIN.lng];
+
+const map = L.map('map', { zoomControl: !compact, attributionControl: true })
+  .setView(ME, compact ? 12 : 12);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 19
+}).addTo(map);
+
+L.marker(ME, { icon: L.divIcon({ className:'', html:'<div class="vg-me"></div>', iconSize:[16,16], iconAnchor:[8,8] }), interactive:false }).addTo(map);
+
+let selected = null, filter = 'All', query = '';
+const markers = {};
+
+function statusColor(s){
+  if (!s.is_open || s.available_count === 0) return '#98A2B3';
+  return s.available_count / s.charger_count > 0.4 ? '#12A150' : '#E8871A';
+}
+function label(s){
+  if (!s.is_open) return 'Closed';
+  if (s.available_count === 0) return 'All in use';
+  return s.available_count + ' free · ' + s.max_power_kw + 'kW';
+}
+function icon(s, sel){
+  return L.divIcon({
+    className: '',
+    html: '<div class="vg-pin' + (sel ? ' sel' : '') + '"><div class="vg-bub"><span class="vg-dot" style="background:' +
+      statusColor(s) + '"></span>' + label(s) + '</div><div class="vg-tail"></div></div>',
+    iconSize: [104, 32], iconAnchor: [52, 32]
+  });
+}
+function passes(s){
+  if (query) {
+    const q = query.toLowerCase();
+    if (s.name.toLowerCase().indexOf(q) < 0 && s.address.toLowerCase().indexOf(q) < 0) return false;
+  }
+  if (filter === 'Available now') return s.is_open && s.available_count > 0;
+  if (filter === 'Fast 100 kW+') return s.max_power_kw >= 100;
+  if (filter === 'Best value') return s.price_per_kwh <= 8.5;
+  if (filter === 'Favourites') return [1, 8, 11, 17].indexOf(s.id) >= 0;
+  return true;
+}
+STATIONS.forEach(s => {
+  const m = L.marker([s.latitude, s.longitude], { icon: icon(s, false) });
+  m.on('click', () => { select(s.id, true); parent.postMessage({ vg:'select', id:s.id }, '*'); });
+  markers[s.id] = m;
+});
+function applyFilter(){
+  STATIONS.forEach(s => {
+    const m = markers[s.id];
+    if (passes(s)) { if (!map.hasLayer(m)) m.addTo(map); }
+    else if (map.hasLayer(m)) map.removeLayer(m);
+  });
+}
+applyFilter();
+
+function select(id, clicked){
+  if (selected != null && markers[selected]) {
+    const prev = window.VG.byId(selected);
+    markers[selected].setIcon(icon(prev, false)).setZIndexOffset(0);
+  }
+  const s = window.VG.byId(id);
+  selected = id;
+  if (!markers[id]) return;
+  markers[id].setIcon(icon(s, true)).setZIndexOffset(1000);
+  if (!clicked) map.setView([s.latitude - (compact ? 0.014 : 0), s.longitude], Math.max(map.getZoom(), 13), { animate:true });
+}
+addEventListener('message', e => {
+  const d = e.data || {};
+  if (d.vg === 'focus') select(d.id, false);
+  if (d.vg === 'filter') { filter = d.value; applyFilter(); }
+  if (d.vg === 'search') { query = d.value || ''; applyFilter(); }
+  if (d.vg === 'reset') map.setView(ME, 12);
+});
+parent.postMessage({ vg:'ready' }, '*');
+</script>
+</body>
+</html>

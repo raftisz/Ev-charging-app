@@ -1,0 +1,128 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/lib/http";
+import { paySessionSchema } from "@/lib/validation";
+import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
+
+export const dynamic = "force-dynamic";
+
+type Params = { params: Promise<{ id: string }> };
+
+async function load(ctx: Params, userId: number, isStaff: boolean) {
+  const id = Number((await ctx.params).id);
+  if (!Number.isInteger(id)) throw badRequest("Invalid session id");
+  const session = await prisma.chargingSession.findUnique({
+    where: { id },
+    include: SESSION_INCLUDE,
+  });
+  if (!session) throw notFound("That charging session does not exist");
+  if (session.userId !== userId && !isStaff) {
+    throw forbidden("That session belongs to another driver");
+  }
+  return session;
+}
+
+export const GET = handler(async (_r: Request, ctx: Params) => {
+  const user = await requireUser();
+  const isStaff = user.role === "ADMIN" || user.role === "OPERATOR";
+  return NextResponse.json({
+    session: serializeSession(await load(ctx, user.id, isStaff)),
+  });
+});
+
+/**
+ * action=stop  freezes the projected values and frees the charger.
+ * action=pay   settles the session against the chosen payment method.
+ */
+export const PATCH = handler(async (request: Request, ctx: Params) => {
+  const user = await requireUser();
+  const isStaff = user.role === "ADMIN" || user.role === "OPERATOR";
+  const session = await load(ctx, user.id, isStaff);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const action = (body.action as string) ?? "stop";
+
+  if (action === "stop") {
+    if (session.status !== "ACTIVE") throw conflict("That session has already finished");
+    const live = projectSession(session);
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.charger.update({
+        where: { id: session.chargerId },
+        data: { status: "AVAILABLE" },
+      });
+      if (session.reservationId) {
+        await tx.reservation.update({
+          where: { id: session.reservationId },
+          data: { status: "COMPLETED" },
+        });
+      }
+      return tx.chargingSession.update({
+        where: { id: session.id },
+        data: {
+          status: "COMPLETED",
+          endTime: new Date(),
+          energyKwh: live.energyKwh,
+          currentPercent: live.currentPercent,
+          cost: live.cost,
+        },
+        include: SESSION_INCLUDE,
+      });
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: session.userId,
+        type: "SESSION",
+        title: "Session complete",
+        body: `${session.station.name} · ${live.energyKwh.toFixed(1)} kWh delivered in ${live.minutesElapsed} minutes.`,
+      },
+    });
+
+    return NextResponse.json({ session: serializeSession(updated) });
+  }
+
+  if (action === "pay") {
+    if (session.status === "ACTIVE") throw conflict("Stop the session before paying");
+    if (session.paymentStatus === "PAID") throw conflict("This session is already paid");
+    const { paymentMethod } = paySessionSchema.parse(body);
+
+    const total = session.cost;
+    if (paymentMethod === "Volt Grid wallet") {
+      const wallet = await prisma.user.findUnique({ where: { id: session.userId } });
+      if ((wallet?.walletBalance ?? 0) < total) {
+        throw conflict("Not enough wallet balance. Top up or use another method.");
+      }
+      await prisma.user.update({
+        where: { id: session.userId },
+        data: { walletBalance: { decrement: total } },
+      });
+    }
+
+    const updated = await prisma.chargingSession.update({
+      where: { id: session.id },
+      data: { paymentStatus: "PAID", paymentMethod },
+      include: SESSION_INCLUDE,
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: session.userId,
+        type: "PAYMENT",
+        title: "Payment received",
+        body: `฿${Math.round(total)} paid with ${paymentMethod} for session #${session.id}.`,
+      },
+    });
+
+    return NextResponse.json({ session: serializeSession(updated) });
+  }
+
+  throw badRequest("Unknown action. Use 'stop' or 'pay'.");
+});
+
+export const DELETE = handler(async (_r: Request, ctx: Params) => {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") throw forbidden("Admin access only");
+  const session = await load(ctx, user.id, true);
+  await prisma.chargingSession.delete({ where: { id: session.id } });
+  return NextResponse.json({ ok: true });
+});

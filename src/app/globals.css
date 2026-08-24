@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* Volt Grid design tokens — taken from design-reference/"Volt Grid.dc.html". */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), sans-serif;
+
+  --color-ink: #12161c;
+  --color-ink-soft: #3c4757;
+  --color-muted: #5a6472;
+  --color-faint: #8a94a6;
+  --color-faint-soft: #98a2b3;
+
+  --color-line: #e6e9ee;
+  --color-line-strong: #e1e5eb;
+  --color-surface: #f4f6f8;
+  --color-surface-alt: #f1f3f6;
+  --color-canvas: #edeff2;
+
+  --color-brand: #1a66f0;
+  --color-brand-dark: #154fbf;
+  --color-brand-tint: #eaf1fe;
+
+  --color-grid-green: #0e7a3e;
+  --color-grid-green-dark: #0b5d30;
+  --color-grid-green-mid: #12a150;
+  --color-grid-green-bright: #3ddc84;
+  --color-grid-green-soft: #7de8ac;
+  --color-grid-green-pale: #beebd1;
+  --color-grid-green-tint: #e4f6ec;
+
+  --color-amber: #e8871a;
+  --color-amber-dark: #a85d0b;
+  --color-amber-tint: #fdf1e3;
+
+  --color-danger: #dc2626;
+  --color-danger-dark: #c22b2b;
+  --color-danger-tint: #fdf0f0;
+
+  --radius-card: 18px;
+  --radius-panel: 20px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--color-brand-tint);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .vg-card {
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+  .vg-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    background: #fff;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--color-ink);
+  }
+  .vg-input::placeholder {
+    color: var(--color-faint);
+  }
+  .vg-input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(26, 102, 240, 0.14);
+  }
+  .vg-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+  .vg-scroll-x {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .vg-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes vgpulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.05;
+    transform: scale(1.9);
+  }
+}
+.vg-pulse {
+  animation: vgpulse 1.8s infinite;
+}
+
+@keyframes vgshimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.vg-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+}
+.vg-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.75),
+    transparent
+  );
+  animation: vgshimmer 1.4s infinite;
+}
+
+/* Leaflet tweaks so the map matches the card language. */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-surface-alt);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -22px rgba(18, 22, 28, 0.55);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+.leaflet-bar a {
+  color: var(--color-ink);
+}
