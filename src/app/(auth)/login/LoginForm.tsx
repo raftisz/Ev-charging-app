@@ -20,6 +20,7 @@ function Form() {
   const params = useSearchParams();
   const toast = useToast();
   const next = params.get("next") || "/dashboard";
+  const expired = params.get("expired") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +69,15 @@ function Form() {
       <p className="mt-2 text-[14px] text-muted">
         Sign in to see live stations, your reservations and any session running now.
       </p>
+
+      {expired ? (
+        <div
+          role="status"
+          className="mt-5 rounded-[14px] bg-amber-tint px-4 py-3 text-[13px] leading-relaxed font-medium text-amber-dark"
+        >
+          Your session is no longer valid. Please sign in again.
+        </div>
+      ) : null}
 
       <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
         <FormError message={error} />

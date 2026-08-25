@@ -1,3 +1,6 @@
+// Exercises the REST API against a running server. The suite mutates data
+// (it stops sessions, cancels reservations, deletes a user), so reseed first:
+//   npm run seed && npm run test:api
 const BASE = "http://localhost:3000";
 let pass = 0, fail = 0;
 const jars = new Map();
@@ -135,6 +138,11 @@ const run = async () => {
   r = await req("driver", "GET", "/api/charging-sessions?status=ACTIVE");
   const live = r.data.sessions[0];
   check("driver has a seeded live session", r.status === 200 && !!live);
+  if (!live) {
+    console.log("\n  This suite mutates data — run `npm run seed` before it.");
+    console.log(`\n${pass} passed, ${fail} failed`);
+    process.exit(1);
+  }
   check("live session projects energy > 0", live.energyKwh > 0 && live.cost > 0);
   check("live session percent within target", live.currentPercent <= live.targetPercent);
 
@@ -242,6 +250,35 @@ const run = async () => {
 
   r = await req("admin", "DELETE", `/api/users/${newUserId}`);
   check("admin deletes a user", r.status === 200);
+
+  section("Stale session");
+  // A token that is still cryptographically valid but whose account is gone
+  // used to bounce between the proxy and the app layout forever.
+  await req("ghost", "POST", "/api/auth/login", { email: "user3@example.com", password: "password123" });
+  const ghostCookie = [...jar("ghost")].map(([k, v]) => `${k}=${v}`).join("; ");
+  const ghost = (await req("admin", "GET", "/api/users")).data.users.find(u => u.email === "user3@example.com");
+  r = await req("admin", "DELETE", `/api/users/${ghost.id}`);
+  check("admin deletes the signed-in driver", r.status === 200, JSON.stringify(r.data));
+
+  let hops = 0;
+  let url = BASE + "/dashboard";
+  let cookie = ghostCookie;
+  let finalStatus = 0;
+  while (hops < 10) {
+    const res = await fetch(url, { headers: { Cookie: cookie }, redirect: "manual" });
+    finalStatus = res.status;
+    for (const c of res.headers.getSetCookie?.() ?? []) {
+      const [pair] = c.split(";");
+      const i = pair.indexOf("=");
+      if (pair.slice(i + 1) === "") cookie = "";
+    }
+    if (res.status !== 307 && res.status !== 302) break;
+    url = new URL(res.headers.get("location"), BASE).toString();
+    hops++;
+  }
+  check("stale session does not loop", hops < 5, `took ${hops} hops`);
+  check("stale session lands on login", url.includes("/login") && finalStatus === 200, url);
+  check("stale session cookie is cleared", cookie === "", cookie.slice(0, 30));
 
   section("Logout");
   r = await req("driver", "POST", "/api/auth/logout");

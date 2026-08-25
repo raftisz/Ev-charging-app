@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // Not `/login`: the cookie may still hold a valid token for an account that
+  // no longer exists, and the proxy would bounce it straight back here.
+  if (!user) redirect("/session-expired");
 
   return (
     <SessionProvider initialUser={serializeUser(user)}>{children}</SessionProvider>

@@ -22,10 +22,15 @@ const PROTECTED = [
 
 const AUTH_PAGES = ["/login", "/register"];
 
+/** Clears a stale cookie; must never be redirected, or the loop reappears. */
+const ALWAYS_ALLOW = ["/session-expired"];
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const session = token ? await readToken(token) : null;
+
+  if (ALWAYS_ALLOW.includes(pathname)) return NextResponse.next();
 
   const needsAuth = PROTECTED.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
