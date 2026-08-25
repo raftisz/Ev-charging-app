@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE as COOKIE_NAME } from "@/lib/auth-edge";
+import { ConfigError } from "@/lib/http";
 import type { Role } from "@/generated/prisma/enums";
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -17,8 +18,8 @@ export type SessionPayload = {
 function secret() {
   const value = process.env.JWT_SECRET;
   if (!value) {
-    throw new Error(
-      "JWT_SECRET is not set. Copy .env.example to .env before starting the app.",
+    throw new ConfigError(
+      "JWT_SECRET is not set. Add it to the environment and redeploy.",
     );
   }
   return new TextEncoder().encode(value);

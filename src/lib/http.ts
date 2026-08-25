@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 
+/** The server is missing something it needs, e.g. an environment variable. */
+export class ConfigError extends Error {}
+
 export class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -30,6 +33,15 @@ export function handler<Args extends unknown[]>(
         return NextResponse.json(
           { error: error.message, details: error.details ?? null },
           { status: error.status },
+        );
+      }
+      if (error instanceof ConfigError) {
+        console.error("[config]", error.message);
+        return NextResponse.json(
+          {
+            error: `The server is not configured correctly: ${error.message}`,
+          },
+          { status: 500 },
         );
       }
       if (error instanceof ZodError) {

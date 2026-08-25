@@ -215,6 +215,22 @@ errors at every width. Screenshots are written to `test-screenshots/`.
 
 ---
 
+## Checking a deployment
+
+`GET /api/health` reports whether each piece is configured and reachable —
+booleans and counts only, never the value of any variable:
+
+```json
+{ "ok": true,
+  "checks": { "databaseUrlSet": true, "jwtSecretSet": true,
+              "databaseReachable": true, "schemaApplied": true,
+              "seeded": true, "stations": 20, "users": 10 } }
+```
+
+It answers `503` when something is missing, which makes the usual deploy
+failures obvious: pages render but signing in returns 500 → `jwtSecretSet` is
+false; everything 500s → `databaseReachable` is false.
+
 ## Deploying
 
 The app needs a PostgreSQL database and two environment variables:
