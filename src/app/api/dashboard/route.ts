@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { handler, requireUser } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { handler, requireUser } from "@/server/http";
 import { getDashboardStats } from "@/server/stats";
 import { getActiveSession, listSessions } from "@/server/sessions";
 import { recommendedStations } from "@/server/stations";

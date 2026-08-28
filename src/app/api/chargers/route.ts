@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { conflict, handler, notFound, requireAdmin } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { conflict, handler, notFound, requireAdmin } from "@/server/http";
 import { chargerCreateSchema } from "@/lib/validation";
 import { CONNECTOR_LABEL } from "@/lib/format";
 

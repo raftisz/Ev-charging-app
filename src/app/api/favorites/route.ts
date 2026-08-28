@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handler, requireUser } from "@/lib/http";
+import { handler, requireUser } from "@/server/http";
 import { listStations } from "@/server/stations";
 
 export const dynamic = "force-dynamic";

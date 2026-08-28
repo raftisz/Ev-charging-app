@@ -91,8 +91,10 @@ src/
     layout/              # AppShell (sidebar + topbar + tab bar), session context
     stations/            # station cards, Leaflet map
     ui/                  # Button, Badge, Field, Modal, Toast, States, Stat, Icons
-  server/                # server-only query + serialisation layer
-  lib/                   # prisma client, auth, validation, formatting, API client
+  server/                # server-only: db client, auth, http helpers,
+                         # query + serialisation layer
+  lib/                   # shared + client-safe: types, validation, formatting,
+                         # geo, edge auth, API client, hooks
   proxy.ts               # route guard (Next 16's `middleware` successor)
 scripts/                 # api-test.mjs (REST) and ui-test.mjs (Playwright)
 design-reference/        # the visual concept and the original Volt Grid canvas

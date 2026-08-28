@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import type { ReservationDTO } from "@/lib/types";
 
 export const RESERVATION_INCLUDE = {

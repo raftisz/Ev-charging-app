@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
-import { handler } from "@/lib/http";
+import { getCurrentUser } from "@/server/auth";
+import { handler } from "@/server/http";
 import { serializeUser } from "@/server/users";
 
 export const dynamic = "force-dynamic";

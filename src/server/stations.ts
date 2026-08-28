@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { ORIGIN, distanceKm, etaMinutes } from "@/lib/geo";
 import { CONNECTOR_LABEL } from "@/lib/format";
 import type {

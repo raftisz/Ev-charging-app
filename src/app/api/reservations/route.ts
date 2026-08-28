@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { badRequest, conflict, handler, notFound, requireUser } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { badRequest, conflict, handler, notFound, requireUser } from "@/server/http";
 import { reservationSchema } from "@/lib/validation";
 import {
   RESERVATION_INCLUDE,

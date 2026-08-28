@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSession } from "@/server/auth";
+import { prisma } from "@/server/db";
 import { Button } from "@/components/ui/Button";
 import { BoltMark } from "@/components/ui/Icons";
 

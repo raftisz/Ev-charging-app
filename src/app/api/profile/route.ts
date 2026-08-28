@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/auth";
-import { handler, requireUser } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { hashPassword } from "@/server/auth";
+import { handler, requireUser } from "@/server/http";
 import { profileSchema } from "@/lib/validation";
 import { serializeUser } from "@/server/users";
 

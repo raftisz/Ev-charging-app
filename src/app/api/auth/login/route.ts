@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { startSession, verifyPassword } from "@/lib/auth";
-import { HttpError, forbidden, handler } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { startSession, verifyPassword } from "@/server/auth";
+import { HttpError, forbidden, handler } from "@/server/http";
 import { loginSchema } from "@/lib/validation";
 import { serializeUser } from "@/server/users";
 

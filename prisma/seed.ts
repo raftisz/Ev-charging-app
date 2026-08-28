@@ -23,7 +23,7 @@ if (!url) {
   throw new Error("DATABASE_URL is not set. Copy .env.example to .env first.");
 }
 
-// Mirror src/lib/prisma.ts: `?schema=` is Prisma's convention, not pg's.
+// Mirror src/server/db.ts: `?schema=` is Prisma's convention, not pg's.
 const parsed = new URL(url);
 const schema = parsed.searchParams.get("schema") ?? undefined;
 parsed.searchParams.delete("schema");

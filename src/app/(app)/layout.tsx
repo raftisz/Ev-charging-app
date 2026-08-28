@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/server/auth";
 import { serializeUser } from "@/server/users";
 import { SessionProvider } from "@/components/layout/SessionProvider";
 

@@ -1,6 +1,7 @@
+import "server-only";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/server/auth";
 
 /** The server is missing something it needs, e.g. an environment variable. */
 export class ConfigError extends Error {}

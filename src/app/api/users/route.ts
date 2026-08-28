@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { handler, requireAdmin } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { handler, requireAdmin } from "@/server/http";
 import { serializeUser } from "@/server/users";
 
 export const dynamic = "force-dynamic";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/server/http";
 import { paySessionSchema } from "@/lib/validation";
 import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
 

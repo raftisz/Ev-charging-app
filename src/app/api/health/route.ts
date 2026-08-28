@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 /**
  * Deployment smoke test: is each piece configured and reachable? Reports

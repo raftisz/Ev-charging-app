@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import type { SessionDTO } from "@/lib/types";
 
 const DEFAULT_BATTERY_KWH = 64;

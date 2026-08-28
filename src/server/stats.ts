@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import type { AdminStats, DashboardStats } from "@/lib/types";
 
 /** grid-average kg CO2 avoided per kWh charged versus an equivalent ICE trip */

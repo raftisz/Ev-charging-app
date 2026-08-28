@@ -2,9 +2,9 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { SESSION_COOKIE as COOKIE_NAME } from "@/lib/auth-edge";
-import { ConfigError } from "@/lib/http";
+import { ConfigError } from "@/server/http";
 import type { Role } from "@/generated/prisma/enums";
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;

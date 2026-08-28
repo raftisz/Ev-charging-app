@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { badRequest, handler, notFound, requireAdmin } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { getSession } from "@/server/auth";
+import { badRequest, handler, notFound, requireAdmin } from "@/server/http";
 import { stationUpdateSchema } from "@/lib/validation";
 import { getStation, serializeStation } from "@/server/stations";
 

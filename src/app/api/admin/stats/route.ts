@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { handler, requireAdmin } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { handler, requireAdmin } from "@/server/http";
 import { getAdminStats } from "@/server/stats";
 import { listSessions } from "@/server/sessions";
 import { RESERVATION_INCLUDE, serializeReservation } from "@/server/reservations";

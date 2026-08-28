@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { badRequest, handler, notFound, requireAdmin } from "@/lib/http";
+import { prisma } from "@/server/db";
+import { badRequest, handler, notFound, requireAdmin } from "@/server/http";
 import { chargerUpdateSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
