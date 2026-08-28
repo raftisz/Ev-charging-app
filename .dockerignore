@@ -1,0 +1,45 @@
+# Build context excludes. Everything the image needs — package.json,
+# package-lock.json, prisma/, src/, public/, and the config files at the root —
+# is deliberately absent from this list.
+
+# Reinstalled inside the image; host binaries are the wrong platform.
+node_modules
+
+# Build output, rebuilt in the image.
+.next
+out
+build
+*.tsbuildinfo
+
+# Secrets. Real values are passed as environment variables at run time,
+# never baked into a layer. .env.example is kept: it documents the contract.
+.env
+.env.*
+!.env.example
+
+# Version control and CI metadata.
+.git
+.gitignore
+.github
+
+# Local-only tooling and artefacts.
+docker-compose.yml
+.dockerignore
+Dockerfile*
+tests/screenshots
+coverage
+*.db
+*.db-journal
+
+# Documentation and design assets: not read at build or run time.
+docs
+README.md
+AGENTS.md
+CLAUDE.md
+
+# Editor and OS noise.
+.DS_Store
+.vscode
+.idea
+*.pem
+npm-debug.log*

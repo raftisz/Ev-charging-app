@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/server/db";
 import { SESSION_COOKIE as COOKIE_NAME } from "@/lib/auth-edge";
 import { ConfigError } from "@/server/http";
+import { requireJwtSecret } from "@/server/env";
 import type { Role } from "@/generated/prisma/enums";
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -16,13 +17,13 @@ export type SessionPayload = {
 };
 
 function secret() {
-  const value = process.env.JWT_SECRET;
-  if (!value) {
-    throw new ConfigError(
-      "JWT_SECRET is not set. Add it to the environment and redeploy.",
-    );
+  try {
+    return new TextEncoder().encode(requireJwtSecret());
+  } catch (error) {
+    // Re-thrown as ConfigError so handler() still answers 500 with the
+    // "server is not configured correctly" body rather than a bare 500.
+    throw new ConfigError(error instanceof Error ? error.message : String(error));
   }
-  return new TextEncoder().encode(value);
 }
 
 export function hashPassword(plain: string) {

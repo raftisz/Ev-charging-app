@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
+import { isDatabaseUrlSet, isJwtSecretSet } from "@/server/env";
 
 /**
  * Deployment smoke test: is each piece configured and reachable? Reports
@@ -11,8 +12,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const checks: Record<string, unknown> = {
-    databaseUrlSet: Boolean(process.env.DATABASE_URL),
-    jwtSecretSet: Boolean(process.env.JWT_SECRET),
+    databaseUrlSet: isDatabaseUrlSet(),
+    jwtSecretSet: isJwtSecretSet(),
     databaseReachable: false,
     schemaApplied: false,
     seeded: false,
