@@ -1,5 +1,5 @@
 /**
- * The 20 Bangkok stations from `design-reference/station-data.js`, kept
+ * The 20 Bangkok stations from `docs/design-reference/station-data.js`, kept
  * verbatim so the seeded database matches the design reference exactly.
  *
  * Tuple: [id, name, lat, lng, pricePerKwh, rating, hasFastCharge, isOpen,

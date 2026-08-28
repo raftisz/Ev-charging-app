@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Vendored artefacts, not application source:
-    "design-reference/**", // the untouched Volt Grid design canvas
+    "docs/design-reference/**", // the untouched Volt Grid design canvas
     "src/generated/**", // Prisma Client output
   ]),
 ]);

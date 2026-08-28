@@ -47,4 +47,4 @@ next-env.d.ts
 *.db-journal
 
 # test artefacts
-/test-screenshots
+/tests/screenshots

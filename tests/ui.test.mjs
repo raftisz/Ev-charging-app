@@ -4,13 +4,13 @@
  * states, form validation and horizontal overflow.
  *
  * Needs a running server (`npm run dev`) and, once, `npx playwright install chromium`.
- * Screenshots land in ./test-screenshots (override with OUT=...).
+ * Screenshots land in ./tests/screenshots (override with OUT=...).
  */
 import { chromium } from "playwright";
 import fs from "node:fs";
 
 const BASE = "http://localhost:3000";
-const OUT = process.env.OUT ?? "test-screenshots";
+const OUT = process.env.OUT ?? "tests/screenshots";
 fs.mkdirSync(OUT, { recursive: true });
 
 let pass = 0, fail = 0;
