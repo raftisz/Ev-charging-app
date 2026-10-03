@@ -1,23 +1,30 @@
 # Database Indexing — Volt Grid (Ev-charging-app)
 
-ทดลองสร้าง index ใน PostgreSQL แล้วนำไปใช้กับ database ของโปรเจค (Prisma + PostgreSQL)
+ทดลองสร้าง index ใน PostgreSQL กับ database ของโปรเจคนี้ (Prisma + PostgreSQL) แล้ววัดผลด้วย `EXPLAIN ANALYZE` ก่อนและหลังสร้าง index
 
-## 1. การทดลอง
+## 1. สภาพแวดล้อมการทดลอง
 
-ทดลองบน PostgreSQL 16 (Docker) ตาราง `bookings` ของโปรเจคเวอร์ชัน FastAPI ของกลุ่ม จำนวน 600,007 แถว วัดด้วย `EXPLAIN ANALYZE` ก่อนและหลังสร้าง index ผลจึงใช้แสดงหลักการ ไม่ใช่ตัวเลขที่วัดจาก Ev-charging-app โดยตรง
+- PostgreSQL 16 ใน Docker (`docker compose up -d db`, port 5433) สร้าง schema จริงของโปรเจคด้วย `prisma migrate deploy` แล้ว seed ข้อมูลตั้งต้น
+- เพิ่มข้อมูลทดสอบด้วย `generate_series` สุ่ม user: `ChargingSession` รวม 500,113 แถว (10 users ละประมาณ 50,000 แถว) และ `Notification` รวม 300,012 แถว
+- รัน `ANALYZE` ก่อนวัดทุกครั้ง วิธีวัด "ก่อน" คือลบ index ใหม่ออกจาก database ทดลอง ส่วน "หลัง" คือสร้างคืนด้วยชื่อและคอลัมน์เดียวกับใน migration
+
+## 2. ผลการวัด
 
 | Query | ก่อนมี index | หลังมี index | เร็วขึ้น |
 |---|---|---|---|
-| ประวัติการจองของ user (กรอง user_id + status เรียงตามเวลา LIMIT 20) | 83.843 ms | 0.354 ms | ประมาณ 237 เท่า |
-| การจองตามวันที่ + status (ได้ 3,330 แถว) | 77.780 ms | 36.502 ms | ประมาณ 2.1 เท่า |
+| ประวัติการชาร์จของ user (`WHERE userId = 1 ORDER BY startTime DESC LIMIT 20`) | 105.769 ms | 0.465 ms | ประมาณ 227 เท่า |
+| แจ้งเตือนล่าสุดของ user (`WHERE userId = 1 ORDER BY createdAt DESC LIMIT 20`) | 32.417 ms | 0.173 ms | ประมาณ 187 เท่า |
 
-- Query แรก: ก่อนมี index ใช้ index เดี่ยวของ user_id อ่าน 54,424 แถว ทิ้ง 36,355 แถว แล้วต้อง Sort เอง หลังมี composite index เป็น Index Scan ไม่มี Sort อ่านแค่ 20 แถว
-- Query ที่สอง: จาก Parallel Seq Scan (อ่านทั้งตาราง) เป็น Bitmap Index Scan แต่ต้องดึงข้อมูลจริง 3,330 แถว จึงเร็วขึ้นไม่มากเท่า
-- ขนาด index ใหม่ในการทดลอง: 23 MB และ 4.2 MB ต่อ 600,007 แถว
+**ChargingSession**
+- ก่อน: Parallel Bitmap Heap Scan ผ่าน index เดิม `ChargingSession_userId_status_idx` อ่าน 50,149 แถวของ user แล้วต้อง Sort เองเพื่อเอา 20 แถวล่าสุด
+- หลัง: Index Scan Backward ไม่มี Sort อ่านแถวที่เกี่ยวข้องเพียงเล็กน้อย
+- หมายเหตุ: PostgreSQL เลือกใช้ `ChargingSession_startTime_idx` (index เดี่ยว) แทน `(userId, startTime)` เพราะข้อมูลทดสอบมีแค่ 10 users กระจายเท่า ๆ กัน สแกนย้อนหลังแล้วเจอแถวของ user ครบ 20 แถวหลังกรองทิ้งเพียง 199 แถว ถ้ามี user จำนวนมากขึ้น คาดว่า composite จะถูกเลือก (ยังไม่ได้ทดสอบ)
 
-## 2. Query จริงของแอปและ index ที่เพิ่ม
+**Notification**
+- ก่อน: Bitmap Heap Scan ผ่าน `Notification_userId_isRead_idx` อ่าน 30,044 แถวแล้ว Sort เอง
+- หลัง: Index Scan Backward ผ่าน `Notification_userId_createdAt_idx` ไม่มี Sort
 
-เลือก index จาก query ที่แอปรันจริง (ใน `src/`) เพิ่ม 4 ตัวใน `prisma/schema.prisma`:
+## 3. Index ที่เพิ่มและเหตุผลจาก query จริง
 
 | Model | Query ในโค้ด | Index ที่เพิ่ม |
 |---|---|---|
@@ -28,15 +35,33 @@
 
 index เดิมที่มีอยู่แล้ว: Reservation [userId, status] และ [chargerId, startTime], ChargingSession [userId, status] และ [status], Notification [userId, isRead], Station [status], Charger [status]
 
-## 3. การนำไปใช้
+## 4. การนำไปใช้
 
 - แก้ `prisma/schema.prisma` และเพิ่ม migration `prisma/migrations/20261003054500_add_history_indexes/migration.sql` (commit 1220e2f)
-- สคริปต์ `vercel-build` ของโปรเจครัน `prisma migrate deploy` ทุกครั้งที่ deploy จึงสร้าง index ใน database ที่ deploy ให้อัตโนมัติ
+- ทดสอบ `prisma migrate deploy` บน PostgreSQL ในเครื่องแล้ว apply สำเร็จทั้งสอง migration
+- สคริปต์ `vercel-build` รัน `prisma migrate deploy` ทุกครั้งที่ deploy และ deployment ของ commit นี้บน Vercel สถานะ Ready
 
-## 4. ข้อสรุป
+## 5. ต้นทุนของ index (ขนาดในการทดลอง)
 
-1. Composite index ที่เรียงคอลัมน์ตาม query (เงื่อนไข = ก่อน แล้วตามด้วยคอลัมน์ ORDER BY) ให้ผลดีที่สุด เพราะไม่ต้อง Sort และอ่านเฉพาะแถวที่ต้องการ
-2. ถ้า query ต้องดึงแถวจำนวนมาก ประโยชน์ของ index ลดลง เพราะคอขวดย้ายไปที่การอ่านข้อมูลจริง
+| Index | ขนาด |
+|---|---|
+| ChargingSession_userId_startTime_idx (ใหม่) | 15 MB |
+| ChargingSession_startTime_idx (ใหม่) | 11 MB |
+| Notification_userId_createdAt_idx (ใหม่) | 9,264 kB |
+| ChargingSession_pkey (เดิม) | 11 MB |
+| ChargingSession_userId_status_idx (เดิม) | 3,208 kB |
+| Notification_pkey (เดิม) | 6,600 kB |
+
+index ใหม่ 3 ตัวรวมประมาณ 35 MB สำหรับข้อมูล 800,000 แถว และทุก INSERT/UPDATE/DELETE ต้องอัปเดต index เหล่านี้ด้วย
+
+ข้อสังเกต: ในการวัดนี้ ChargingSession_userId_startTime_idx (15 MB) ไม่ถูก PostgreSQL เลือกใช้กับ query ที่ทดสอบ เพราะข้อมูลทดสอบมี user เพียง 10 คน ควรประเมินความจำเป็นอีกครั้งเมื่อมี user จำนวนมากขึ้น (ยังไม่ได้ทดสอบ)
+
+## 6. ข้อสรุป
+
+1. Index ที่ตรงกับ query ทั้งส่วนกรองและส่วนเรียง ทำให้ไม่ต้อง Sort และอ่านเพียง 20 แถวที่ต้องการ เร็วขึ้นประมาณ 190-230 เท่าในการทดลองนี้
+2. ต้องตรวจแผนด้วย `EXPLAIN ANALYZE` เสมอ เพราะ PostgreSQL เลือก index เอง ในกรณี ChargingSession มันเลือกตัวเดี่ยวแทน composite
 3. Index มีต้นทุน คือใช้พื้นที่เพิ่ม และทุก INSERT/UPDATE/DELETE ต้องอัปเดต index ด้วย จึงสร้างเฉพาะตัวที่ตรงกับ query ที่ใช้จริง
-4. ลำดับคอลัมน์ใน composite index สำคัญ (leftmost prefix rule)
-5. ข้อมูล seed ของโปรเจคมีน้อย ผลที่เห็นในแอปตอนนี้จึงยังไม่ชัด index เหล่านี้เป็นการเตรียมรองรับข้อมูลที่เพิ่มขึ้น
+4. ลำดับคอลัมน์ใน composite index สำคัญ (leftmost prefix rule) ใส่คอลัมน์ที่กรองด้วย = ก่อน แล้วตามด้วยคอลัมน์ที่ใช้ ORDER BY
+5. ทดลองเบื้องต้นกับโปรเจคเวอร์ชัน FastAPI ของกลุ่ม (ตาราง bookings 600,007 แถว) ได้ผลแนวเดียวกัน คือ 83.843 ms เหลือ 0.354 ms
+
+ข้อจำกัด: ข้อมูลทดสอบเป็นข้อมูลสังเคราะห์ที่กระจายสม่ำเสมอ วัดบน database ในเครื่องไม่ใช่ production และไม่ได้วัด index ของ Reservation
