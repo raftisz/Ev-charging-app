@@ -131,6 +131,7 @@ errors at every width. Screenshots are written to `tests/screenshots/`.
 | Document | What it covers |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | Project structure, how the domain works, data, auth |
+| [docs/system-diagrams.md](docs/system-diagrams.md) | Architecture, target microservices, tech stack, ER diagram and user journey (Mermaid) |
 | [docs/api.md](docs/api.md) | Every REST endpoint and its purpose |
 | [docs/deployment.md](docs/deployment.md) | Render, Vercel and any Node host · `GET /api/health` |
 | [docs/design-reference/](docs/design-reference/) | The visual concept and the original Volt Grid canvas |
