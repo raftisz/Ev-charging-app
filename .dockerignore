@@ -35,7 +35,6 @@ coverage
 docs
 README.md
 AGENTS.md
-CLAUDE.md
 
 # Editor and OS noise.
 .DS_Store
