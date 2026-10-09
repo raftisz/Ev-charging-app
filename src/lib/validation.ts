@@ -1,4 +1,12 @@
 import { z } from "zod";
+import { METHOD_FROM_LABEL, PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from "@/lib/payments";
+
+const paymentMethod = z
+  .enum([...PAYMENT_METHODS, ...PAYMENT_METHODS.map((m) => PAYMENT_METHOD_LABEL[m])] as [
+    string,
+    ...string[],
+  ])
+  .transform((v) => METHOD_FROM_LABEL[v] ?? (v as (typeof PAYMENT_METHODS)[number]));
 
 export const registerSchema = z.object({
   fullName: z.string().trim().min(2, "Please enter your full name"),
@@ -41,7 +49,7 @@ export const startSessionSchema = z.object({
 });
 
 export const paySessionSchema = z.object({
-  paymentMethod: z.enum(["Volt Grid wallet", "Credit card", "PromptPay QR"]),
+  paymentMethod,
 });
 
 const stationStatus = z.enum(["AVAILABLE", "BUSY", "OFFLINE", "MAINTENANCE"]);

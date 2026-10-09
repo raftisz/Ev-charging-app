@@ -31,6 +31,21 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/PATCH/DELETE | `/api/users/{id}` | Detail · update role/wallet/active · delete (admin) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
 
+## Paying for a session
+
+`PATCH /api/charging-sessions/{id}` with
+`{ "action": "pay", "paymentMethod": "WALLET" | "CREDIT_CARD" | "PROMPTPAY" }`.
+The older labels (`"Volt Grid wallet"`, `"Credit card"`, `"PromptPay QR"`) are
+still accepted.
+
+The payment runs in one database transaction:
+
+1. The session is marked `PAID` only if it is finished and not already paid.
+   A second request for the same session, even a concurrent one, gets `409`.
+2. For `WALLET`, the balance is debited only if it covers the amount, in the
+   same `UPDATE`. Too little balance returns `409` and nothing is written.
+3. A `Payment` row (`type: CHARGE`) records the amount, method and status.
+
 The frontend never hardcodes data: every page fetches through
 `src/lib/api-client.ts`, and every dashboard figure is aggregated from the
 database in `src/server/stats.ts`.

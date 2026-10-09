@@ -151,18 +151,41 @@ const run = async () => {
 
   r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "stop" });
   check("stop session", r.status === 200 && r.data.session.status === "COMPLETED", JSON.stringify(r.data).slice(0,200));
-
+  const stopped = r.data.session;
 
   r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "stop" });
   check("stop twice → 409", r.status === 409);
 
-  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "Volt Grid wallet" });
-  check("pay with wallet", r.status === 200 && r.data.session.paymentStatus === "PAID", JSON.stringify(r.data).slice(0,200));
+  r = await req("driver", "GET", "/api/profile");
+  const driverId = r.data.user.id;
+  const balanceBefore = r.data.user.walletBalance;
+
+  r = await req("admin", "PATCH", `/api/users/${driverId}`, { walletBalance: 0 });
+  check("admin empties the driver's wallet", r.status === 200 && r.data.user.walletBalance === 0);
+  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "WALLET" });
+  check("wallet pay with too little balance → 409", r.status === 409, JSON.stringify(r.data));
+  r = await req("driver", "GET", `/api/charging-sessions/${live.id}`);
+  check("failed wallet pay leaves session unpaid", r.data.session.paymentStatus !== "PAID");
+  r = await req("driver", "GET", "/api/profile");
+  check("failed wallet pay leaves balance untouched", r.data.user.walletBalance === 0);
+  await req("admin", "PATCH", `/api/users/${driverId}`, { walletBalance: balanceBefore });
+
+  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "BITCOIN" });
+  check("unknown payment method → 422", r.status === 422);
+
+  const both = await Promise.all([
+    req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "WALLET" }),
+    req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "Volt Grid wallet" }),
+  ]);
+  const okPays = both.filter(x => x.status === 200);
+  check("two concurrent pays: exactly one succeeds", okPays.length === 1 && both.some(x => x.status === 409), both.map(x => x.status).join(","));
+  check("pay with wallet marks session PAID", okPays[0]?.data.session.paymentStatus === "PAID" && okPays[0]?.data.session.paymentMethod === "Volt Grid wallet");
 
   r = await req("driver", "GET", "/api/profile");
-  check("wallet was debited", Math.abs(r.data.user.walletBalance) >= 0);
+  const charged = Math.round(stopped.cost * 100) / 100;
+  check("wallet debited exactly once", Math.abs(balanceBefore - charged - r.data.user.walletBalance) < 0.01, `${balanceBefore} - ${charged} → ${r.data.user.walletBalance}`);
 
-  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "Credit card" });
+  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "CREDIT_CARD" });
   check("paying twice → 409", r.status === 409);
 
   // start a fresh session now that the old one is closed

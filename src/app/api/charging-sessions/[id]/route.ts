@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/server/http";
 import { paySessionSchema } from "@/lib/validation";
+import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
 
 export const dynamic = "force-dynamic";
@@ -84,24 +85,45 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
   if (action === "pay") {
     if (session.status === "ACTIVE") throw conflict("Stop the session before paying");
     if (session.paymentStatus === "PAID") throw conflict("This session is already paid");
-    const { paymentMethod } = paySessionSchema.parse(body);
+    const { paymentMethod: method } = paySessionSchema.parse(body);
+    const label = PAYMENT_METHOD_LABEL[method];
+    const total = toSatang(session.cost);
 
-    const total = session.cost;
-    if (paymentMethod === "Volt Grid wallet") {
-      const wallet = await prisma.user.findUnique({ where: { id: session.userId } });
-      if ((wallet?.walletBalance ?? 0) < total) {
-        throw conflict("Not enough wallet balance. Top up or use another method.");
-      }
-      await prisma.user.update({
-        where: { id: session.userId },
-        data: { walletBalance: { decrement: total } },
+    // Both writes below are conditional, so two concurrent requests cannot
+    // both settle the session and the wallet cannot be taken below zero.
+    // Either one fails and the whole transaction rolls back.
+    const updated = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.chargingSession.updateMany({
+        where: { id: session.id, status: { not: "ACTIVE" }, paymentStatus: { not: "PAID" } },
+        data: { paymentStatus: "PAID", paymentMethod: label },
       });
-    }
+      if (claimed.count === 0) throw conflict("This session is already paid");
 
-    const updated = await prisma.chargingSession.update({
-      where: { id: session.id },
-      data: { paymentStatus: "PAID", paymentMethod },
-      include: SESSION_INCLUDE,
+      if (method === "WALLET") {
+        const debited = await tx.user.updateMany({
+          where: { id: session.userId, walletBalance: { gte: total } },
+          data: { walletBalance: { decrement: total } },
+        });
+        if (debited.count === 0) {
+          throw conflict("Not enough wallet balance. Top up or use another method.");
+        }
+      }
+
+      await tx.payment.create({
+        data: {
+          sessionId: session.id,
+          userId: session.userId,
+          type: "CHARGE",
+          amount: total,
+          method,
+          status: "PAID",
+        },
+      });
+
+      return tx.chargingSession.findUniqueOrThrow({
+        where: { id: session.id },
+        include: SESSION_INCLUDE,
+      });
     });
 
     await prisma.notification.create({
@@ -109,7 +131,7 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
         userId: session.userId,
         type: "PAYMENT",
         title: "Payment received",
-        body: `฿${Math.round(total)} paid with ${paymentMethod} for session #${session.id}.`,
+        body: `฿${Math.round(total)} paid with ${label} for session #${session.id}.`,
       },
     });
 
