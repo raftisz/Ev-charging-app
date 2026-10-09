@@ -74,13 +74,13 @@ export function AppShell({
 
       {variant === "driver" ? (
         <Link
-          href="/history"
+          href="/wallet"
           className="mb-3 block rounded-[18px] bg-grid-green p-4 text-white shadow-[0_12px_26px_-16px_rgba(5,150,105,0.9)] transition-opacity hover:opacity-95"
         >
           <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
           <div className="font-display text-[20px] font-bold">{thb(user.walletBalance)}</div>
           <div className="mt-2 text-[11.5px] font-semibold text-grid-green-pale">
-            View payments →
+            Top up & transactions →
           </div>
         </Link>
       ) : null}

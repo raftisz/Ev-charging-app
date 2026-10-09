@@ -148,8 +148,8 @@ export default function ProfilePage() {
           <div className="rounded-[18px] bg-grid-green p-4 text-white">
             <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
             <div className="font-display text-[26px] font-bold">{thb(user.walletBalance)}</div>
-            <Link href="/history" className="mt-2 inline-block text-[12.5px] font-semibold text-grid-green-pale">
-              View payments →
+            <Link href="/wallet" className="mt-2 inline-block text-[12.5px] font-semibold text-grid-green-pale">
+              Top up & transactions →
             </Link>
           </div>
 

@@ -52,6 +52,17 @@ export const paySessionSchema = z.object({
   paymentMethod,
 });
 
+export const TOP_UP_MIN = 20;
+export const TOP_UP_MAX = 10_000;
+
+export const topUpSchema = z.object({
+  amount: z.coerce
+    .number()
+    .min(TOP_UP_MIN, `Top up at least ฿${TOP_UP_MIN}`)
+    .max(TOP_UP_MAX, `Top up at most ฿${TOP_UP_MAX.toLocaleString("en-US")} at a time`),
+  method: z.enum(["CREDIT_CARD", "PROMPTPAY"]),
+});
+
 const stationStatus = z.enum(["AVAILABLE", "BUSY", "OFFLINE", "MAINTENANCE"]);
 
 export const stationCreateSchema = z.object({

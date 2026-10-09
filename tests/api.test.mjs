@@ -188,6 +188,31 @@ const run = async () => {
   r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "CREDIT_CARD" });
   check("paying twice → 409", r.status === 409);
 
+  section("Wallet");
+  r = await req("driver", "GET", "/api/wallet");
+  const chargeRow = r.data?.transactions?.find(t => t.sessionId === live.id);
+  check("wallet lists the charge as a Payment row", r.status === 200 && chargeRow?.type === "CHARGE" && chargeRow?.method === "WALLET" && chargeRow?.status === "PAID", JSON.stringify(chargeRow));
+  check("only one Payment row for the session", r.data.transactions.filter(t => t.sessionId === live.id).length === 1);
+  check("charge row amount matches the session cost", Math.abs(chargeRow.amount - charged) < 0.01);
+  const walletBefore = r.data.balance;
+
+  r = await req("anon", "GET", "/api/wallet");
+  check("wallet requires auth (401)", r.status === 401);
+  r = await req("driver", "POST", "/api/wallet/topup", { amount: 5, method: "CREDIT_CARD" });
+  check("top-up below minimum → 422", r.status === 422);
+  r = await req("driver", "POST", "/api/wallet/topup", { amount: 50000, method: "CREDIT_CARD" });
+  check("top-up above maximum → 422", r.status === 422);
+  r = await req("driver", "POST", "/api/wallet/topup", { amount: 100, method: "WALLET" });
+  check("top-up from the wallet itself → 422", r.status === 422);
+
+  r = await req("driver", "POST", "/api/wallet/topup", { amount: 250, method: "PROMPTPAY" });
+  check("top up ฿250", r.status === 201 && r.data.payment.type === "TOPUP" && r.data.payment.status === "PAID", JSON.stringify(r.data).slice(0, 200));
+  check("top-up returns the new balance", Math.abs(r.data.balance - (walletBefore + 250)) < 0.01);
+  r = await req("driver", "GET", "/api/wallet");
+  check("top-up is the latest transaction", r.data.transactions[0].type === "TOPUP" && r.data.transactions[0].amount === 250);
+  r = await req("driver", "GET", "/api/profile");
+  check("profile balance includes the top-up", Math.abs(r.data.user.walletBalance - (walletBefore + 250)) < 0.01);
+
   // start a fresh session now that the old one is closed
   r = await req("driver", "GET", "/api/stations/1");
   const freeCharger = r.data.station.chargers.find(c => c.status === "AVAILABLE");
@@ -333,7 +358,7 @@ const run = async () => {
   res = await fetch(BASE + "/login", { headers: { Cookie: driverCookie }, redirect: "manual" });
   check("GET /login while signed in → redirect", res.status === 307);
 
-  const appPages = ["/stations", "/stations/8", "/charging", "/reservations", "/reservations/new", "/history", "/profile", "/settings", "/favorites", "/notifications"];
+  const appPages = ["/stations", "/stations/8", "/charging", "/reservations", "/reservations/new", "/history", "/wallet", "/profile", "/settings", "/favorites", "/notifications"];
   for (const path of appPages) {
     const res2 = await fetch(BASE + path, { headers: { Cookie: driverCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);

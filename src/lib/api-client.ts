@@ -3,6 +3,7 @@ import type {
   ApiError,
   DashboardStats,
   NotificationDTO,
+  PaymentDTO,
   ReservationDTO,
   SessionDTO,
   StationDTO,
@@ -137,6 +138,10 @@ export const api = {
       action: "pay",
       paymentMethod,
     }),
+
+  wallet: () => get<{ balance: number; transactions: PaymentDTO[] }>("/api/wallet"),
+  topUp: (amount: number, method: string) =>
+    post<{ balance: number; payment: PaymentDTO }>("/api/wallet/topup", { amount, method }),
 
   notifications: () =>
     get<{ notifications: NotificationDTO[]; unread: number }>("/api/notifications"),

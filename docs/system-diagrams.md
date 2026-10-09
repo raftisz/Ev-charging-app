@@ -215,6 +215,8 @@ flowchart LR
     G --> H["Stop charging"]
     H --> I["Pay"]
     I --> J["History + Notifications"]
+    I -.->|"balance too low"| W["Wallet<br/>top up + transactions"]
+    W --> I
     B --> K["Favourites / Profile / Vehicle"]
     L["Operator / Admin"] --> M["Admin console<br/>stations, chargers,<br/>reservations, sessions, users"]
 ```

@@ -24,6 +24,8 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/PATCH/DELETE | `/api/reservations/{id}` | Detail · cancel or change status · delete |
 | GET/POST | `/api/charging-sessions` | List · start charging |
 | GET/PATCH/DELETE | `/api/charging-sessions/{id}` | Detail · `action: "stop"` \| `"pay"` · delete (admin) |
+| GET | `/api/wallet` | Wallet balance and the latest 50 transactions (`Payment` rows) |
+| POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` |
 | GET/PATCH | `/api/notifications` | List · mark all read |
 | PATCH/DELETE | `/api/notifications/{id}` | Mark read · delete |
 | GET/PATCH | `/api/profile` | View / update the signed-in user |
@@ -45,6 +47,13 @@ The payment runs in one database transaction:
 2. For `WALLET`, the balance is debited only if it covers the amount, in the
    same `UPDATE`. Too little balance returns `409` and nothing is written.
 3. A `Payment` row (`type: CHARGE`) records the amount, method and status.
+
+## Wallet top-up
+
+`POST /api/wallet/topup` increments the balance and writes a `Payment` row
+(`type: TOPUP`, `status: PAID`) in one transaction, then sends a `PAYMENT`
+notification. No card or PromptPay provider is connected to this endpoint, so
+top-ups are approved immediately. The page is `/wallet`.
 
 The frontend never hardcodes data: every page fetches through
 `src/lib/api-client.ts`, and every dashboard figure is aggregated from the

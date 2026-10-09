@@ -11,7 +11,8 @@ export const DRIVER_NAV: NavItem[] = [
   { href: "/stations", label: "Stations & map", glyph: "◎", match: ["/stations", "/map"] },
   { href: "/charging", label: "Charging session", glyph: "⚡" },
   { href: "/reservations", label: "Reservations", glyph: "▦" },
-  { href: "/history", label: "History & payments", glyph: "฿" },
+  { href: "/history", label: "History & payments", glyph: "≡" },
+  { href: "/wallet", label: "Wallet", glyph: "฿" },
   { href: "/profile", label: "Profile", glyph: "◍", match: ["/profile", "/settings", "/favorites"] },
 ];
 
@@ -20,7 +21,7 @@ export const DRIVER_TABS: NavItem[] = [
   { href: "/stations", label: "Stations", glyph: "◎", match: ["/stations", "/map"] },
   { href: "/charging", label: "Charging", glyph: "⚡" },
   { href: "/history", label: "Activity", glyph: "≡", match: ["/history", "/reservations"] },
-  { href: "/profile", label: "Profile", glyph: "◍", match: ["/profile", "/favorites"] },
+  { href: "/profile", label: "Profile", glyph: "◍", match: ["/profile", "/favorites", "/wallet"] },
 ];
 
 export const ADMIN_NAV: NavItem[] = [

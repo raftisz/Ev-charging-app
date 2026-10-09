@@ -18,6 +18,22 @@ export type ReservationStatus =
   | "EXPIRED";
 export type SessionStatus = "ACTIVE" | "COMPLETED" | "STOPPED" | "FAULTED";
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+export type PaymentType = "CHARGE" | "TOPUP" | "REFUND";
+export type PaymentMethodCode = "WALLET" | "CREDIT_CARD" | "PROMPTPAY";
+
+export type PaymentDTO = {
+  id: number;
+  type: PaymentType;
+  amount: number;
+  method: PaymentMethodCode;
+  methodLabel: string;
+  status: PaymentStatus;
+  providerRef: string | null;
+  createdAt: string;
+  sessionId: number | null;
+  stationName: string | null;
+};
+
 export type NotificationType = "SESSION" | "RESERVATION" | "PAYMENT" | "SYSTEM";
 
 export type ConnectorDTO = {
