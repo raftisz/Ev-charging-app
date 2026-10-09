@@ -352,6 +352,64 @@ const run = async () => {
   r = await req("driver", "GET", "/api/wallet");
   check("PromptPay payment recorded", r.data.transactions.some(t => t.sessionId === newSessionId && t.method === "PROMPTPAY"));
 
+  section("Refunds");
+  r = await req("driver", "GET", "/api/profile");
+  const balanceBeforeRefund = r.data.user.walletBalance;
+  r = await req("anon", "POST", `/api/payments/${chargeRow.id}/refund`);
+  check("refund signed out → 401", r.status === 401);
+  r = await req("driver", "POST", `/api/payments/${chargeRow.id}/refund`);
+  check("driver cannot refund (even their own) → 403", r.status === 403);
+  r = await req("operator", "POST", `/api/payments/${chargeRow.id}/refund`);
+  check("operator cannot refund → 403", r.status === 403);
+  r = await req("driver", "GET", "/api/profile");
+  check("refused refunds leave the wallet alone", r.data.user.walletBalance === balanceBeforeRefund);
+  r = await req("admin", "POST", "/api/payments/99999999/refund");
+  check("refund of unknown payment → 404", r.status === 404);
+  r = await req("admin", "POST", `/api/payments/${topUpPaymentId}/refund`);
+  check("a top-up is not refundable → 400", r.status === 400, String(r.status));
+
+  // An unpaid charge: a PromptPay QR that was never confirmed.
+  r = await req("driver", "GET", "/api/stations/1");
+  const refundCharger = r.data.station.chargers.find(c => c.status === "AVAILABLE");
+  r = await req("driver", "POST", "/api/charging-sessions", { stationId: 1, chargerId: refundCharger.id, startPercent: 30, targetPercent: 80 });
+  const unpaidSessionId = r.data.session.id;
+  await new Promise((done) => setTimeout(done, 2000));
+  await req("driver", "PATCH", `/api/charging-sessions/${unpaidSessionId}`, { action: "stop" });
+  r = await req("driver", "PATCH", `/api/charging-sessions/${unpaidSessionId}`, { action: "pay", paymentMethod: "PROMPTPAY" });
+  const pendingChargeId = r.data.payment?.id;
+  r = await req("admin", "POST", `/api/payments/${pendingChargeId}/refund`);
+  check("an unpaid (pending) charge is not refundable → 409", r.status === 409, String(r.status));
+
+  const refunds = await Promise.all([
+    req("admin", "POST", `/api/payments/${chargeRow.id}/refund`),
+    req("admin", "POST", `/api/payments/${chargeRow.id}/refund`),
+  ]);
+  const okRefunds = refunds.filter(x => x.status === 200);
+  check("two concurrent refunds: exactly one succeeds", okRefunds.length === 1 && refunds.some(x => x.status === 409), refunds.map(x => x.status).join(","));
+  const refunded = okRefunds[0]?.data;
+  check("original payment is REFUNDED", refunded?.payment.status === "REFUNDED");
+  check("a REFUND row to the wallet is created", refunded?.refund.type === "REFUND" && refunded.refund.method === "WALLET" && refunded.refund.status === "PAID" && Math.abs(refunded.refund.amount - chargeRow.amount) < 0.01);
+  r = await req("admin", "POST", `/api/payments/${chargeRow.id}/refund`);
+  check("refunding again → 409", r.status === 409);
+
+  r = await req("driver", "GET", "/api/profile");
+  check("wallet credited exactly once", Math.abs(r.data.user.walletBalance - (balanceBeforeRefund + chargeRow.amount)) < 0.01, `${balanceBeforeRefund} + ${chargeRow.amount} → ${r.data.user.walletBalance}`);
+  r = await req("driver", "GET", `/api/charging-sessions/${live.id}`);
+  check("session is REFUNDED", r.data.session.paymentStatus === "REFUNDED");
+  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "WALLET" });
+  check("a refunded session cannot be paid again → 409", r.status === 409);
+  r = await req("driver", "GET", "/api/wallet");
+  check("refund appears in the driver's transactions", r.data.transactions.some(t => t.id === refunded.refund.id && t.type === "REFUND"));
+  check("only one REFUND row for the payment", r.data.transactions.filter(t => t.type === "REFUND" && t.sessionId === live.id).length === 1);
+  r = await req("driver", "GET", "/api/notifications");
+  const refundNote = r.data.notifications.find(n => n.title === "Refund issued");
+  check("driver is notified with a 2-decimal amount", /^฿[\d,]+\.\d{2} refunded to your wallet for session #\d+\. New balance ฿[\d,]+\.\d{2}\.$/.test(refundNote?.body ?? ""), refundNote?.body);
+  r = await req("driver", "GET", `/api/payments/${refunded.refund.id}`);
+  check("driver can open the refund receipt", r.status === 200 && r.data.receipt.payment.type === "REFUND");
+
+  r = await req("admin", "POST", `/api/payments/${ppPaymentId}/refund`);
+  check("a PromptPay charge refunds to the wallet too", r.status === 200 && r.data.refund.method === "WALLET");
+
   section("Dashboard & stats");
   r = await req("driver", "GET", "/api/dashboard");
   check("dashboard payload", r.status === 200 && r.data.stats.totalStations === 20);

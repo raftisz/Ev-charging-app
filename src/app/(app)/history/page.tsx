@@ -28,6 +28,9 @@ const PAYMENT_TONE: Record<PaymentStatus, "green" | "amber" | "danger" | "neutra
 
 const FILTERS = ["All", "Paid", "Unpaid"] as const;
 
+/** Still owes money. A refunded session is settled, not unpaid. */
+const isUnpaid = (s: SessionDTO) => s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED";
+
 export default function HistoryPage() {
   const { user, refreshUser } = useSession();
   const toast = useToast();
@@ -44,7 +47,7 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     if (filter === "Paid") return sessions.filter((s) => s.paymentStatus === "PAID");
     if (filter === "Unpaid")
-      return sessions.filter((s) => s.status !== "ACTIVE" && s.paymentStatus !== "PAID");
+      return sessions.filter((s) => s.status !== "ACTIVE" && isUnpaid(s));
     return sessions;
   }, [sessions, filter]);
 
@@ -55,7 +58,7 @@ export default function HistoryPage() {
       energy: done.reduce((sum, s) => sum + s.energyKwh, 0),
       spend: done.filter((s) => s.paymentStatus === "PAID").reduce((sum, s) => sum + s.cost, 0),
       outstanding: done
-        .filter((s) => s.paymentStatus !== "PAID")
+        .filter(isUnpaid)
         .reduce((sum, s) => sum + s.cost, 0),
     };
   }, [sessions]);

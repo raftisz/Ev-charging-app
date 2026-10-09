@@ -204,3 +204,75 @@ export async function getReceipt(
       : null,
   };
 }
+
+/**
+ * Refunds a paid charge to the driver's wallet. The original payment and its
+ * session become REFUNDED, the wallet is credited and a REFUND row records it,
+ * all in one transaction. Claiming the payment is a conditional update on
+ * status PAID, so a second or concurrent refund of the same payment gets 409.
+ */
+export async function refundPayment(paymentId: number) {
+  const result = await prisma.$transaction(async (tx) => {
+    const original = Number.isInteger(paymentId)
+      ? await tx.payment.findUnique({ where: { id: paymentId } })
+      : null;
+    if (!original) throw notFound("That payment does not exist");
+    if (original.type !== "CHARGE") throw badRequest("Only charging payments can be refunded");
+
+    const claimed = await tx.payment.updateMany({
+      where: { id: original.id, type: "CHARGE", status: "PAID" },
+      data: { status: "REFUNDED" },
+    });
+    if (claimed.count === 0) {
+      throw conflict(
+        original.status === "REFUNDED"
+          ? "This payment has already been refunded"
+          : "Only a paid payment can be refunded",
+      );
+    }
+
+    if (original.sessionId) {
+      await tx.chargingSession.update({
+        where: { id: original.sessionId },
+        data: { paymentStatus: "REFUNDED" },
+      });
+    }
+    const user = await tx.user.update({
+      where: { id: original.userId },
+      data: { walletBalance: { increment: original.amount } },
+    });
+    const refund = await tx.payment.create({
+      data: {
+        userId: original.userId,
+        sessionId: original.sessionId,
+        type: "REFUND",
+        amount: original.amount,
+        method: "WALLET",
+        status: "PAID",
+        providerRef: `REFUND-OF-${original.id}`,
+      },
+      include: paymentInclude,
+    });
+    const payment = await tx.payment.findUniqueOrThrow({
+      where: { id: original.id },
+      include: paymentInclude,
+    });
+    return { payment, refund, balance: user.walletBalance };
+  });
+
+  const { payment, refund, balance } = result;
+  await prisma.notification.create({
+    data: {
+      userId: payment.userId,
+      type: "PAYMENT",
+      title: "Refund issued",
+      body: `${thb(refund.amount)} refunded to your wallet${payment.sessionId ? ` for session #${payment.sessionId}` : ""}. New balance ${thb(balance)}.`,
+    },
+  });
+
+  return {
+    payment: serializePayment(payment),
+    refund: serializePayment(refund),
+    balance,
+  };
+}

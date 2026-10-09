@@ -110,10 +110,10 @@ export async function getAdminStats(): Promise<AdminStats> {
     prisma.user.count({ where: { isActive: true } }),
     prisma.chargingSession.aggregate({
       _sum: { energyKwh: true, cost: true },
-      where: { paymentStatus: { not: "FAILED" } },
+      where: { paymentStatus: { in: ["PAID", "PENDING"] } },
     }),
     prisma.chargingSession.findMany({
-      where: { startTime: { gte: daysAgo(29) }, paymentStatus: { not: "FAILED" } },
+      where: { startTime: { gte: daysAgo(29) }, paymentStatus: { in: ["PAID", "PENDING"] } },
       select: { startTime: true, cost: true, energyKwh: true },
     }),
     prisma.reservation.count(),

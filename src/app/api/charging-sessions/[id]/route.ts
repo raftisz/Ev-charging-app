@@ -87,6 +87,7 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
   if (action === "pay") {
     if (session.status === "ACTIVE") throw conflict("Stop the session before paying");
     if (session.paymentStatus === "PAID") throw conflict("This session is already paid");
+    if (session.paymentStatus === "REFUNDED") throw conflict("This session was refunded");
     const { paymentMethod: method } = paySessionSchema.parse(body);
     const label = PAYMENT_METHOD_LABEL[method];
     const total = toSatang(session.cost);
@@ -109,7 +110,11 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
     // Either one fails and the whole transaction rolls back.
     const updated = await prisma.$transaction(async (tx) => {
       const claimed = await tx.chargingSession.updateMany({
-        where: { id: session.id, status: { not: "ACTIVE" }, paymentStatus: { not: "PAID" } },
+        where: {
+          id: session.id,
+          status: { not: "ACTIVE" },
+          paymentStatus: { in: ["PENDING", "FAILED"] },
+        },
         data: { paymentStatus: "PAID", paymentMethod: label },
       });
       if (claimed.count === 0) throw conflict("This session is already paid");

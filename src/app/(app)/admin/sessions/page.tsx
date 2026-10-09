@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
@@ -12,15 +13,22 @@ import { StatTile } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
+import { useSession } from "@/components/layout/SessionProvider";
 import type { SessionDTO } from "@/lib/types";
 
 const FILTERS = ["All", "Active", "Completed", "Unpaid"] as const;
+
+const isUnpaid = (s: SessionDTO) => s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED";
 
 export default function AdminSessionsPage() {
   const toast = useToast();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [stopping, setStopping] = useState<SessionDTO | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refunding, setRefunding] = useState<SessionDTO | null>(null);
+  const { user } = useSession();
+  // Operators can see sessions but only admins move money back.
+  const isAdmin = user.role === "ADMIN";
 
   const { data, loading, error, reload } = useAsync(() => api.sessions({ all: true, limit: 200 }));
   usePolling(() => void reload(true), 20_000, true);
@@ -31,7 +39,7 @@ export default function AdminSessionsPage() {
     if (filter === "Active") return sessions.filter((s) => s.status === "ACTIVE");
     if (filter === "Completed") return sessions.filter((s) => s.status !== "ACTIVE");
     if (filter === "Unpaid")
-      return sessions.filter((s) => s.status !== "ACTIVE" && s.paymentStatus !== "PAID");
+      return sessions.filter((s) => s.status !== "ACTIVE" && isUnpaid(s));
     return sessions;
   }, [sessions, filter]);
 
@@ -43,11 +51,26 @@ export default function AdminSessionsPage() {
         .filter((s) => s.paymentStatus === "PAID")
         .reduce((sum, s) => sum + s.cost, 0),
       outstanding: sessions
-        .filter((s) => s.status !== "ACTIVE" && s.paymentStatus !== "PAID")
+        .filter((s) => s.status !== "ACTIVE" && isUnpaid(s))
         .reduce((sum, s) => sum + s.cost, 0),
     }),
     [sessions],
   );
+
+  async function refund() {
+    if (!refunding?.receiptId) return;
+    setBusy(true);
+    try {
+      const res = await api.refundPayment(refunding.receiptId);
+      toast.push(`Refunded ${thb(res.refund.amount)} to ${refunding.user?.fullName ?? "the driver"}'s wallet`);
+      setRefunding(null);
+      void reload(true);
+    } catch (err) {
+      toast.push(err instanceof ApiRequestError ? err.message : "Refund failed", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function stop() {
     if (!stopping) return;
@@ -150,8 +173,20 @@ export default function AdminSessionsPage() {
                       {s.status === "ACTIVE" ? (
                         <Badge tone="brand">{s.currentPercent}% · {duration(s.minutesElapsed)}</Badge>
                       ) : (
-                        <Badge tone={s.paymentStatus === "PAID" ? "green" : "amber"}>
-                          {s.paymentStatus === "PAID" ? "Paid" : "Unpaid"}
+                        <Badge
+                          tone={
+                            s.paymentStatus === "PAID"
+                              ? "green"
+                              : s.paymentStatus === "REFUNDED"
+                                ? "neutral"
+                                : "amber"
+                          }
+                        >
+                          {s.paymentStatus === "PAID"
+                            ? "Paid"
+                            : s.paymentStatus === "REFUNDED"
+                              ? "Refunded"
+                              : "Unpaid"}
                         </Badge>
                       )}
                     </span>
@@ -166,7 +201,21 @@ export default function AdminSessionsPage() {
                           Stop
                         </Button>
                       ) : (
-                        <span className="text-[12px] text-faint">—</span>
+                        <span className="flex items-center gap-2">
+                          {s.receiptId ? (
+                            <Link href={`/receipts/${s.receiptId}`} className="text-[12px] font-semibold text-brand">
+                              Receipt
+                            </Link>
+                          ) : null}
+                          {isAdmin && s.paymentStatus === "PAID" && s.receiptId ? (
+                            <Button size="sm" variant="ghost" onClick={() => setRefunding(s)}>
+                              Refund
+                            </Button>
+                          ) : null}
+                          {!s.receiptId && !(isAdmin && s.paymentStatus === "PAID") ? (
+                            <span className="text-[12px] text-faint">—</span>
+                          ) : null}
+                        </span>
                       )}
                     </div>
                   </li>
@@ -193,6 +242,27 @@ export default function AdminSessionsPage() {
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={stop}>
               Stop session
+            </Button>
+          </>
+        }
+      />
+
+      <Modal
+        open={Boolean(refunding)}
+        onClose={() => setRefunding(null)}
+        title="Refund this payment?"
+        description={
+          refunding
+            ? `${thb(refunding.cost)} goes back to ${refunding.user?.fullName ?? "the driver"}'s wallet for session #${refunding.id} at ${refunding.station.name}. A payment can be refunded once.`
+            : undefined
+        }
+        footer={
+          <>
+            <Button variant="secondary" fullWidth onClick={() => setRefunding(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth loading={busy} onClick={refund}>
+              Refund {refunding ? thb(refunding.cost) : ""}
             </Button>
           </>
         }

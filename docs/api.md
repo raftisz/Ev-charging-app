@@ -27,6 +27,7 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET | `/api/wallet` | Wallet balance and the latest 50 transactions (`Payment` rows) |
 | POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` (PromptPay: `202` + QR) |
 | GET | `/api/payments/{id}` | One payment as a receipt (payer or admin; otherwise `404`) |
+| POST | `/api/payments/{id}/refund` | Refund a paid charge to the driver's wallet (`ADMIN` only) |
 | POST | `/api/payments/{id}/confirm` | Confirm a pending PromptPay payment (simulated, payer only) |
 | GET/PATCH | `/api/notifications` | List · mark all read |
 | PATCH/DELETE | `/api/notifications/{id}` | Mark read · delete |
@@ -118,6 +119,24 @@ can save it as an A4 PDF.
 Only the payer and `ADMIN` users can open a receipt. Anyone else, operators
 included, gets `404` from both the API and the page, so receipt ids cannot be
 probed. Sessions carry `receiptId`, the payment that settled them.
+
+## Refunds
+
+`POST /api/payments/{id}/refund` is for `ADMIN` users only; operators and
+drivers get `403`. It refunds a `CHARGE` payment whose status is `PAID`, back
+to the driver's wallet whatever the original method was. In one transaction:
+
+1. The payment is claimed with a conditional update on `status = PAID` and
+   set to `REFUNDED`. A second refund, even a concurrent one, gets `409`.
+2. The session's `paymentStatus` becomes `REFUNDED`. It cannot be paid again.
+3. The wallet is credited with the amount.
+4. A `Payment` row with `type: REFUND`, `method: WALLET` records it, with
+   `providerRef: REFUND-OF-<original id>`.
+
+Then the driver gets a `PAYMENT` notification. A pending (unpaid) charge
+gets `409`, a top-up or refund row `400`, an unknown id `404`. The response is
+`{ payment, refund, balance }`. Refunded sessions are left out of revenue in
+the admin stats. The Refund button is on `/admin/sessions`.
 
 ## Wallet top-up
 

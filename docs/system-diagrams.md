@@ -86,7 +86,7 @@ flowchart TB
     end
 
     subgraph QA["Quality"]
-        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>134 cases"] --- Q4["Playwright UI<br/>74 cases"] --- Q5["Time zone unit<br/>20 cases, TZ=UTC"] --- Q6["Money format unit<br/>9 cases"]
+        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>177 cases"] --- Q4["Playwright UI<br/>89 cases"] --- Q5["Time zone unit<br/>20 cases, TZ=UTC"] --- Q6["Money format unit<br/>9 cases"] --- Q7["PromptPay payload unit<br/>16 cases"]
     end
 
     subgraph OPS["DevOps / Deploy"]
@@ -220,6 +220,7 @@ flowchart LR
     W --> I
     B --> K["Favourites / Profile / Vehicle"]
     L["Operator / Admin"] --> M["Admin console<br/>stations, chargers,<br/>reservations, sessions, users"]
+    M -->|"ADMIN only"| RF["Refund to wallet"]
 ```
 
 ## 6. PromptPay Payment Flow
@@ -243,5 +244,23 @@ sequenceDiagram
     API->>DB: $transaction: Payment PAID +<br/>session PAID หรือ wallet += ยอด
     API->>DB: Notification
     API-->>UI: 200
+```
+
+## 7. Refund Flow (Admin)
+
+```mermaid
+sequenceDiagram
+    actor A as Admin
+    participant UI as /admin/sessions
+    participant API as POST /api/payments/{id}/refund
+    participant DB as PostgreSQL
+
+    A->>UI: กด Refund บนรายการที่ Paid
+    UI->>API: refund
+    API->>API: role ต้องเป็น ADMIN (OPERATOR ได้ 403)
+    API->>DB: $transaction
+    Note over DB: Payment PAID → REFUNDED (updateMany แบบมีเงื่อนไข, ซ้ำได้ 409)<br/>Session → REFUNDED<br/>Wallet += ยอด<br/>Payment ใหม่ type REFUND
+    API->>DB: Notification "Refund issued"
+    API-->>UI: 200 { payment, refund, balance }
 ```
 

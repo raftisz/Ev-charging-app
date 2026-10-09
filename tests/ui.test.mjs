@@ -351,6 +351,33 @@ console.log("\n=== Receipt ===");
   await ctx.close();
 }
 
+// ---------- REFUND ----------
+console.log("\n=== Admin refund ===");
+{
+  const op = await newPage({ width: 1440, height: 900 }, "refund-operator");
+  await login(op.page, "operator@example.com");
+  await op.page.goto(`${BASE}/admin/sessions`, { waitUntil: "networkidle" });
+  await op.page.waitForTimeout(1500);
+  check("operator sees no Refund buttons", (await op.page.locator('button:has-text("Refund")').count()) === 0);
+  await op.ctx.close();
+
+  const { ctx, page } = await newPage({ width: 1440, height: 900 }, "refund-admin");
+  await login(page, "admin@example.com");
+  await page.goto(`${BASE}/admin/sessions`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  const before = await page.locator('li button:text-is("Refund")').count();
+  check("admin sees Refund on paid sessions", before > 0, String(before));
+  await page.locator('li button:text-is("Refund")').first().click();
+  await page.waitForSelector("text=Refund this payment?");
+  await page.click('button:has-text("Refund ฿")');
+  await page.waitForSelector("text=/Refunded ฿[\\d,]+\\.\\d{2} to/", { timeout: 8000 });
+  await page.waitForTimeout(1200);
+  check("refunded row shows Refunded", (await page.locator('li:has-text("Refunded")').count()) > 0);
+  check("one fewer Refund button", (await page.locator('li button:text-is("Refund")').count()) === before - 1);
+  await page.screenshot({ path: `${OUT}/admin-refund.png` });
+  await ctx.close();
+}
+
 // ---------- TIME ZONE ----------
 // A browser in UTC (as the Vercel server is) must still offer, book and show
 // Bangkok times: the slot picked is the slot booked and the time displayed.

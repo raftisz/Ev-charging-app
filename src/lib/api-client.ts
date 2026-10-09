@@ -146,6 +146,8 @@ export const api = {
       amount,
       method,
     }),
+  refundPayment: (id: number) =>
+    post<{ payment: PaymentDTO; refund: PaymentDTO; balance: number }>(`/api/payments/${id}/refund`),
   confirmPayment: (id: number) =>
     post<{ payment: PaymentDTO; balance: number | null }>(`/api/payments/${id}/confirm`),
 
