@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
-import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
+import { EmptyState, ErrorState, FormError, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { PaymentStatus, SessionDTO } from "@/lib/types";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
+import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 
 const PAYMENT_TONE: Record<PaymentStatus, "green" | "amber" | "danger" | "neutral"> = {
   PAID: "green",
@@ -30,6 +32,8 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
   const [paying, setPaying] = useState(false);
+  const [method, setMethod] = useState<PaymentMethod>("WALLET");
+  const [payError, setPayError] = useState<string | null>(null);
 
   const { data, loading, error, reload } = useAsync(() => api.sessions({}));
   const sessions = useMemo(() => data?.sessions ?? [], [data]);
@@ -53,17 +57,24 @@ export default function HistoryPage() {
     };
   }, [sessions]);
 
+  function openPay(session: SessionDTO) {
+    setPayError(null);
+    setMethod(user.walletBalance >= session.cost ? "WALLET" : "CREDIT_CARD");
+    setPayFor(session);
+  }
+
   async function pay() {
     if (!payFor) return;
     setPaying(true);
+    setPayError(null);
     try {
-      await api.paySession(payFor.id, "Volt Grid wallet");
-      toast.push(`Paid ${thb(payFor.cost)} from your wallet`);
+      await api.paySession(payFor.id, method);
+      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
       setPayFor(null);
       await refreshUser();
       void reload(true);
     } catch (err) {
-      toast.push(err instanceof ApiRequestError ? err.message : "Payment failed", "error");
+      setPayError(err instanceof ApiRequestError ? err.message : "Payment failed");
     } finally {
       setPaying(false);
     }
@@ -168,7 +179,7 @@ export default function HistoryPage() {
                       ) : s.paymentStatus === "PAID" ? (
                         <Badge tone="green">Paid</Badge>
                       ) : (
-                        <Button size="sm" variant="tint" onClick={() => setPayFor(s)}>
+                        <Button size="sm" variant="tint" onClick={() => openPay(s)}>
                           Pay {thb(s.cost)}
                         </Button>
                       )}
@@ -209,7 +220,7 @@ export default function HistoryPage() {
                         {thb(s.cost)}
                       </span>
                       {s.status !== "ACTIVE" && s.paymentStatus !== "PAID" ? (
-                        <Button size="sm" onClick={() => setPayFor(s)}>
+                        <Button size="sm" onClick={() => openPay(s)}>
                           Pay
                         </Button>
                       ) : null}
@@ -225,11 +236,9 @@ export default function HistoryPage() {
       <Modal
         open={Boolean(payFor)}
         onClose={() => setPayFor(null)}
-        title="Pay from your wallet"
+        title="Pay for this session"
         description={
-          payFor
-            ? `${payFor.station.name} · ${kwh(payFor.energyKwh)}. Wallet balance ${thb(user.walletBalance)}.`
-            : undefined
+          payFor ? `${payFor.station.name} · ${kwh(payFor.energyKwh)} · ${thb(payFor.cost)}` : undefined
         }
         footer={
           <>
@@ -241,7 +250,17 @@ export default function HistoryPage() {
             </Button>
           </>
         }
-      />
+      >
+        <div className="space-y-3">
+          <FormError message={payError} />
+          <PaymentMethodPicker
+            value={method}
+            onChange={setMethod}
+            walletBalance={user.walletBalance}
+            amount={payFor?.cost ?? 0}
+          />
+        </div>
+      </Modal>
     </Page>
   );
 }

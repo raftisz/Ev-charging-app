@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
@@ -14,12 +13,8 @@ import { EmptyState, ErrorState, FormError } from "@/components/ui/States";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import type { SessionDTO } from "@/lib/types";
-
-const METHODS = [
-  { key: "Volt Grid wallet", hint: "Instant, no fees" },
-  { key: "Credit card", hint: "Visa · Mastercard" },
-  { key: "PromptPay QR", hint: "Scan to pay" },
-] as const;
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
+import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 
 export default function ChargingPage() {
   const toast = useToast();
@@ -27,7 +22,7 @@ export default function ChargingPage() {
   const [stopping, setStopping] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
-  const [method, setMethod] = useState<string>(METHODS[0].key);
+  const [method, setMethod] = useState<PaymentMethod>("WALLET");
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -76,7 +71,7 @@ export default function ChargingPage() {
     setPaying(true);
     try {
       await api.paySession(payFor.id, method);
-      toast.push(`Paid ${thb(payFor.cost)} with ${method}`);
+      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
       setPayFor(null);
       await refreshUser();
       void reload(true);
@@ -347,37 +342,12 @@ export default function ChargingPage() {
       >
         <div className="space-y-3">
           {payError ? <FormError message={payError} /> : null}
-          <div className="space-y-2">
-            {METHODS.map((m) => (
-              <button
-                key={m.key}
-                onClick={() => setMethod(m.key)}
-                className={clsx(
-                  "flex w-full items-center gap-3 rounded-[16px] px-4 py-3.5 text-left transition-colors",
-                  method === m.key
-                    ? "bg-brand-tint ring-2 ring-brand"
-                    : "bg-surface hover:bg-surface-alt",
-                )}
-              >
-                <span
-                  className={clsx(
-                    "flex h-4 w-4 items-center justify-center rounded-full border-2",
-                    method === m.key ? "border-brand" : "border-line-strong",
-                  )}
-                >
-                  {method === m.key ? <span className="h-2 w-2 rounded-full bg-brand" /> : null}
-                </span>
-                <span className="flex-1">
-                  <span className="block text-[13.5px] font-semibold text-ink">{m.key}</span>
-                  <span className="block text-[12px] text-faint">
-                    {m.key === "Volt Grid wallet"
-                      ? `Balance ${thb(user.walletBalance)}`
-                      : m.hint}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
+          <PaymentMethodPicker
+            value={method}
+            onChange={setMethod}
+            walletBalance={user.walletBalance}
+            amount={payFor?.cost ?? 0}
+          />
           {payFor ? (
             <dl className="rounded-[16px] bg-surface p-4 text-[13px]">
               <Row label="Energy" value={kwh(payFor.energyKwh)} />

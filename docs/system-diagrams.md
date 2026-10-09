@@ -86,7 +86,7 @@ flowchart TB
     end
 
     subgraph QA["Quality"]
-        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>92 cases"] --- Q4["Playwright UI<br/>57 cases"]
+        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>117 cases"] --- Q4["Playwright UI<br/>57 cases"]
     end
 
     subgraph OPS["DevOps / Deploy"]
@@ -213,7 +213,7 @@ flowchart LR
     E --> F
     F --> G["Live session<br/>% / kWh / cost"]
     G --> H["Stop charging"]
-    H --> I["Pay"]
+    H --> I["Pay<br/>wallet / card / PromptPay"]
     I --> J["History + Notifications"]
     I -.->|"balance too low"| W["Wallet<br/>top up + transactions"]
     W --> I

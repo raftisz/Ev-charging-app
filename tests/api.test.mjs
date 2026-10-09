@@ -228,6 +228,15 @@ const run = async () => {
   r = await req("driver", "GET", "/api/stations/1");
   check("charger released back to AVAILABLE", r.data.station.chargers.find(c => c.id === freeCharger.id).status === "AVAILABLE");
 
+  r = await req("driver", "GET", "/api/profile");
+  const balanceBeforePromptPay = r.data.user.walletBalance;
+  r = await req("driver", "PATCH", `/api/charging-sessions/${newSessionId}`, { action: "pay", paymentMethod: "PROMPTPAY" });
+  check("pay with PromptPay", r.status === 200 && r.data.session.paymentMethod === "PromptPay QR", JSON.stringify(r.data).slice(0, 200));
+  r = await req("driver", "GET", "/api/profile");
+  check("PromptPay does not touch the wallet", r.data.user.walletBalance === balanceBeforePromptPay);
+  r = await req("driver", "GET", "/api/wallet");
+  check("PromptPay payment recorded", r.data.transactions.some(t => t.sessionId === newSessionId && t.method === "PROMPTPAY"));
+
   section("Dashboard & stats");
   r = await req("driver", "GET", "/api/dashboard");
   check("dashboard payload", r.status === 200 && r.data.stats.totalStations === 20);
