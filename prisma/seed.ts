@@ -82,13 +82,16 @@ function stationStatusFor(isOpen: boolean, free: number, total: number, id: numb
 async function resyncSequences() {
   const tables = [
     "User", "Station", "Charger", "Connector",
-    "Reservation", "ChargingSession", "Notification", "Favorite",
+    "Reservation", "ChargingSession", "Notification", "Favorite", "Payment",
   ];
   for (const table of tables) {
+    // Raw SQL does not get the adapter's schema, so name it explicitly or a
+    // `?schema=` deploy resyncs the sequences in `public` instead.
+    const name = schema ? `"${schema}"."${table}"` : `"${table}"`;
     await prisma.$executeRawUnsafe(
       `SELECT setval(
-         pg_get_serial_sequence('"${table}"', 'id'),
-         COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1,
+         pg_get_serial_sequence('${name}', 'id'),
+         COALESCE((SELECT MAX(id) FROM ${name}), 0) + 1,
          false
        )`,
     );
