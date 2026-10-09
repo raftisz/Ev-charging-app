@@ -18,6 +18,7 @@
     "test:tz": "TZ=UTC tsx tests/timezone.test.ts",
     "test:format": "tsx tests/format.test.ts",
     "test:promptpay": "tsx tests/promptpay.test.ts",
+    "test:photos": "tsx tests/station-photos.test.ts",
     "seed:if-empty": "tsx prisma/seed.ts --if-empty",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",

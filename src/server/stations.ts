@@ -81,6 +81,8 @@ export function serializeStation(
     etaMin: etaMinutes(dist),
     isFavorite: favoriteIds.has(station.id),
     isOpen: station.status === "AVAILABLE" || station.status === "BUSY",
+    imageUrl: station.imageUrl,
+    imageHue: station.imageHue,
     chargers,
   };
 }

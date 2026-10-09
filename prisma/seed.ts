@@ -18,6 +18,7 @@ import type {
 } from "../src/generated/prisma/enums";
 import { STATION_ROWS, type ConnectorName } from "./stations";
 import { parseDatabaseUrl, requireDatabaseUrl } from "../src/server/env";
+import { STATION_PHOTOS } from "../src/lib/station-photos";
 
 const { connectionString, schema } = parseDatabaseUrl(requireDatabaseUrl());
 
@@ -188,6 +189,7 @@ async function main() {
         reviewCount: 40 + Math.floor(rand() * 320),
         amenities,
         imageHue: 200 + Math.floor(rand() * 60),
+        imageUrl: STATION_PHOTOS[name]?.src ?? null,
         chargers: {
           create: chargerSpecs.map(([code, connector, kw, available]) => {
             let chargerStatus: ChargerStatus = available ? "AVAILABLE" : "CHARGING";

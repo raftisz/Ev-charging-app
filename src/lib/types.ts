@@ -85,6 +85,10 @@ export type StationDTO = {
   etaMin: number;
   isFavorite: boolean;
   isOpen: boolean;
+  /** Path of the station photo under /public, or null to draw the gradient. */
+  imageUrl: string | null;
+  /** Hue of the fallback gradient. */
+  imageHue: number;
 };
 
 export type StationDetailDTO = StationDTO & {

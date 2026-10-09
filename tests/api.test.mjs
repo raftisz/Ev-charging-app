@@ -109,6 +109,13 @@ const run = async () => {
   check("list stations", r.status === 200 && stations.length === 20, `got ${stations?.length}`);
   check("stations sorted by distance", stations[0].distanceKm <= stations[1].distanceKm);
   check("station has derived fields", typeof stations[0].availableCount === "number" && Array.isArray(stations[0].amenities));
+  check("every seeded station has a photo URL", stations.every(s => /^\/stations\/[a-z0-9-]+\.webp$/.test(s.imageUrl ?? "")), JSON.stringify(stations.find(s => !s.imageUrl)?.name));
+  check("photos are unique per station", new Set(stations.map(s => s.imageUrl)).size === stations.length);
+  check("stations carry a gradient hue for the fallback", stations.every(s => Number.isInteger(s.imageHue)));
+  let photo = await fetch(BASE + stations[0].imageUrl);
+  check("a station photo is served as WebP", photo.status === 200 && photo.headers.get("content-type") === "image/webp", `${photo.status} ${photo.headers.get("content-type")}`);
+  photo = await fetch(BASE + "/_next/image?url=" + encodeURIComponent(stations[0].imageUrl) + "&w=640&q=75", { headers: { Accept: "image/webp" } });
+  check("next/image can resize a station photo", photo.status === 200 && /^image\//.test(photo.headers.get("content-type") ?? ""), String(photo.status));
 
   r = await req("driver", "GET", "/api/stations?q=Siam");
   check("search q=Siam", r.status === 200 && r.data.stations.every(s => /siam/i.test(s.name + s.address)) && r.data.stations.length > 0);
@@ -453,6 +460,7 @@ const run = async () => {
   });
   check("admin creates station", r.status === 201, JSON.stringify(r.data).slice(0,200));
   const testStationId = r.data?.station?.id;
+  check("a new station has no photo (imageUrl null)", r.data?.station?.imageUrl === null && Number.isInteger(r.data?.station?.imageHue));
 
   r = await req("driver", "POST", "/api/stations", { name: "Nope", address: "x y z", latitude: 1, longitude: 1, pricePerKwh: 5 });
   check("driver cannot create station → 403", r.status === 403);

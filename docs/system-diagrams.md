@@ -139,6 +139,8 @@ erDiagram
         float longitude
         string status
         float pricePerKwh
+        int imageHue
+        string imageUrl "optional, /stations/*.webp"
     }
     Charger {
         int id PK

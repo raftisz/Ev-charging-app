@@ -36,6 +36,16 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/PATCH/DELETE | `/api/users/{id}` | Detail · update role/wallet/active · delete (admin) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
 
+## Station photos
+
+Every station object has `imageUrl` (a path under `/public`, such as
+`/stations/siam-green-station.webp`, or `null`) and `imageHue`. The UI shows
+the photo through `next/image`; when `imageUrl` is `null`, for example for a
+station an admin has just added, it draws a gradient in `imageHue` instead.
+The 20 seeded photos are credited in [credits](credits.md). Existing
+databases get them from the `add_station_image_url` migration, which matches
+stations by name and only fills empty values.
+
 ## Money
 
 Amounts are baht stored as numbers rounded to 2 decimals (satang) before

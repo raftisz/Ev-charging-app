@@ -123,6 +123,9 @@ model Station {
   reviewCount    Int           @default(0)
   amenities      String        @default("")
   imageHue       Int           @default(220)
+  /// Path under /public (e.g. /stations/siam-green-station.webp). Null means
+  /// "no photo": the UI draws a gradient from imageHue instead.
+  imageUrl       String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
