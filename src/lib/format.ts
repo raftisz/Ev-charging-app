@@ -1,3 +1,5 @@
+import { APP_TIME_ZONE } from "@/lib/timezone";
+
 const BAHT = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
@@ -33,12 +35,21 @@ export function duration(minutes: number) {
   return rest ? `${h} h ${rest} min` : `${h} h`;
 }
 
+// Times are shown in Bangkok time whatever zone the browser or server is in.
 const TIME = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
 });
-const DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+const DAY = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
+  day: "numeric",
+  month: "short",
+});
+const DAY_OF_MONTH = new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, day: "numeric" });
+const MONTH = new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, month: "short" });
 const FULL = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
   weekday: "long",
   day: "numeric",
   month: "long",
@@ -50,6 +61,8 @@ export const asDate = (value: string | Date) =>
 export const time = (value: string | Date) => TIME.format(asDate(value));
 export const dayMonth = (value: string | Date) => DAY.format(asDate(value));
 export const fullDate = (value: string | Date) => FULL.format(asDate(value));
+export const dayOfMonth = (value: string | Date) => DAY_OF_MONTH.format(asDate(value));
+export const monthShort = (value: string | Date) => MONTH.format(asDate(value));
 
 export function dateTime(value: string | Date) {
   const d = asDate(value);

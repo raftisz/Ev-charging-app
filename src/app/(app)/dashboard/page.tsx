@@ -5,7 +5,8 @@ import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
-import { dayMonth, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
+import { dayMonth, dayOfMonth, duration, fullDate, kwh, monthShort, relative, thb, time } from "@/lib/format";
+import { bangkokTime } from "@/lib/timezone";
 import { Button } from "@/components/ui/Button";
 import { BarChart, ProgressRing, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
@@ -19,7 +20,7 @@ export default function DashboardPage() {
   // The live session keeps advancing, so refresh it while one is running.
   usePolling(() => void reload(true), 15_000, Boolean(data?.activeSession));
 
-  const hour = new Date().getHours();
+  const hour = Number(bangkokTime(new Date()).slice(0, 2));
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
@@ -170,10 +171,10 @@ export default function DashboardPage() {
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[16px] bg-brand-tint">
                       <span className="font-display text-[16px] leading-none font-bold text-brand">
-                        {new Date(data.nextReservation.startTime).getDate()}
+                        {dayOfMonth(data.nextReservation.startTime)}
                       </span>
                       <span className="text-[9.5px] font-semibold text-brand uppercase">
-                        {dayMonth(data.nextReservation.startTime).split(" ")[1]}
+                        {monthShort(data.nextReservation.startTime)}
                       </span>
                     </div>
                     <div className="min-w-0">

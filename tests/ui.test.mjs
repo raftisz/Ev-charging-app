@@ -22,8 +22,8 @@ const check = (n, c, extra = "") => {
 
 const browser = await chromium.launch();
 
-async function newPage(viewport, name) {
-  const ctx = await browser.newContext({ viewport });
+async function newPage(viewport, name, options = {}) {
+  const ctx = await browser.newContext({ viewport, ...options });
   const page = await ctx.newPage();
   page.on("console", (m) => {
     if (m.type() === "error") errors.push(`[${name}] ${m.text()}`);
@@ -271,6 +271,44 @@ console.log("\n=== Registration flow ===");
   await page.waitForTimeout(1800);
   check("new user sees empty-state dashboard", (await page.textContent("body")).includes("Nothing charging right now"));
   await page.screenshot({ path: `${OUT}/desktop-dashboard-new-user.png` });
+  await ctx.close();
+}
+
+// ---------- TIME ZONE ----------
+// A browser in UTC (as the Vercel server is) must still offer, book and show
+// Bangkok times: the slot picked is the slot booked and the time displayed.
+console.log("\n=== Booking from a UTC browser ===");
+{
+  const { ctx, page } = await newPage({ width: 1280, height: 900 }, "utc", { timezoneId: "UTC" });
+  check("browser runs in UTC", (await page.evaluate(() => new Date(0).getTimezoneOffset())) === 0);
+  await login(page, "user2@example.com");
+  await page.goto(`${BASE}/reservations/new?station=6`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+  await page.selectOption('select[aria-label="Choose a day"]', { index: 2 });
+  await page.waitForTimeout(1800);
+  const want = page.locator("button:not([disabled])").filter({ hasText: /^16:30$/ }).first();
+  const pick = (await want.count()) ? want : page.locator("button:not([disabled])").filter({ hasText: /^\d{2}:\d{2}$/ }).first();
+  const label = (await pick.textContent()).trim();
+  await pick.click();
+  await page.waitForTimeout(600);
+  const when = await page.locator("dt:has-text('When') + dd").textContent();
+  check(`summary shows the picked slot (${label})`, when.trim().endsWith(label), when);
+
+  const [created] = await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith("/api/reservations") && r.request().method() === "POST"),
+    page.click('button:has-text("Confirm reservation")'),
+  ]);
+  const { reservation } = await created.json();
+  const bkk = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  check("booked start is the picked slot in Bangkok", bkk.format(new Date(reservation.startTime)) === label, reservation.startTime);
+
+  await page.waitForURL("**/reservations", { timeout: 15000 });
+  await page.waitForTimeout(1200);
+  const row = page.locator("li", { hasText: reservation.station.name }).first();
+  check("reservation list shows the same time", ((await row.textContent()) ?? "").includes(`${label} –`), (await row.textContent())?.slice(0, 120));
+  await page.screenshot({ path: `${OUT}/utc-reservation.png` });
+
+  await page.request.patch(`${BASE}/api/reservations/${reservation.id}`, { data: { status: "CANCELLED" } });
   await ctx.close();
 }
 

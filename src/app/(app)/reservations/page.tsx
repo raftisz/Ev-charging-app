@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { dateTime, kwh, thb, time } from "@/lib/format";
+import { dateTime, dayOfMonth, kwh, monthShort, thb, time } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -121,12 +121,10 @@ export default function ReservationsPage() {
                 <div className="flex flex-wrap items-start gap-3">
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[16px] bg-brand-tint">
                     <span className="font-display text-[17px] leading-none font-bold text-brand">
-                      {new Date(r.startTime).getDate()}
+                      {dayOfMonth(r.startTime)}
                     </span>
                     <span className="text-[10px] font-semibold text-brand uppercase">
-                      {new Intl.DateTimeFormat("en-GB", { month: "short" }).format(
-                        new Date(r.startTime),
-                      )}
+                      {monthShort(r.startTime)}
                     </span>
                   </div>
 

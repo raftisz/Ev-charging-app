@@ -86,7 +86,7 @@ flowchart TB
     end
 
     subgraph QA["Quality"]
-        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>117 cases"] --- Q4["Playwright UI<br/>57 cases"]
+        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>124 cases"] --- Q4["Playwright UI<br/>61 cases"] --- Q5["Time zone unit<br/>13 cases, TZ=UTC"]
     end
 
     subgraph OPS["DevOps / Deploy"]
@@ -208,7 +208,7 @@ flowchart LR
     A["Landing / Login / Register"] --> B["Dashboard"]
     B --> C["Find a station<br/>map + filters"]
     C --> D["Station detail<br/>chargers + connectors"]
-    D --> E["Reserve a time slot<br/>clash check"]
+    D --> E["Reserve a time slot<br/>Bangkok time + clash check"]
     D --> F["Start charging"]
     E --> F
     F --> G["Live session<br/>% / kWh / cost"]
