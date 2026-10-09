@@ -274,6 +274,70 @@ console.log("\n=== Registration flow ===");
   await ctx.close();
 }
 
+// ---------- STATION PHOTOS ----------
+// Real photos on cards, the detail header, the dashboard suggestions and the
+// booking summary; a station without imageUrl falls back to the gradient.
+console.log("\n=== Station photos ===");
+{
+  const { ctx, page } = await newPage({ width: 1440, height: 900 }, "photos");
+  await login(page, "user1@example.com");
+  const loadedPhotos = async (minCount) => {
+    await page.waitForFunction((n) => {
+      const imgs = [...document.querySelectorAll('[data-testid="station-photo"] img')];
+      return imgs.length >= n && imgs.slice(0, n).every((i) => i.complete && i.naturalWidth > 0);
+    }, minCount, { timeout: 15000 }).catch(() => {});
+    return page.$$eval('[data-testid="station-photo"] img', (imgs) => imgs.map((i) => ({
+      alt: i.alt, ok: i.complete && i.naturalWidth > 0, fit: getComputedStyle(i).objectFit,
+      ratio: i.getBoundingClientRect().width / i.getBoundingClientRect().height,
+      box: i.parentElement.getBoundingClientRect().width / i.parentElement.getBoundingClientRect().height,
+    })));
+  };
+
+  await page.goto(`${BASE}/stations`, { waitUntil: "networkidle" });
+  let imgs = await loadedPhotos(3);
+  check("station cards show photos", imgs.length >= 3 && imgs.slice(0, 3).every((i) => i.ok), JSON.stringify(imgs.slice(0, 3)));
+  check("card photos have alt text", imgs.every((i) => i.alt.length > 10));
+  check("photos are cropped, not stretched (object-fit: cover)", imgs.every((i) => i.fit === "cover" && Math.abs(i.ratio - i.box) < 0.02));
+
+  await page.goto(`${BASE}/stations/8`, { waitUntil: "networkidle" });
+  imgs = await loadedPhotos(1);
+  check("station detail header shows the photo", imgs[0]?.ok === true);
+  const title = page.locator('[data-testid="station-photo"] h2');
+  check("title over the photo is white with a shadow", await title.evaluate((el) => getComputedStyle(el).color === "rgb(255, 255, 255)" && getComputedStyle(el).textShadow !== "none"));
+  await page.screenshot({ path: `${OUT}/station-detail-photo.png` });
+
+  await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
+  imgs = await loadedPhotos(2);
+  check("dashboard suggestions show photos", imgs.length >= 2 && imgs.slice(0, 2).every((i) => i.ok));
+
+  await page.goto(`${BASE}/reservations/new?station=8`, { waitUntil: "networkidle" });
+  imgs = await loadedPhotos(1);
+  check("booking summary shows the station photo", imgs[0]?.ok === true);
+
+  // A station an admin has just added has no photo.
+  const admin = await newPage({ width: 1440, height: 900 }, "photos-admin");
+  await login(admin.page, "admin@example.com");
+  const created = await admin.page.request.post(`${BASE}/api/stations`, { data: {
+    name: "Photo Fallback Depot", address: "9 Test Road, Bangkok", latitude: 13.75, longitude: 100.52, pricePerKwh: 8.5, status: "AVAILABLE",
+  } });
+  const { station } = await created.json();
+  check("new station has no imageUrl", station.imageUrl === null);
+  await page.goto(`${BASE}/stations/${station.id}`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="station-photo"]');
+  const fallback = page.locator('[data-testid="station-photo"]').first();
+  check("detail page falls back to the gradient", (await fallback.getAttribute("data-photo")) === "fallback" && (await fallback.locator("img").count()) === 0);
+  check("fallback gradient uses the station's hue", (await fallback.getAttribute("data-hue")) === String(station.imageHue) && ((await fallback.getAttribute("style")) ?? "").includes("linear-gradient"), (await fallback.getAttribute("style")) ?? "");
+  check("fallback says there is no photo", (await fallback.innerText()).includes("No photo of Photo Fallback Depot yet"));
+  check("title still readable on the fallback", await page.locator('[data-testid="station-photo"] h2').isVisible());
+  await page.goto(`${BASE}/stations?q=Photo%20Fallback`, { waitUntil: "networkidle" });
+  await page.waitForSelector('text=Photo Fallback Depot');
+  check("card falls back to the gradient", (await page.locator('[data-testid="station-photo"][data-photo="fallback"]').count()) >= 1);
+  await page.screenshot({ path: `${OUT}/station-photo-fallback.png` });
+  await admin.page.request.delete(`${BASE}/api/stations/${station.id}`);
+  await admin.ctx.close();
+  await ctx.close();
+}
+
 // ---------- MONEY FORMAT ----------
 // Every baht amount on screen carries satang: ฿64.47, ฿249.00, never ฿64.
 console.log("\n=== Money shown to 2 decimals ===");

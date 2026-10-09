@@ -17,6 +17,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { Field, Input } from "@/components/ui/Field";
 import type { ChargerDTO } from "@/lib/types";
+import { StationPhoto } from "@/components/stations/StationPhoto";
 
 const StationMap = dynamic(() => import("@/components/stations/StationMap"), {
   ssr: false,
@@ -105,38 +106,33 @@ export default function StationDetailPage({
         <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
           <div className="min-w-0 space-y-4">
             <div className="vg-card overflow-hidden">
-              <div className="relative h-40 bg-[linear-gradient(140deg,#1e3a8a,#2563eb_65%,#10b981)] sm:h-48">
-                <svg
-                  viewBox="0 0 600 200"
-                  preserveAspectRatio="xMidYMid slice"
-                  className="absolute inset-0 h-full w-full opacity-25"
-                  aria-hidden
-                >
-                  <rect x="60" y="70" width="56" height="130" rx="12" fill="#fff" opacity=".5" />
-                  <rect x="190" y="40" width="56" height="160" rx="12" fill="#fff" opacity=".35" />
-                  <rect x="320" y="90" width="56" height="110" rx="12" fill="#fff" opacity=".45" />
-                  <rect x="450" y="58" width="56" height="142" rx="12" fill="#fff" opacity=".3" />
-                </svg>
+              <StationPhoto
+                station={station}
+                sizes="(min-width: 1024px) 720px, 100vw"
+                priority
+                scrim
+                className="h-48 sm:h-64"
+              >
                 <button
                   onClick={toggleFavorite}
                   aria-pressed={station.isFavorite}
                   aria-label={station.isFavorite ? "Remove from favourites" : "Save to favourites"}
                   className={clsx(
                     "absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-xl backdrop-blur transition-colors",
-                    station.isFavorite ? "bg-white text-danger" : "bg-white/25 text-white hover:bg-white/40",
+                    station.isFavorite ? "bg-white text-danger" : "bg-slate-900/40 text-white hover:bg-slate-900/55",
                   )}
                 >
                   <HeartIcon size={18} filled={station.isFavorite} />
                 </button>
                 <div className="absolute right-4 bottom-4 left-4 text-white">
-                  <h2 className="font-display text-[22px] font-bold sm:text-[26px]">
+                  <h2 className="font-display text-[22px] font-bold [text-shadow:0_1px_8px_rgba(0,0,0,0.45)] sm:text-[26px]">
                     {station.name}
                   </h2>
-                  <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/85">
+                  <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/90 [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">
                     <PinIcon /> {station.address}
                   </div>
                 </div>
-              </div>
+              </StationPhoto>
 
               <div className="grid grid-cols-2 sm:grid-cols-4">
                 <Fact label="Price" value={`${thb(station.pricePerKwh)}/kWh`} />

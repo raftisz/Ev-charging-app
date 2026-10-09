@@ -86,7 +86,7 @@ flowchart TB
     end
 
     subgraph QA["Quality"]
-        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>177 cases"] --- Q4["Playwright UI<br/>89 cases"] --- Q5["Time zone unit<br/>20 cases, TZ=UTC"] --- Q6["Money format unit<br/>9 cases"] --- Q7["PromptPay payload unit<br/>16 cases"]
+        Q1["ESLint"] --- Q2["tsc typecheck"] --- Q3["API test suite<br/>183 cases"] --- Q4["Playwright UI<br/>102 cases"] --- Q5["Time zone unit<br/>20 cases, TZ=UTC"] --- Q6["Money format unit<br/>9 cases"] --- Q7["PromptPay payload unit<br/>16 cases"] --- Q8["Station photos unit<br/>15 cases"]
     end
 
     subgraph OPS["DevOps / Deploy"]

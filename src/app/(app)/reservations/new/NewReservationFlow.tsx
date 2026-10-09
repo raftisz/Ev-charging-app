@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/Field";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDetailDTO } from "@/lib/types";
+import { StationPhoto } from "@/components/stations/StationPhoto";
 import { APP_TIME_ZONE, addDays, bangkokDate, bangkokDay, bangkokTime } from "@/lib/timezone";
 
 const DURATIONS = [30, 45, 60, 90];
@@ -334,70 +335,79 @@ export function NewReservationFlow() {
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-[92px]">
-          <div className="vg-card p-4">
-            <h2 className="font-display text-[15px] font-semibold text-ink">Summary</h2>
+          <div className="vg-card overflow-hidden">
             {station ? (
-              <dl className="mt-3 space-y-2 text-[13px]">
-                <SummaryRow label="Station" value={station.name} />
-                <SummaryRow
-                  label="Charger"
-                  value={
-                    selectedCharger
-                      ? `${selectedCharger.chargerCode} · ${kw(selectedCharger.powerKw)}`
-                      : "Not selected"
-                  }
-                />
-                <SummaryRow
-                  label="When"
-                  value={
-                    slotIso
-                      ? `${days.find((d) => d.value === day)?.label} · ${bangkokTime(new Date(slotIso))}`
-                      : "Not selected"
-                  }
-                />
-                <SummaryRow label="Duration" value={`${durationMinutes} minutes`} />
-                {estimate ? (
-                  <>
-                    <SummaryRow label="Estimated energy" value={kwh(estimate.energy)} />
-                    <SummaryRow
-                      label={`Energy at ${thb(station.pricePerKwh)}/kWh`}
-                      value={thb(estimate.energyCost)}
-                    />
-                    <SummaryRow label="Reservation fee" value={thb(estimate.fee)} />
-                    <div className="flex justify-between border-t border-line pt-2.5">
-                      <span className="text-[13.5px] font-semibold text-ink">Estimated total</span>
-                      <span className="font-display text-[16px] font-bold text-ink">
-                        {thb(estimate.total)}
-                      </span>
-                    </div>
-                  </>
-                ) : null}
-              </dl>
-            ) : (
-              <p className="mt-2 text-[13px] leading-relaxed text-faint">
-                Choose a station, a charger and a time slot. The estimate updates as you go.
-              </p>
-            )}
-
-            {error ? (
-              <div className="mt-3">
-                <FormError message={error} />
-              </div>
+              <StationPhoto station={station} sizes="320px" scrim className="h-32">
+                <div className="absolute right-3 bottom-2.5 left-3 font-display text-[14px] font-semibold text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">
+                  {station.name}
+                </div>
+              </StationPhoto>
             ) : null}
+            <div className="p-4">
+              <h2 className="font-display text-[15px] font-semibold text-ink">Summary</h2>
+              {station ? (
+                <dl className="mt-3 space-y-2 text-[13px]">
+                  <SummaryRow label="Station" value={station.name} />
+                  <SummaryRow
+                    label="Charger"
+                    value={
+                      selectedCharger
+                        ? `${selectedCharger.chargerCode} · ${kw(selectedCharger.powerKw)}`
+                        : "Not selected"
+                    }
+                  />
+                  <SummaryRow
+                    label="When"
+                    value={
+                      slotIso
+                        ? `${days.find((d) => d.value === day)?.label} · ${bangkokTime(new Date(slotIso))}`
+                        : "Not selected"
+                    }
+                  />
+                  <SummaryRow label="Duration" value={`${durationMinutes} minutes`} />
+                  {estimate ? (
+                    <>
+                      <SummaryRow label="Estimated energy" value={kwh(estimate.energy)} />
+                      <SummaryRow
+                        label={`Energy at ${thb(station.pricePerKwh)}/kWh`}
+                        value={thb(estimate.energyCost)}
+                      />
+                      <SummaryRow label="Reservation fee" value={thb(estimate.fee)} />
+                      <div className="flex justify-between border-t border-line pt-2.5">
+                        <span className="text-[13.5px] font-semibold text-ink">Estimated total</span>
+                        <span className="font-display text-[16px] font-bold text-ink">
+                          {thb(estimate.total)}
+                        </span>
+                      </div>
+                    </>
+                  ) : null}
+                </dl>
+              ) : (
+                <p className="mt-2 text-[13px] leading-relaxed text-faint">
+                  Choose a station, a charger and a time slot. The estimate updates as you go.
+                </p>
+              )}
 
-            <Button
-              fullWidth
-              size="lg"
-              className="mt-4"
-              disabled={!stationId || !chargerId || !slotIso}
-              loading={submitting}
-              onClick={submit}
-            >
-              Confirm reservation
-            </Button>
-            <p className="mt-2.5 text-center text-[12px] text-faint">
-              Free to cancel any time before the slot starts.
-            </p>
+              {error ? (
+                <div className="mt-3">
+                  <FormError message={error} />
+                </div>
+              ) : null}
+
+              <Button
+                fullWidth
+                size="lg"
+                className="mt-4"
+                disabled={!stationId || !chargerId || !slotIso}
+                loading={submitting}
+                onClick={submit}
+              >
+                Confirm reservation
+              </Button>
+              <p className="mt-2.5 text-center text-[12px] text-faint">
+                Free to cancel any time before the slot starts.
+              </p>
+            </div>
           </div>
         </div>
       </div>
