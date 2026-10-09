@@ -119,6 +119,8 @@ erDiagram
     Charger ||--o{ Reservation : reserved
     Charger ||--o{ ChargingSession : used
     Reservation ||--o| ChargingSession : "becomes"
+    User ||--o{ Payment : "pays / tops up"
+    ChargingSession ||--o{ Payment : "settled by"
 
     User {
         int id PK
@@ -172,6 +174,17 @@ erDiagram
         float energyKwh
         float cost
         string paymentStatus
+    }
+    Payment {
+        int id PK
+        int sessionId FK "optional, null for top-ups"
+        int userId FK
+        string type "CHARGE / TOPUP / REFUND"
+        float amount
+        string method "WALLET / CREDIT_CARD / PROMPTPAY"
+        string status "PENDING / PAID / FAILED / REFUNDED"
+        string providerRef
+        datetime createdAt
     }
     Notification {
         int id PK

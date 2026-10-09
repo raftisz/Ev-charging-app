@@ -62,6 +62,20 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  WALLET
+  CREDIT_CARD
+  PROMPTPAY
+}
+
+/// CHARGE settles a charging session, TOPUP adds money to the wallet,
+/// REFUND returns a charge to the wallet.
+enum PaymentType {
+  CHARGE
+  TOPUP
+  REFUND
+}
+
 enum NotificationType {
   SESSION
   RESERVATION
@@ -90,6 +104,7 @@ model User {
   sessions      ChargingSession[]
   notifications Notification[]
   favorites     Favorite[]
+  payments      Payment[]
 }
 
 model Station {
@@ -196,11 +211,33 @@ model ChargingSession {
   station     Station      @relation(fields: [stationId], references: [id], onDelete: Cascade)
   charger     Charger      @relation(fields: [chargerId], references: [id], onDelete: Cascade)
   reservation Reservation? @relation(fields: [reservationId], references: [id])
+  payments    Payment[]
 
   @@index([userId, status])
   @@index([status])
   @@index([userId, startTime])
   @@index([startTime])
+}
+
+/// One row per money movement. A top-up has no session. The session link is
+/// cleared rather than cascaded when a session is deleted, so the ledger
+/// keeps its history.
+model Payment {
+  id          Int           @id @default(autoincrement())
+  sessionId   Int?
+  userId      Int
+  type        PaymentType   @default(CHARGE)
+  amount      Float
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  providerRef String?
+  createdAt   DateTime      @default(now())
+
+  session ChargingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([sessionId])
 }
 
 model Notification {

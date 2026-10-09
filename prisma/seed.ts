@@ -98,6 +98,7 @@ async function resyncSequences() {
 async function reset() {
   // Order matters: children first (SQLite cascades are on, but be explicit).
   await prisma.notification.deleteMany();
+  await prisma.payment.deleteMany();
   await prisma.chargingSession.deleteMany();
   await prisma.reservation.deleteMany();
   await prisma.favorite.deleteMany();
@@ -241,6 +242,14 @@ async function main() {
       const energy = round((power * minutes) / 60 / (1.4 + rand()), 2);
       const startPercent = 12 + Math.floor(rand() * 35);
 
+      const paymentStatus = rand() > 0.06 ? "PAID" : "FAILED";
+      const [paymentMethod, method] = pick([
+        ["Volt Grid wallet", "WALLET"],
+        ["Credit card", "CREDIT_CARD"],
+        ["PromptPay QR", "PROMPTPAY"],
+      ] as const);
+      const cost = round(energy * station.pricePerKwh, 2);
+
       await prisma.chargingSession.create({
         data: {
           userId: user.id,
@@ -255,9 +264,22 @@ async function main() {
           energyKwh: energy,
           powerKw: round(power, 1),
           pricePerKwh: station.pricePerKwh,
-          cost: round(energy * station.pricePerKwh, 2),
-          paymentStatus: rand() > 0.06 ? "PAID" : "FAILED",
-          paymentMethod: pick(["Volt Grid wallet", "Credit card", "PromptPay QR"]),
+          cost,
+          paymentStatus,
+          paymentMethod,
+          payments:
+            paymentStatus === "PAID"
+              ? {
+                  create: {
+                    userId: user.id,
+                    type: "CHARGE",
+                    amount: cost,
+                    method,
+                    status: "PAID",
+                    createdAt: end,
+                  },
+                }
+              : undefined,
         },
       });
       sessionCount++;
