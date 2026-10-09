@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/server/db";
 import type { AdminStats, DashboardStats } from "@/lib/types";
+import { toSatang } from "@/lib/payments";
 
 /** grid-average kg CO2 avoided per kWh charged versus an equivalent ICE trip */
 const CO2_PER_KWH = 0.27;
@@ -83,7 +84,7 @@ export async function getDashboardStats(userId: number): Promise<DashboardStats>
       ? Math.round(((totalChargers - availableChargers) / totalChargers) * 100)
       : 0,
     monthEnergyKwh: Number(monthEnergyKwh.toFixed(1)),
-    monthSpend: Math.round(monthSpend),
+    monthSpend: toSatang(monthSpend),
     monthSessions: monthSessions.length,
     co2SavedKg: Math.round(monthEnergyKwh * CO2_PER_KWH),
     upcomingReservations,
@@ -156,7 +157,7 @@ export async function getAdminStats(): Promise<AdminStats> {
       id: row.stationId,
       name: nameById.get(row.stationId) ?? `Station ${row.stationId}`,
       sessions: row._count._all,
-      revenue: Math.round(row._sum.cost ?? 0),
+      revenue: toSatang(row._sum.cost ?? 0),
     }))
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
@@ -169,8 +170,8 @@ export async function getAdminStats(): Promise<AdminStats> {
     totalUsers,
     activeUsers,
     totalEnergyKwh: Number((allSessions._sum.energyKwh ?? 0).toFixed(1)),
-    revenue: Math.round(allSessions._sum.cost ?? 0),
-    revenue30d: Math.round(revenue30dRows.reduce((s, r) => s + r.cost, 0)),
+    revenue: toSatang(allSessions._sum.cost ?? 0),
+    revenue30d: toSatang(revenue30dRows.reduce((s, r) => s + r.cost, 0)),
     reservations,
     upcomingReservations,
     utilization: totalChargers
@@ -186,7 +187,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     })),
     revenueByDay: [...buckets.entries()].map(([date, v]) => ({
       date,
-      revenue: Math.round(v.revenue),
+      revenue: toSatang(v.revenue),
       kwh: Number(v.kwh.toFixed(1)),
     })),
     topStations,

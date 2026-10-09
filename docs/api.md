@@ -33,6 +33,14 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/PATCH/DELETE | `/api/users/{id}` | Detail · update role/wallet/active · delete (admin) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
 
+## Money
+
+Amounts are baht stored as numbers rounded to 2 decimals (satang) before
+they are written. API figures keep those 2 decimals, including the
+dashboard `monthSpend` and the admin revenue totals. Every amount shown in
+the UI or in a notification goes through `thb()` in `src/lib/format.ts` and
+always has 2 decimals: `฿64.47`, `฿249.00`, `฿0.00`.
+
 ## Time zone
 
 Booking days and slot times are Bangkok wall-clock time (`Asia/Bangkok`,

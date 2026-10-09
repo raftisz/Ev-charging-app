@@ -274,6 +274,32 @@ console.log("\n=== Registration flow ===");
   await ctx.close();
 }
 
+// ---------- MONEY FORMAT ----------
+// Every baht amount on screen carries satang: ฿64.47, ฿249.00, never ฿64.
+console.log("\n=== Money shown to 2 decimals ===");
+{
+  // innerText, not textContent: adjacent elements must not run together.
+  const amounts = async (page) => (await page.innerText("body")).match(/฿[\d,]+(?:\.\d+)?/g) ?? [];
+  const sweep = async (page, paths) => {
+    for (const path of paths) {
+      await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(1200);
+      const found = await amounts(page);
+      const bad = found.filter((m) => !/\.\d{2}$/.test(m));
+      check(`${path}: ${found.length} amounts, all 2 decimals`, found.length > 0 && bad.length === 0, bad.slice(0, 5).join(" "));
+    }
+  };
+  const driver = await newPage({ width: 1440, height: 900 }, "money-driver");
+  await login(driver.page, "user1@example.com");
+  await sweep(driver.page, ["/dashboard", "/history", "/wallet", "/charging", "/reservations", "/reservations/new?station=4", "/profile", "/notifications", "/stations"]);
+  await driver.ctx.close();
+
+  const admin = await newPage({ width: 1440, height: 900 }, "money-admin");
+  await login(admin.page, "admin@example.com");
+  await sweep(admin.page, ["/admin", "/admin/sessions", "/admin/users", "/admin/stations"]);
+  await admin.ctx.close();
+}
+
 // ---------- TIME ZONE ----------
 // A browser in UTC (as the Vercel server is) must still offer, book and show
 // Bangkok times: the slot picked is the slot booked and the time displayed.

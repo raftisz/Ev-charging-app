@@ -95,7 +95,7 @@ export default function StationMap({
                <div style="font:600 14px Poppins,sans-serif;color:#0F172A">${station.name}</div>
                <div style="font-size:12px;color:#94A3B8;margin-top:3px">${station.address}</div>
                <div style="font-size:12.5px;color:#64748B;margin-top:7px">
-                 ${station.availableCount} of ${station.chargerCount} free · ${kw(station.maxPowerKw)} · ${thb(station.pricePerKwh, 2)}/kWh
+                 ${station.availableCount} of ${station.chargerCount} free · ${kw(station.maxPowerKw)} · ${thb(station.pricePerKwh)}/kWh
                </div>
                <a href="/stations/${station.id}" style="display:inline-block;margin-top:9px;font:600 12.5px Inter;color:#2563EB">View station →</a>
              </div>`,

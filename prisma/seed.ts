@@ -382,7 +382,7 @@ async function main() {
   const notifications = [
     ["SESSION", "Charging started", "Rama IX Power Station · charger A1 is delivering 118 kW.", false],
     ["RESERVATION", "Reservation confirmed", "Siam Green Station · charger A1 is held for your slot.", false],
-    ["PAYMENT", "Payment received", "฿284 charged to your Volt Grid wallet for session #1042.", true],
+    ["PAYMENT", "Payment received", "฿284.00 charged to your Volt Grid wallet for session #1042.", true],
     ["SYSTEM", "New station nearby", "Suvarnabhumi Airport Hub now has three 180 kW chargers.", true],
     ["SESSION", "Session complete", "Asoke Intersection Hub · 33.4 kWh delivered in 41 minutes.", true],
   ] as const;

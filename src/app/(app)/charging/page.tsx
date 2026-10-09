@@ -153,7 +153,7 @@ export default function ChargingPage() {
                 </span>
                 <div className="flex-1" />
                 <span className="text-[12.5px] text-grid-green-pale">
-                  {kw(session.powerKw)} · {thb(session.pricePerKwh, 2)}/kWh
+                  {kw(session.powerKw)} · {thb(session.pricePerKwh)}/kWh
                 </span>
               </div>
 
@@ -254,7 +254,7 @@ export default function ChargingPage() {
                   label="Connector"
                   value={`Charger ${session.charger.chargerCode} · ${kw(session.charger.powerKw)}`}
                 />
-                <Row label="Rate" value={`${thb(session.pricePerKwh, 2)} per kWh`} />
+                <Row label="Rate" value={`${thb(session.pricePerKwh)} per kWh`} />
               </dl>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function ChargingPage() {
         title="Pay for this session"
         description={
           payFor
-            ? `${payFor.station.name} · ${kwh(payFor.energyKwh)} at ${thb(payFor.pricePerKwh, 2)}/kWh.`
+            ? `${payFor.station.name} · ${kwh(payFor.energyKwh)} at ${thb(payFor.pricePerKwh)}/kWh.`
             : undefined
         }
         footer={
@@ -351,7 +351,7 @@ export default function ChargingPage() {
           {payFor ? (
             <dl className="rounded-[16px] bg-surface p-4 text-[13px]">
               <Row label="Energy" value={kwh(payFor.energyKwh)} />
-              <Row label={`Rate`} value={`${thb(payFor.pricePerKwh, 2)}/kWh`} />
+              <Row label={`Rate`} value={`${thb(payFor.pricePerKwh)}/kWh`} />
               <div className="mt-2 flex justify-between border-t border-line pt-2">
                 <span className="font-semibold text-ink">Total</span>
                 <span className="font-display text-[16px] font-bold text-ink">

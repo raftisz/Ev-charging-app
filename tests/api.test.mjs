@@ -47,6 +47,9 @@ const BKK_TIME = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", ho
 const BKK_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" });
 const bkkTime = (iso) => BKK_TIME.format(new Date(iso));
 const bkkDay = (d = new Date()) => BKK_DAY.format(d);
+const BAHT = /฿[\d,]+(?:\.\d+)?/g;
+const allSatang = (text) => (text.match(BAHT) ?? []).every((m) => /\.\d{2}$/.test(m));
+const isSatang = (n) => typeof n === "number" && Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;
 
 const run = async () => {
   section("Auth");
@@ -236,6 +239,13 @@ const run = async () => {
   check("top-up returns the new balance", Math.abs(r.data.balance - (walletBefore + 250)) < 0.01);
   r = await req("driver", "GET", "/api/wallet");
   check("top-up is the latest transaction", r.data.transactions[0].type === "TOPUP" && r.data.transactions[0].amount === 250);
+  r = await req("driver", "GET", "/api/notifications");
+  const topUpNote = r.data.notifications.find(n => n.title === "Wallet topped up");
+  check("top-up notification shows ฿250.00 and a 2-decimal balance", /^฿250\.00 added .* New balance ฿[\d,]+\.\d{2}\.$/.test(topUpNote?.body ?? ""), topUpNote?.body);
+  const paidNote = r.data.notifications.find(n => n.title === "Payment received" && n.body.includes(`session #${live.id}`));
+  check("payment notification shows the exact amount", paidNote?.body.startsWith(`฿${charged.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} paid`), paidNote?.body);
+  check("notification amounts all have 2 decimals", r.data.notifications.every(n => allSatang(n.body)), JSON.stringify(r.data.notifications.find(n => !allSatang(n.body))?.body));
+
   r = await req("driver", "GET", "/api/profile");
   check("profile balance includes the top-up", Math.abs(r.data.user.walletBalance - (walletBefore + 250)) < 0.01);
 
@@ -268,6 +278,7 @@ const run = async () => {
   check("dashboard payload", r.status === 200 && r.data.stats.totalStations === 20);
   check("dashboard stats derived from db", r.data.stats.totalChargers > 0 && r.data.stats.dailyEnergy.length === 14);
   check("recommended stations returned", Array.isArray(r.data.recommended));
+  check("monthSpend keeps satang", isSatang(r.data.stats.monthSpend), String(r.data.stats.monthSpend));
 
   r = await req("driver", "GET", "/api/admin/stats");
   check("driver blocked from admin stats → 403", r.status === 403);
@@ -275,6 +286,9 @@ const run = async () => {
   r = await req("admin", "GET", "/api/admin/stats");
   check("admin stats", r.status === 200 && r.data.stats.totalStations === 20 && r.data.stats.revenueByDay.length === 30);
   check("admin top stations", r.data.stats.topStations.length > 0);
+  const money = [r.data.stats.revenue, r.data.stats.revenue30d, ...r.data.stats.revenueByDay.map(d => d.revenue), ...r.data.stats.topStations.map(t => t.revenue)];
+  check("revenue figures keep satang (2 decimals)", money.every(isSatang) && money.some(v => !Number.isInteger(v)), JSON.stringify(money.slice(0, 5)));
+  check("30-day revenue equals the daily buckets", Math.abs(r.data.stats.revenue30d - r.data.stats.revenueByDay.reduce((a, d) => a + d.revenue, 0)) < 0.05);
 
   section("Notifications & profile");
   r = await req("driver", "GET", "/api/notifications");

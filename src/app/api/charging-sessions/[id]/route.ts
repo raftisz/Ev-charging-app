@@ -3,6 +3,7 @@ import { prisma } from "@/server/db";
 import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/server/http";
 import { paySessionSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
+import { thb } from "@/lib/format";
 import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
 
 export const dynamic = "force-dynamic";
@@ -131,7 +132,7 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
         userId: session.userId,
         type: "PAYMENT",
         title: "Payment received",
-        body: `฿${Math.round(total)} paid with ${label} for session #${session.id}.`,
+        body: `${thb(total)} paid with ${label} for session #${session.id}.`,
       },
     });
 

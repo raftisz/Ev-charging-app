@@ -172,7 +172,7 @@ export function NewReservationFlow() {
                 <option value="">Choose a station…</option>
                 {stations.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} · {thb(s.pricePerKwh, 2)}/kWh · {s.availableCount}/{s.chargerCount} free
+                    {s.name} · {thb(s.pricePerKwh)}/kWh · {s.availableCount}/{s.chargerCount} free
                   </option>
                 ))}
               </Select>
@@ -360,7 +360,7 @@ export function NewReservationFlow() {
                   <>
                     <SummaryRow label="Estimated energy" value={kwh(estimate.energy)} />
                     <SummaryRow
-                      label={`Energy at ${thb(station.pricePerKwh, 2)}/kWh`}
+                      label={`Energy at ${thb(station.pricePerKwh)}/kWh`}
                       value={thb(estimate.energyCost)}
                     />
                     <SummaryRow label="Reservation fee" value={thb(estimate.fee)} />

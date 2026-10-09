@@ -255,7 +255,7 @@ export default function AdminStationsPage() {
                   {s.chargerCount} · up to {kw(s.maxPowerKw)}
                 </div>
                 <div className="font-display text-[13.5px] font-semibold text-ink">
-                  {thb(s.pricePerKwh, 2)}
+                  {thb(s.pricePerKwh)}
                 </div>
                 <div className="text-[12.5px] text-faint">
                   {s.latitude.toFixed(3)}, {s.longitude.toFixed(3)}

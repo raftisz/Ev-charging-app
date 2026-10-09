@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { thb } from "@/lib/format";
 import { METHOD_FROM_LABEL, PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from "@/lib/payments";
 
 const paymentMethod = z
@@ -58,8 +59,8 @@ export const TOP_UP_MAX = 10_000;
 export const topUpSchema = z.object({
   amount: z.coerce
     .number()
-    .min(TOP_UP_MIN, `Top up at least ฿${TOP_UP_MIN}`)
-    .max(TOP_UP_MAX, `Top up at most ฿${TOP_UP_MAX.toLocaleString("en-US")} at a time`),
+    .min(TOP_UP_MIN, `Top up at least ${thb(TOP_UP_MIN)}`)
+    .max(TOP_UP_MAX, `Top up at most ${thb(TOP_UP_MAX)} at a time`),
   method: z.enum(["CREDIT_CARD", "PROMPTPAY"]),
 });
 

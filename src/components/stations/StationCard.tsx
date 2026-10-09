@@ -61,7 +61,7 @@ export function StationCard({
           />
           <div className="flex-1" />
           <span className="font-display text-[15px] font-bold text-ink">
-            {thb(station.pricePerKwh, 2)}
+            {thb(station.pricePerKwh)}
             <span className="font-sans text-[11px] font-normal text-faint">/kWh</span>
           </span>
         </div>
@@ -118,7 +118,7 @@ export function StationHeroCard({ station }: { station: StationDTO }) {
           />
           <div className="flex-1" />
           <span className="font-display text-[13px] font-bold text-ink">
-            {thb(station.pricePerKwh, 2)}
+            {thb(station.pricePerKwh)}
             <span className="font-sans text-[11px] font-normal text-faint">/kWh</span>
           </span>
         </div>

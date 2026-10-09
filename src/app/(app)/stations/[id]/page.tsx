@@ -139,7 +139,7 @@ export default function StationDetailPage({
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4">
-                <Fact label="Price" value={`${thb(station.pricePerKwh, 2)}/kWh`} />
+                <Fact label="Price" value={`${thb(station.pricePerKwh)}/kWh`} />
                 <Fact label="Max power" value={kw(station.maxPowerKw)} />
                 <Fact label="Distance" value={`${km(station.distanceKm)} · ${station.etaMin} min`} />
                 <Fact

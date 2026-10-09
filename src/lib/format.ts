@@ -1,18 +1,14 @@
 import { APP_TIME_ZONE } from "@/lib/timezone";
 
 const BAHT = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
-export function thb(value: number, decimals = 0) {
-  if (decimals > 0) {
-    return `฿${value.toLocaleString("en-US", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    })}`;
-  }
-  return `฿${BAHT.format(Math.round(value))}`;
+/** Baht, always to the satang: ฿64.47, ฿1,249.00, ฿0.00. */
+export function thb(value: number) {
+  // Normalise -0 so a zero balance never prints as "฿-0.00".
+  return `฿${BAHT.format(value + 0 || 0)}`;
 }
 
 export function kwh(value: number, decimals = 1) {

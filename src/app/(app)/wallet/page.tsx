@@ -80,7 +80,7 @@ export default function WalletPage() {
           <div className="rounded-[18px] bg-grid-green p-4 text-white">
             <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
             <div className="font-display text-[28px] font-bold" data-testid="wallet-balance">
-              {thb(balance, 2)}
+              {thb(balance)}
             </div>
           </div>
 
@@ -187,7 +187,7 @@ export default function WalletPage() {
                       )}
                     >
                       {signed > 0 ? "+" : signed < 0 ? "−" : ""}
-                      {thb(p.amount, 2)}
+                      {thb(p.amount)}
                     </span>
                   </li>
                 );

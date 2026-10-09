@@ -3,6 +3,7 @@ import { prisma } from "@/server/db";
 import { handler, requireUser } from "@/server/http";
 import { topUpSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
+import { thb } from "@/lib/format";
 import { PAYMENT_INCLUDE, serializePayment } from "@/server/payments";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export const POST = handler(async (request: Request) => {
       userId: user.id,
       type: "PAYMENT",
       title: "Wallet topped up",
-      body: `฿${Math.round(total)} added with ${PAYMENT_METHOD_LABEL[method]}. New balance ฿${Math.round(balance)}.`,
+      body: `${thb(total)} added with ${PAYMENT_METHOD_LABEL[method]}. New balance ${thb(balance)}.`,
     },
   });
 

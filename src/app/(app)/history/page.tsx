@@ -213,7 +213,7 @@ export default function HistoryPage() {
                       <span className="text-[12.5px] text-muted">{kwh(s.energyKwh)}</span>
                       <span className="text-line-strong">·</span>
                       <span className="text-[12.5px] text-muted">
-                        {thb(s.pricePerKwh, 2)}/kWh
+                        {thb(s.pricePerKwh)}/kWh
                       </span>
                       <div className="flex-1" />
                       <span className="font-display text-[15px] font-bold text-ink">
