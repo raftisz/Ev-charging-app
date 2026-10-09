@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
@@ -182,8 +183,17 @@ export default function HistoryPage() {
                     <span className="flex justify-end">
                       {s.status === "ACTIVE" ? (
                         <Badge tone="brand">Charging</Badge>
-                      ) : s.paymentStatus === "PAID" ? (
-                        <Badge tone="green">Paid</Badge>
+                      ) : s.paymentStatus === "PAID" || s.paymentStatus === "REFUNDED" ? (
+                        <span className="flex items-center gap-2">
+                          <Badge tone={PAYMENT_TONE[s.paymentStatus]}>
+                            {s.paymentStatus === "PAID" ? "Paid" : "Refunded"}
+                          </Badge>
+                          {s.receiptId ? (
+                            <Link href={`/receipts/${s.receiptId}`} className="text-[12px] font-semibold text-brand">
+                              Receipt
+                            </Link>
+                          ) : null}
+                        </span>
                       ) : (
                         <Button size="sm" variant="tint" onClick={() => openPay(s)}>
                           Pay {thb(s.cost)}
@@ -225,10 +235,14 @@ export default function HistoryPage() {
                       <span className="font-display text-[15px] font-bold text-ink">
                         {thb(s.cost)}
                       </span>
-                      {s.status !== "ACTIVE" && s.paymentStatus !== "PAID" ? (
+                      {s.status !== "ACTIVE" && (s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED") ? (
                         <Button size="sm" onClick={() => openPay(s)}>
                           Pay
                         </Button>
+                      ) : s.receiptId ? (
+                        <Link href={`/receipts/${s.receiptId}`} className="text-[12.5px] font-semibold text-brand">
+                          Receipt
+                        </Link>
                       ) : null}
                     </div>
                   </li>

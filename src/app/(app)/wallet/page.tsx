@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
@@ -176,7 +177,12 @@ export default function WalletPage() {
               {data.transactions.map((p) => {
                 const signed = signedAmount(p);
                 return (
-                  <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+                  <li key={p.id}>
+                    <Link
+                      href={`/receipts/${p.id}`}
+                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface"
+                      aria-label={`Receipt for ${describe(p)}`}
+                    >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13.5px] font-medium text-ink">{describe(p)}</div>
                       <div className="mt-0.5 text-[12px] text-faint">
@@ -195,6 +201,7 @@ export default function WalletPage() {
                       {signed > 0 ? "+" : signed < 0 ? "−" : ""}
                       {thb(p.amount)}
                     </span>
+                    </Link>
                   </li>
                 );
               })}

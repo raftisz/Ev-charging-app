@@ -249,6 +249,38 @@ const run = async () => {
   check("charge row amount matches the session cost", Math.abs(chargeRow.amount - charged) < 0.01);
   const walletBefore = r.data.balance;
 
+  section("Receipts");
+  r = await req("driver", "GET", `/api/charging-sessions/${live.id}`);
+  check("paid session points at its receipt", r.data.session.receiptId === chargeRow.id, `${r.data.session.receiptId} vs ${chargeRow.id}`);
+  r = await req("driver", "GET", `/api/payments/${chargeRow.id}`);
+  const receipt = r.data?.receipt;
+  check("owner opens the receipt", r.status === 200 && /^VG-\d{8}-\d{6}$/.test(receipt?.receiptNo ?? ""), JSON.stringify(receipt)?.slice(0, 200));
+  check("receipt number uses the Bangkok date", receipt.receiptNo.slice(3, 11) === bkkDay(new Date(receipt.payment.createdAt)).replaceAll("-", ""));
+  check("receipt has station, kWh, rate, total, method", receipt.session?.stationName && receipt.session.energyKwh > 0 && receipt.session.pricePerKwh > 0 && Math.abs(receipt.payment.amount - charged) < 0.01 && receipt.payment.methodLabel === "Volt Grid wallet");
+  r = await req("newbie", "GET", `/api/payments/${chargeRow.id}`);
+  check("another driver gets 404", r.status === 404, String(r.status));
+  r = await req("anon", "GET", `/api/payments/${chargeRow.id}`);
+  check("signed out gets 401", r.status === 401);
+  await req("operator", "POST", "/api/auth/login", { email: "operator@example.com", password: "password123" });
+  r = await req("operator", "GET", `/api/payments/${chargeRow.id}`);
+  check("operator (not admin) gets 404", r.status === 404, String(r.status));
+  r = await req("admin", "GET", `/api/payments/${chargeRow.id}`);
+  check("admin opens any receipt", r.status === 200 && r.data.receipt.customer.id === driverId);
+  r = await req("driver", "GET", "/api/payments/99999999");
+  check("unknown receipt → 404", r.status === 404);
+  const pageAs = async (who, path) => {
+    const cookie = [...jar(who)].map(([k, v]) => `${k}=${v}`).join("; ");
+    const res = await fetch(BASE + path, { headers: cookie ? { Cookie: cookie } : {}, redirect: "manual" });
+    return { status: res.status, text: await res.text() };
+  };
+  let page = await pageAs("driver", `/receipts/${chargeRow.id}`);
+  check("receipt page renders for the owner", page.status === 200 && page.text.includes(receipt.receiptNo) && page.text.includes(receipt.session.stationName), String(page.status));
+  check("receipt page shows the 2-decimal total", page.text.includes(`฿${charged.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`));
+  page = await pageAs("newbie", `/receipts/${chargeRow.id}`);
+  check("receipt page is 404 for another driver", page.status === 404 && !page.text.includes(receipt.receiptNo), String(page.status));
+  page = await pageAs("admin", `/receipts/${chargeRow.id}`);
+  check("receipt page renders for an admin", page.status === 200 && page.text.includes(receipt.receiptNo));
+
   r = await req("anon", "GET", "/api/wallet");
   check("wallet requires auth (401)", r.status === 401);
   r = await req("driver", "POST", "/api/wallet/topup", { amount: 5, method: "CREDIT_CARD" });

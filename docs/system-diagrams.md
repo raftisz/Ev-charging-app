@@ -215,6 +215,7 @@ flowchart LR
     G --> H["Stop charging"]
     H --> I["Pay<br/>wallet / card / PromptPay"]
     I --> J["History + Notifications"]
+    I --> R["Receipt<br/>print / save as PDF"]
     I -.->|"balance too low"| W["Wallet<br/>top up + transactions"]
     W --> I
     B --> K["Favourites / Profile / Vehicle"]

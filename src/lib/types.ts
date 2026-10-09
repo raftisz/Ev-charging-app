@@ -139,6 +139,24 @@ export type SessionDTO = {
   station: { id: number; name: string; address: string };
   charger: { id: number; chargerCode: string; powerKw: number };
   user?: { id: number; fullName: string; email: string };
+  /** The settled charge's payment, which is also its receipt. */
+  receiptId: number | null;
+};
+
+export type ReceiptDTO = {
+  receiptNo: string;
+  payment: PaymentDTO;
+  customer: { id: number; fullName: string; email: string };
+  session: {
+    id: number;
+    stationName: string;
+    stationAddress: string;
+    chargerCode: string;
+    startTime: string;
+    endTime: string | null;
+    energyKwh: number;
+    pricePerKwh: number;
+  } | null;
 };
 
 export type NotificationDTO = {

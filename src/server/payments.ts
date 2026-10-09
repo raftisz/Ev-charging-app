@@ -4,6 +4,8 @@ import { PAYMENT_METHOD_LABEL } from "@/lib/payments";
 import { thb } from "@/lib/format";
 import { badRequest, conflict, notFound } from "@/server/http";
 import { promptPayQr } from "@/server/promptpay";
+import { bangkokDay } from "@/lib/timezone";
+import type { ReceiptDTO } from "@/lib/types";
 import type { PaymentDTO } from "@/lib/types";
 
 const paymentInclude = {
@@ -144,4 +146,61 @@ export async function confirmPromptPay(paymentId: number, userId: number) {
   });
 
   return { payment: serializePayment(payment), balance };
+}
+
+/** VG-20261009-000812: the Bangkok date it was made, then the payment id. */
+export function receiptNumber(payment: { id: number; createdAt: Date }) {
+  return `VG-${bangkokDay(payment.createdAt).replaceAll("-", "")}-${String(payment.id).padStart(6, "0")}`;
+}
+
+/**
+ * One payment as a receipt. Drivers see only their own; admins see any.
+ * Everyone else gets "not found" rather than "forbidden", so receipt ids
+ * cannot be probed for existence.
+ */
+export async function getReceipt(
+  paymentId: number,
+  viewer: { id: number; role: string },
+): Promise<ReceiptDTO> {
+  const payment = Number.isInteger(paymentId)
+    ? await prisma.payment.findUnique({
+        where: { id: paymentId },
+        include: {
+          ...paymentInclude,
+          user: { select: { id: true, fullName: true, email: true } },
+          session: {
+            select: {
+              id: true,
+              startTime: true,
+              endTime: true,
+              energyKwh: true,
+              pricePerKwh: true,
+              station: { select: { name: true, address: true } },
+              charger: { select: { chargerCode: true } },
+            },
+          },
+        },
+      })
+    : null;
+  if (!payment || (payment.userId !== viewer.id && viewer.role !== "ADMIN")) {
+    throw notFound("That receipt does not exist");
+  }
+  const s = payment.session;
+  return {
+    receiptNo: receiptNumber(payment),
+    payment: serializePayment(payment),
+    customer: payment.user,
+    session: s
+      ? {
+          id: s.id,
+          stationName: s.station.name,
+          stationAddress: s.station.address,
+          chargerCode: s.charger.chargerCode,
+          startTime: s.startTime.toISOString(),
+          endTime: s.endTime?.toISOString() ?? null,
+          energyKwh: s.energyKwh,
+          pricePerKwh: s.pricePerKwh,
+        }
+      : null,
+  };
 }

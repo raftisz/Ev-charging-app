@@ -14,6 +14,7 @@ const PROTECTED = [
   "/reservations",
   "/history",
   "/wallet",
+  "/receipts",
   "/profile",
   "/settings",
   "/favorites",

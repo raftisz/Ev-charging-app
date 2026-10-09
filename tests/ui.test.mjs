@@ -328,6 +328,29 @@ console.log("\n=== PromptPay top-up ===");
   await ctx.close();
 }
 
+// ---------- RECEIPT ----------
+console.log("\n=== Receipt ===");
+{
+  const { ctx, page } = await newPage({ width: 1280, height: 900 }, "receipt");
+  await login(page, "user4@example.com");
+  await page.goto(`${BASE}/wallet`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  await page.locator('a[href^="/receipts/"]').first().click();
+  await page.waitForSelector('[data-testid="receipt"]', { timeout: 10000 });
+  check("receipt opens from the wallet list", /^VG-\d{8}-\d{6}$/.test((await page.locator('[data-testid="receipt-no"]').innerText()).trim()));
+  check("receipt total has 2 decimals", /^฿[\d,]+\.\d{2}$/.test((await page.locator('[data-testid="receipt-total"]').innerText()).trim()));
+  check("print button on screen", await page.locator('button:has-text("Print / Save as PDF")').isVisible());
+  await page.emulateMedia({ media: "print" });
+  check("print hides the buttons", !(await page.locator('button:has-text("Print / Save as PDF")').isVisible()));
+  check("print keeps the receipt", await page.locator('[data-testid="receipt"]').isVisible());
+  const pdf = await page.pdf({ format: "A4" });
+  check("saves as a PDF", pdf.length > 1000 && pdf.subarray(0, 4).toString() === "%PDF", String(pdf.length));
+  fs.writeFileSync(`${OUT}/receipt.pdf`, pdf);
+  await page.emulateMedia({ media: "screen" });
+  await page.screenshot({ path: `${OUT}/receipt.png` });
+  await ctx.close();
+}
+
 // ---------- TIME ZONE ----------
 // A browser in UTC (as the Vercel server is) must still offer, book and show
 // Bangkok times: the slot picked is the slot booked and the time displayed.

@@ -26,6 +26,7 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/PATCH/DELETE | `/api/charging-sessions/{id}` | Detail · `action: "stop"` \| `"pay"` · delete (admin) |
 | GET | `/api/wallet` | Wallet balance and the latest 50 transactions (`Payment` rows) |
 | POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` (PromptPay: `202` + QR) |
+| GET | `/api/payments/{id}` | One payment as a receipt (payer or admin; otherwise `404`) |
 | POST | `/api/payments/{id}/confirm` | Confirm a pending PromptPay payment (simulated, payer only) |
 | GET/PATCH | `/api/notifications` | List · mark all read |
 | PATCH/DELETE | `/api/notifications/{id}` | Mark read · delete |
@@ -104,6 +105,19 @@ The recipient comes from the `PROMPTPAY_ID` environment variable only (a
 phone number, national/tax ID or e-wallet ID; see `.env.example`). Unset, it
 falls back to 000-000-0000, which no bank accepts, and the response says
 `isDemoRecipient: true`.
+
+## Receipts
+
+Every `Payment` row is a receipt. `GET /api/payments/{id}` returns
+`{ receipt: { receiptNo, payment, customer, session } }`, where `receiptNo`
+is `VG-<Bangkok date YYYYMMDD>-<payment id, 6 digits>` and `session` (station,
+charger, kWh, rate, times) is `null` for a top-up. The printable page is
+`/receipts/{id}`: it has a print stylesheet, so the browser's Print dialog
+can save it as an A4 PDF.
+
+Only the payer and `ADMIN` users can open a receipt. Anyone else, operators
+included, gets `404` from both the API and the page, so receipt ids cannot be
+probed. Sessions carry `receiptId`, the payment that settled them.
 
 ## Wallet top-up
 

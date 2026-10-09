@@ -204,3 +204,14 @@
   color: var(--color-ink);
   border-bottom-color: var(--color-line) !important;
 }
+
+/* Receipts print on plain white A4 with the browser's margins tamed. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+  body {
+    background: #fff;
+  }
+}

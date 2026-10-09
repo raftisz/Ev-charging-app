@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/server/db";
-import type { SessionDTO } from "@/lib/types";
+import type { PaymentStatus, SessionDTO } from "@/lib/types";
 
 const DEFAULT_BATTERY_KWH = 64;
 /** Average delivered power as a fraction of rated power (charge curve taper). */
@@ -10,6 +10,12 @@ const sessionInclude = {
   station: { select: { id: true, name: true, address: true } },
   charger: { select: { id: true, chargerCode: true, powerKw: true } },
   user: { select: { id: true, fullName: true, email: true, batteryKwh: true } },
+  payments: {
+    where: { type: "CHARGE", status: { in: ["PAID", "REFUNDED"] as PaymentStatus[] } },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  },
 } as const;
 
 type SessionRecord = Awaited<
@@ -86,6 +92,7 @@ export function serializeSession(session: SessionRecord): SessionDTO {
     user: session.user
       ? { id: session.user.id, fullName: session.user.fullName, email: session.user.email }
       : undefined,
+    receiptId: session.payments[0]?.id ?? null,
   };
 }
 
