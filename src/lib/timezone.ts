@@ -43,3 +43,19 @@ export function addDays(day: string, n: number) {
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
+
+/** Midnight in Bangkok `n` days before the Bangkok day `now` falls on. */
+export function bangkokDaysAgo(n: number, now: Date = new Date()) {
+  return bangkokDate(addDays(bangkokDay(now), -n));
+}
+
+/** Midnight in Bangkok on the first of the current Bangkok month. */
+export function startOfBangkokMonth(now: Date = new Date()) {
+  return bangkokDate(`${bangkokDay(now).slice(0, 8)}01`);
+}
+
+/** The last `count` Bangkok days as YYYY-MM-DD keys, oldest first, ending today. */
+export function lastBangkokDays(count: number, now: Date = new Date()) {
+  const today = bangkokDay(now);
+  return Array.from({ length: count }, (_, i) => addDays(today, i - count + 1));
+}

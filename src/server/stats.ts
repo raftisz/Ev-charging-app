@@ -2,37 +2,25 @@ import "server-only";
 import { prisma } from "@/server/db";
 import type { AdminStats, DashboardStats } from "@/lib/types";
 import { toSatang } from "@/lib/payments";
+import { bangkokDay, bangkokDaysAgo, lastBangkokDays, startOfBangkokMonth } from "@/lib/timezone";
 
 /** grid-average kg CO2 avoided per kWh charged versus an equivalent ICE trip */
 const CO2_PER_KWH = 0.27;
 
-function startOfMonth() {
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function daysAgo(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+// Days and months are Bangkok days and months, not the server's (UTC on
+// Vercel), so a session at 01:00 in Bangkok counts towards that day.
+const daysAgo = (n: number) => bangkokDaysAgo(n);
+const dayKey = (d: Date) => bangkokDay(d);
 
 function emptyDays(count: number) {
   const map = new Map<string, { kwh: number; revenue: number }>();
-  for (let i = count - 1; i >= 0; i--) {
-    map.set(dayKey(daysAgo(i)), { kwh: 0, revenue: 0 });
-  }
+  for (const day of lastBangkokDays(count)) map.set(day, { kwh: 0, revenue: 0 });
   return map;
 }
 
 /** Per-driver dashboard figures. Every number comes from the database. */
 export async function getDashboardStats(userId: number): Promise<DashboardStats> {
-  const monthStart = startOfMonth();
+  const monthStart = startOfBangkokMonth();
 
   const [
     totalStations,

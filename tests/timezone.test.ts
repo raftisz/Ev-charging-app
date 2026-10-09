@@ -1,7 +1,15 @@
-// Booking times must not depend on the zone the process runs in. Vercel runs
+// Booking times and daily stats must not depend on the zone the process runs in. Vercel runs
 // in UTC, so `npm run test:tz` forces TZ=UTC; the helpers have to produce
 // Bangkok wall-clock values anyway.
-import { addDays, bangkokDate, bangkokDay, bangkokTime } from "../src/lib/timezone";
+import {
+  addDays,
+  bangkokDate,
+  bangkokDay,
+  bangkokDaysAgo,
+  bangkokTime,
+  lastBangkokDays,
+  startOfBangkokMonth,
+} from "../src/lib/timezone";
 import { dateTime, dayOfMonth, monthShort, time } from "../src/lib/format";
 
 let pass = 0, fail = 0;
@@ -37,6 +45,19 @@ check("16:00 has not passed at 15:31", bangkokDate("2026-10-09", "16:00").getTim
 
 check("addDays crosses months", addDays("2026-10-31", 1) === "2026-11-01");
 check("addDays crosses years", addDays("2026-12-31", 1) === "2027-01-01");
+
+console.log("\n=== Daily stats buckets ===");
+// 00:30 on 1 Nov in Bangkok is still 31 Oct in UTC: the case that used to
+// put early-morning sessions on the wrong day and month.
+const justAfterMidnight = new Date("2026-10-31T17:30:00Z");
+check("the bucket day is the Bangkok day", bangkokDay(justAfterMidnight) === "2026-11-01");
+check("the month starts on Bangkok 1 Nov", startOfBangkokMonth(justAfterMidnight).toISOString() === "2026-10-31T17:00:00.000Z", startOfBangkokMonth(justAfterMidnight).toISOString());
+const days = lastBangkokDays(14, justAfterMidnight);
+check("14 buckets ending today in Bangkok", days.length === 14 && days[13] === "2026-11-01" && days[0] === "2026-10-19", days.join(","));
+check("buckets are consecutive days", days.every((d, i) => i === 0 || addDays(days[i - 1], 1) === d));
+check("window starts at Bangkok midnight", bangkokDaysAgo(13, justAfterMidnight).toISOString() === "2026-10-18T17:00:00.000Z", bangkokDaysAgo(13, justAfterMidnight).toISOString());
+check("a 01:00 Bangkok session lands in today's bucket", days.includes(bangkokDay(new Date("2026-10-31T18:00:00Z"))) && bangkokDay(new Date("2026-10-31T18:00:00Z")) === days[13]);
+check("a 23:30 Bangkok session lands in yesterday's bucket", bangkokDay(new Date("2026-10-31T16:30:00Z")) === days[12]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

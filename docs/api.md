@@ -52,6 +52,11 @@ send `iso` as `startTime` when booking. A slot is `past` once that instant has
 passed. All API timestamps are UTC ISO strings and the UI formats them in
 Bangkok time (`src/lib/timezone.ts`, `src/lib/format.ts`).
 
+Dashboard and admin statistics use Bangkok days too: `dailyEnergy` (14 days)
+and `revenueByDay` (30 days) are keyed by Bangkok `YYYY-MM-DD` and end on
+today in Bangkok, and "this month" (`monthSpend`, `monthEnergyKwh`) starts
+at Bangkok midnight on the 1st.
+
 `npm run dev:utc` starts the server in UTC as Vercel runs it, and
 `npm run test:tz` checks the helpers with `TZ=UTC`.
 

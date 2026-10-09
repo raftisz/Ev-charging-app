@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
-import { dateTime, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
+import { dateTime, dayMonth, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { AreaChart, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
@@ -67,12 +67,7 @@ export default function AdminOverviewPage() {
                   height={130}
                   ariaLabel="Revenue over the last 30 days"
                   labels={[
-                    stats.revenueByDay[0]
-                      ? new Date(stats.revenueByDay[0].date).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                        })
-                      : "30 days ago",
+                    stats.revenueByDay[0] ? dayMonth(stats.revenueByDay[0].date) : "30 days ago",
                     "Today",
                   ]}
                 />

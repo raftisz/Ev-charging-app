@@ -279,6 +279,10 @@ const run = async () => {
   check("dashboard stats derived from db", r.data.stats.totalChargers > 0 && r.data.stats.dailyEnergy.length === 14);
   check("recommended stations returned", Array.isArray(r.data.recommended));
   check("monthSpend keeps satang", isSatang(r.data.stats.monthSpend), String(r.data.stats.monthSpend));
+  const energyDays = r.data.stats.dailyEnergy.map(d => d.date);
+  check("energy chart ends on today in Bangkok", energyDays.at(-1) === bkkDay(), `${energyDays.at(-1)} vs ${bkkDay()}`);
+  check("energy chart covers 14 consecutive Bangkok days", energyDays.length === 14 && energyDays[0] === bkkDay(new Date(Date.now() - 13 * 86_400_000)));
+  check("today's sessions count in today's bucket", r.data.stats.dailyEnergy.at(-1).kwh > 0, JSON.stringify(r.data.stats.dailyEnergy.at(-1)));
 
   r = await req("driver", "GET", "/api/admin/stats");
   check("driver blocked from admin stats → 403", r.status === 403);
@@ -288,6 +292,8 @@ const run = async () => {
   check("admin top stations", r.data.stats.topStations.length > 0);
   const money = [r.data.stats.revenue, r.data.stats.revenue30d, ...r.data.stats.revenueByDay.map(d => d.revenue), ...r.data.stats.topStations.map(t => t.revenue)];
   check("revenue figures keep satang (2 decimals)", money.every(isSatang) && money.some(v => !Number.isInteger(v)), JSON.stringify(money.slice(0, 5)));
+  const revenueDays = r.data.stats.revenueByDay.map(d => d.date);
+  check("revenue chart ends on today in Bangkok", revenueDays.at(-1) === bkkDay() && revenueDays[0] === bkkDay(new Date(Date.now() - 29 * 86_400_000)), `${revenueDays[0]}…${revenueDays.at(-1)}`);
   check("30-day revenue equals the daily buckets", Math.abs(r.data.stats.revenue30d - r.data.stats.revenueByDay.reduce((a, d) => a + d.revenue, 0)) < 0.05);
 
   section("Notifications & profile");

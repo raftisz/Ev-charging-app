@@ -6,7 +6,7 @@ import { useSession } from "@/components/layout/SessionProvider";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
 import { dayMonth, dayOfMonth, duration, fullDate, kwh, monthShort, relative, thb, time } from "@/lib/format";
-import { bangkokTime } from "@/lib/timezone";
+import { APP_TIME_ZONE, bangkokTime } from "@/lib/timezone";
 import { Button } from "@/components/ui/Button";
 import { BarChart, ProgressRing, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                   This month
                 </div>
                 <span className="text-[12px] text-faint">
-                  {new Intl.DateTimeFormat("en-GB", { month: "long" }).format(new Date())}
+                  {new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, month: "long" }).format(new Date())}
                 </span>
               </div>
               <div className="mb-4 grid grid-cols-2 gap-2.5">
