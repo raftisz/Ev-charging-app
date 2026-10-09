@@ -16,7 +16,7 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/POST | `/api/stations` | Browse (search, filters, sort) · create (admin) |
 | GET/PATCH/DELETE | `/api/stations/{id}` | Station detail · update · delete (admin) |
 | POST/DELETE | `/api/stations/{id}/favorite` | Save / unsave a station |
-| GET | `/api/stations/{id}/availability` | Half-hour slots per charger for a given day |
+| GET | `/api/stations/{id}/availability` | Half-hour slots per charger for a given day (Bangkok time) |
 | GET | `/api/favorites` | The driver's saved stations |
 | GET/POST | `/api/chargers` | List (admin, filterable) · create (admin) |
 | PATCH/DELETE | `/api/chargers/{id}` | Update · delete (admin) |
@@ -32,6 +32,20 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET | `/api/users` | List users (admin) |
 | GET/PATCH/DELETE | `/api/users/{id}` | Detail · update role/wallet/active · delete (admin) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
+
+## Time zone
+
+Booking days and slot times are Bangkok wall-clock time (`Asia/Bangkok`,
+UTC+7), whatever zone the server or browser runs in.
+`GET /api/stations/{id}/availability?date=YYYY-MM-DD` treats `date` as a
+Bangkok day (default: today in Bangkok). Each slot has a `time` label such as
+`"16:30"` and an `iso` instant, `2026-10-09T09:30:00.000Z` for that label;
+send `iso` as `startTime` when booking. A slot is `past` once that instant has
+passed. All API timestamps are UTC ISO strings and the UI formats them in
+Bangkok time (`src/lib/timezone.ts`, `src/lib/format.ts`).
+
+`npm run dev:utc` starts the server in UTC as Vercel runs it, and
+`npm run test:tz` checks the helpers with `TZ=UTC`.
 
 ## Paying for a session
 

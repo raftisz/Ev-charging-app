@@ -1,6 +1,9 @@
 // Exercises the REST API against a running server. The suite mutates data
 // (it stops sessions, cancels reservations, deletes a user), so reseed first:
 //   npm run seed && npm run test:api
+//
+// Start the server in UTC (`npm run dev:utc`), as Vercel runs, so the
+// "Time zone" checks prove booking times stay in Bangkok time.
 const BASE = "http://localhost:3000";
 let pass = 0, fail = 0;
 const jars = new Map();
@@ -39,6 +42,11 @@ function check(name, cond, extra = "") {
 }
 
 const section = (t) => console.log(`\n=== ${t} ===`);
+
+const BKK_TIME = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const BKK_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" });
+const bkkTime = (iso) => BKK_TIME.format(new Date(iso));
+const bkkDay = (d = new Date()) => BKK_DAY.format(d);
 
 const run = async () => {
   section("Auth");
@@ -102,7 +110,7 @@ const run = async () => {
   check("favourites list no longer contains it", !r.data.stations.some(s => s.id === 5));
 
   section("Reservations");
-  const day = new Date(Date.now() + 26 * 3600_000).toISOString().slice(0, 10);
+  const day = bkkDay(new Date(Date.now() + 26 * 3600_000));
   r = await req("driver", "GET", `/api/stations/4/availability?date=${day}&duration=45`);
   check("availability returns slots per charger", r.status === 200 && r.data.chargers.length > 0 && r.data.chargers[0].slots.length > 0);
   const charger = r.data.chargers.find(c => c.bookable && c.slots.some(s => s.available));
@@ -111,6 +119,24 @@ const run = async () => {
   r = await req("driver", "POST", "/api/reservations", { stationId: 4, chargerId: charger.id, startTime: slot.iso, durationMinutes: 45 });
   check("create reservation", r.status === 201 && r.data.reservation.status === "CONFIRMED", JSON.stringify(r.data));
   const reservationId = r.data?.reservation?.id;
+  check("booked start equals the chosen slot", r.data.reservation.startTime === new Date(slot.iso).toISOString(), `${slot.time} ${slot.iso} → ${r.data.reservation.startTime}`);
+  check("booked start reads as the slot label in Bangkok", bkkTime(r.data.reservation.startTime) === slot.time && bkkDay(new Date(r.data.reservation.startTime)) === day, bkkTime(r.data.reservation.startTime));
+
+  section("Time zone");
+  // Slot labels are Bangkok wall-clock times on the requested Bangkok day.
+  r = await req("driver", "GET", `/api/stations/4/availability?date=${day}&duration=30`);
+  const allSlots = r.data.chargers.flatMap(c => c.slots);
+  check("every slot label matches its instant in Bangkok", allSlots.every(x => bkkTime(x.iso) === x.time && bkkDay(new Date(x.iso)) === day), JSON.stringify(allSlots.find(x => bkkTime(x.iso) !== x.time)));
+  const s1630 = r.data.chargers[0].slots.find(x => x.time === "16:30");
+  check("16:30 slot is 09:30 UTC", s1630?.iso === `${day}T09:30:00.000Z`, s1630?.iso);
+  check("08:00 slot is 01:00 UTC", r.data.chargers[0].slots[0].iso === `${day}T01:00:00.000Z`, r.data.chargers[0].slots[0].iso);
+
+  r = await req("driver", "GET", "/api/stations/4/availability?duration=30");
+  check("default day is today in Bangkok", r.data.date === bkkDay(), `${r.data.date} vs ${bkkDay()}`);
+  const todaySlots = r.data.chargers.find(c => c.bookable)?.slots ?? [];
+  const checkedAt = Date.now();
+  const pastWrong = todaySlots.filter(x => Math.abs(Date.parse(x.iso) - checkedAt) > 60_000 && (x.reason === "past") !== (Date.parse(x.iso) < checkedAt));
+  check("a slot is 'past' only once its Bangkok time has passed", pastWrong.length === 0, JSON.stringify(pastWrong.slice(0, 3)));
 
   r = await req("driver", "POST", "/api/reservations", { stationId: 4, chargerId: charger.id, startTime: slot.iso, durationMinutes: 45 });
   check("double-booking same slot → 409", r.status === 409, JSON.stringify(r.data));

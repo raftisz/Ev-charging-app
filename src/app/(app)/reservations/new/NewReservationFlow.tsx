@@ -12,29 +12,30 @@ import { Select } from "@/components/ui/Field";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDetailDTO } from "@/lib/types";
+import { APP_TIME_ZONE, addDays, bangkokDate, bangkokDay, bangkokTime } from "@/lib/timezone";
 
 const DURATIONS = [30, 45, 60, 90];
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
+const DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIME_ZONE,
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
 
+/** The next seven booking days, counted in Bangkok so "Today" matches the stations. */
 function dayOptions() {
+  const today = bangkokDay();
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
+    const value = addDays(today, i);
     return {
-      value: d.toISOString().slice(0, 10),
+      value,
       label:
         i === 0
           ? "Today"
           : i === 1
             ? "Tomorrow"
-            : new Intl.DateTimeFormat("en-GB", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              }).format(d),
+            : DAY_LABEL.format(bangkokDate(value, "12:00")),
     };
   });
 }
@@ -47,7 +48,7 @@ export function NewReservationFlow() {
   const [stationId, setStationId] = useState<number | null>(
     params.get("station") ? Number(params.get("station")) : null,
   );
-  const [day, setDay] = useState(todayIso());
+  const [day, setDay] = useState(() => bangkokDay());
   const [durationMinutes, setDuration] = useState(45);
   const [chargerId, setChargerId] = useState<number | null>(null);
   const [slotIso, setSlotIso] = useState<string | null>(null);
@@ -350,7 +351,7 @@ export function NewReservationFlow() {
                   label="When"
                   value={
                     slotIso
-                      ? `${days.find((d) => d.value === day)?.label} · ${new Date(slotIso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+                      ? `${days.find((d) => d.value === day)?.label} · ${bangkokTime(new Date(slotIso))}`
                       : "Not selected"
                   }
                 />

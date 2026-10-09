@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/server/db";
 import type { ReservationDTO } from "@/lib/types";
+import { bangkokDate } from "@/lib/timezone";
 
 export const RESERVATION_INCLUDE = {
   station: { select: { id: true, name: true, address: true, pricePerKwh: true } },
@@ -29,7 +30,7 @@ export function serializeReservation(r: ReservationRecord): ReservationDTO {
   };
 }
 
-/** Half-hour slots the station is bookable for, on the given calendar day. */
+/** Half-hour slots the station is bookable for, in Bangkok time, on the given calendar day. */
 export const SLOT_TIMES = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
   "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
@@ -44,8 +45,9 @@ export type Slot = {
   reason?: "past" | "booked";
 };
 
+/** The instant a slot starts: `day` and `time` are Bangkok wall-clock values. */
 export function slotDate(day: string, time: string) {
-  return new Date(`${day}T${time}:00`);
+  return bangkokDate(day, time);
 }
 
 /** Availability for one charger on one day, taking existing bookings into account. */
@@ -54,7 +56,7 @@ export async function chargerSlots(
   day: string,
   durationMinutes: number,
 ): Promise<Slot[]> {
-  const dayStart = new Date(`${day}T00:00:00`);
+  const dayStart = bangkokDate(day);
   const dayEnd = new Date(dayStart.getTime() + 24 * 3_600_000);
 
   const booked = await prisma.reservation.findMany({

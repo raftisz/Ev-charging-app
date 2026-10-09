@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { badRequest, handler, notFound } from "@/server/http";
 import { chargerSlots } from "@/server/reservations";
+import { bangkokDay } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export const GET = handler(async (request: Request, ctx: Params) => {
   if (!Number.isInteger(stationId)) throw badRequest("Invalid station id");
 
   const url = new URL(request.url);
-  const day = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
+  const day = url.searchParams.get("date") ?? bangkokDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw badRequest("Use date=YYYY-MM-DD");
   const duration = Number(url.searchParams.get("duration") ?? 45);
 
