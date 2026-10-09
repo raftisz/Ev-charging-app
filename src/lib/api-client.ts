@@ -4,6 +4,7 @@ import type {
   DashboardStats,
   NotificationDTO,
   PaymentDTO,
+  PromptPayQrDTO,
   ReservationDTO,
   SessionDTO,
   StationDTO,
@@ -134,14 +135,19 @@ export const api = {
   stopSession: (id: number) =>
     patch<{ session: SessionDTO }>(`/api/charging-sessions/${id}`, { action: "stop" }),
   paySession: (id: number, paymentMethod: string) =>
-    patch<{ session: SessionDTO }>(`/api/charging-sessions/${id}`, {
+    patch<{ session: SessionDTO; payment?: PaymentDTO; promptpay?: PromptPayQrDTO }>(`/api/charging-sessions/${id}`, {
       action: "pay",
       paymentMethod,
     }),
 
   wallet: () => get<{ balance: number; transactions: PaymentDTO[] }>("/api/wallet"),
   topUp: (amount: number, method: string) =>
-    post<{ balance: number; payment: PaymentDTO }>("/api/wallet/topup", { amount, method }),
+    post<{ balance: number; payment: PaymentDTO; promptpay?: PromptPayQrDTO }>("/api/wallet/topup", {
+      amount,
+      method,
+    }),
+  confirmPayment: (id: number) =>
+    post<{ payment: PaymentDTO; balance: number | null }>(`/api/payments/${id}/confirm`),
 
   notifications: () =>
     get<{ notifications: NotificationDTO[]; unread: number }>("/api/notifications"),

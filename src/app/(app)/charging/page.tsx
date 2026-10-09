@@ -12,9 +12,10 @@ import { ProgressRing } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, FormError } from "@/components/ui/States";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import type { SessionDTO } from "@/lib/types";
+import type { PendingPromptPay, SessionDTO } from "@/lib/types";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
+import { PromptPayDialog } from "@/components/payments/PromptPayDialog";
 
 export default function ChargingPage() {
   const toast = useToast();
@@ -23,6 +24,7 @@ export default function ChargingPage() {
   const [confirmStop, setConfirmStop] = useState(false);
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("WALLET");
+  const [promptPay, setPromptPay] = useState<PendingPromptPay | null>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -70,9 +72,13 @@ export default function ChargingPage() {
     setPayError(null);
     setPaying(true);
     try {
-      await api.paySession(payFor.id, method);
-      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
+      const res = await api.paySession(payFor.id, method);
       setPayFor(null);
+      if (res.payment && res.promptpay) {
+        setPromptPay({ payment: res.payment, promptpay: res.promptpay });
+        return;
+      }
+      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
       await refreshUser();
       void reload(true);
     } catch (err) {
@@ -362,6 +368,17 @@ export default function ChargingPage() {
           ) : null}
         </div>
       </Modal>
+
+      <PromptPayDialog
+        pending={promptPay}
+        onClose={() => setPromptPay(null)}
+        onConfirmed={(payment) => {
+          setPromptPay(null);
+          toast.push(`Paid ${thb(payment.amount)} with PromptPay QR`);
+          void refreshUser();
+          void reload(true);
+        }}
+      />
     </Page>
   );
 }

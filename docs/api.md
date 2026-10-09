@@ -25,7 +25,8 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/POST | `/api/charging-sessions` | List · start charging |
 | GET/PATCH/DELETE | `/api/charging-sessions/{id}` | Detail · `action: "stop"` \| `"pay"` · delete (admin) |
 | GET | `/api/wallet` | Wallet balance and the latest 50 transactions (`Payment` rows) |
-| POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` |
+| POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` (PromptPay: `202` + QR) |
+| POST | `/api/payments/{id}/confirm` | Confirm a pending PromptPay payment (simulated, payer only) |
 | GET/PATCH | `/api/notifications` | List · mark all read |
 | PATCH/DELETE | `/api/notifications/{id}` | Mark read · delete |
 | GET/PATCH | `/api/profile` | View / update the signed-in user |
@@ -75,12 +76,42 @@ The payment runs in one database transaction:
    same `UPDATE`. Too little balance returns `409` and nothing is written.
 3. A `Payment` row (`type: CHARGE`) records the amount, method and status.
 
+`PROMPTPAY` works differently, see below.
+
+## PromptPay QR
+
+Paying a session or topping up with `PROMPTPAY` does not move money yet. It
+returns `202` with a `PENDING` payment and a QR:
+
+```json
+{ "payment": { "id": 812, "status": "PENDING", ... },
+  "promptpay": { "payload": "000201010212...6304ABCD", "amount": 64.47,
+                 "recipient": "xxxxxx0000", "isDemoRecipient": true } }
+```
+
+`payload` is a dynamic EMVCo PromptPay payload: tag 29 holds the PromptPay
+application id and the recipient, tag 54 the exact amount with 2 decimals,
+and tag 63 a CRC-16/CCITT checksum. Asking again for the same session and
+amount returns the same pending payment.
+
+`POST /api/payments/{id}/confirm` stands in for the bank's confirmation (the
+"ยืนยันการชำระ" button). In one transaction it marks the payment `PAID` and
+either settles the session or credits the wallet. Only the payer can confirm
+(others get `404`), and only once (`409` after that). A ฿0.00 session settles
+without a QR.
+
+The recipient comes from the `PROMPTPAY_ID` environment variable only (a
+phone number, national/tax ID or e-wallet ID; see `.env.example`). Unset, it
+falls back to 000-000-0000, which no bank accepts, and the response says
+`isDemoRecipient: true`.
+
 ## Wallet top-up
 
-`POST /api/wallet/topup` increments the balance and writes a `Payment` row
-(`type: TOPUP`, `status: PAID`) in one transaction, then sends a `PAYMENT`
-notification. No card or PromptPay provider is connected to this endpoint, so
-top-ups are approved immediately. The page is `/wallet`.
+`POST /api/wallet/topup` with `CREDIT_CARD` increments the balance and writes
+a `Payment` row (`type: TOPUP`, `status: PAID`) in one transaction, then sends
+a `PAYMENT` notification. No card provider is connected yet, so card top-ups
+are approved immediately. With `PROMPTPAY` it returns a QR and the wallet is
+credited on confirm. The page is `/wallet`.
 
 The frontend never hardcodes data: every page fetches through
 `src/lib/api-client.ts`, and every dashboard figure is aggregated from the

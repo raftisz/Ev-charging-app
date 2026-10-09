@@ -34,6 +34,18 @@ export type PaymentDTO = {
   stationName: string | null;
 };
 
+export type PromptPayQrDTO = {
+  payload: string;
+  amount: number;
+  /** Masked, e.g. "xxxxxx5678". */
+  recipient: string;
+  /** True when PROMPTPAY_ID is unset and a number no bank accepts is used. */
+  isDemoRecipient: boolean;
+};
+
+/** A PromptPay payment waiting for the payer to confirm the transfer. */
+export type PendingPromptPay = { payment: PaymentDTO; promptpay: PromptPayQrDTO };
+
 export type NotificationType = "SESSION" | "RESERVATION" | "PAYMENT" | "SYSTEM";
 
 export type ConnectorDTO = {

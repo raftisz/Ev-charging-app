@@ -220,3 +220,27 @@ flowchart LR
     B --> K["Favourites / Profile / Vehicle"]
     L["Operator / Admin"] --> M["Admin console<br/>stations, chargers,<br/>reservations, sessions, users"]
 ```
+
+## 6. PromptPay Payment Flow
+
+ทั้งจ่ายค่าชาร์จและเติมเงิน ใช้ QR แบบ EMVCo ที่ใส่ยอดเงินจริง แล้วยืนยันการรับเงินแบบจำลอง (ยังไม่ได้ต่อธนาคาร)
+
+```mermaid
+sequenceDiagram
+    actor D as Driver
+    participant UI as History / Charging / Wallet
+    participant API as Next.js API
+    participant DB as PostgreSQL
+
+    D->>UI: เลือก PromptPay QR
+    UI->>API: PATCH /api/charging-sessions/{id} (pay)<br/>หรือ POST /api/wallet/topup
+    API->>DB: Payment PENDING (CHARGE / TOPUP)
+    API-->>UI: 202 + EMVCo payload (ยอดเงิน + CRC)<br/>ผู้รับจาก env PROMPTPAY_ID
+    UI-->>D: แสดง QR
+    D->>UI: กด "ยืนยันการชำระ"
+    UI->>API: POST /api/payments/{id}/confirm
+    API->>DB: $transaction: Payment PAID +<br/>session PAID หรือ wallet += ยอด
+    API->>DB: Notification
+    API-->>UI: 200
+```
+

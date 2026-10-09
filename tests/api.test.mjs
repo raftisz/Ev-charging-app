@@ -49,6 +49,30 @@ const bkkTime = (iso) => BKK_TIME.format(new Date(iso));
 const bkkDay = (d = new Date()) => BKK_DAY.format(d);
 const BAHT = /฿[\d,]+(?:\.\d+)?/g;
 const allSatang = (text) => (text.match(BAHT) ?? []).every((m) => /\.\d{2}$/.test(m));
+// Independent of src/lib/promptpay.ts so the payload is checked, not echoed.
+function crc16ccitt(str) {
+  let crc = 0xffff;
+  for (const b of Buffer.from(str, "utf8")) {
+    crc ^= b << 8;
+    for (let i = 0; i < 8; i++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+function emvFields(payload) {
+  const out = {};
+  for (let i = 0; i < payload.length;) {
+    const tag = payload.slice(i, i + 2), len = Number(payload.slice(i + 2, i + 4));
+    out[tag] = payload.slice(i + 4, i + 4 + len);
+    i += 4 + len;
+  }
+  return out;
+}
+const validPromptPay = (payload, amount) => {
+  const f = emvFields(payload);
+  return crc16ccitt(payload.slice(0, -4)) === payload.slice(-4) && payload.slice(-8, -4) === "6304"
+    && f["54"] === amount.toFixed(2) && f["53"] === "764" && f["58"] === "TH" && f["01"] === "12"
+    && emvFields(f["29"])["00"] === "A000000677010111";
+};
 const isSatang = (n) => typeof n === "number" && Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;
 
 const run = async () => {
@@ -235,8 +259,18 @@ const run = async () => {
   check("top-up from the wallet itself → 422", r.status === 422);
 
   r = await req("driver", "POST", "/api/wallet/topup", { amount: 250, method: "PROMPTPAY" });
-  check("top up ฿250", r.status === 201 && r.data.payment.type === "TOPUP" && r.data.payment.status === "PAID", JSON.stringify(r.data).slice(0, 200));
+  check("PromptPay top-up returns a pending payment (202)", r.status === 202 && r.data.payment.type === "TOPUP" && r.data.payment.status === "PENDING", JSON.stringify(r.data).slice(0, 200));
+  check("top-up QR is valid EMVCo for ฿250.00", validPromptPay(r.data.promptpay.payload, 250), r.data.promptpay?.payload);
+  check("demo recipient when PROMPTPAY_ID is unset", r.data.promptpay.isDemoRecipient === true && r.data.promptpay.recipient.endsWith("0000"));
+  check("balance unchanged until confirmed", Math.abs(r.data.balance - walletBefore) < 0.01);
+  const topUpPaymentId = r.data.payment.id;
+  r = await req("newbie", "POST", `/api/payments/${topUpPaymentId}/confirm`);
+  check("another driver cannot confirm it → 404", r.status === 404, String(r.status));
+  r = await req("driver", "POST", `/api/payments/${topUpPaymentId}/confirm`);
+  check("confirm the PromptPay top-up", r.status === 200 && r.data.payment.status === "PAID" && r.data.payment.providerRef, JSON.stringify(r.data).slice(0, 200));
   check("top-up returns the new balance", Math.abs(r.data.balance - (walletBefore + 250)) < 0.01);
+  r = await req("driver", "POST", `/api/payments/${topUpPaymentId}/confirm`);
+  check("confirming twice → 409", r.status === 409);
   r = await req("driver", "GET", "/api/wallet");
   check("top-up is the latest transaction", r.data.transactions[0].type === "TOPUP" && r.data.transactions[0].amount === 250);
   r = await req("driver", "GET", "/api/notifications");
@@ -259,15 +293,28 @@ const run = async () => {
   r = await req("driver", "GET", "/api/stations/1");
   check("charger flipped to CHARGING", r.data.station.chargers.find(c => c.id === freeCharger.id).status === "CHARGING");
 
+  // Let it run a few seconds so it costs something to pay by PromptPay.
+  await new Promise((done) => setTimeout(done, 3000));
   r = await req("driver", "PATCH", `/api/charging-sessions/${newSessionId}`, { action: "stop" });
-  check("stop the new session", r.status === 200);
+  check("stop the new session", r.status === 200 && r.data.session.cost > 0, JSON.stringify(r.data.session?.cost));
+  const newSessionCost = r.data.session.cost;
   r = await req("driver", "GET", "/api/stations/1");
   check("charger released back to AVAILABLE", r.data.station.chargers.find(c => c.id === freeCharger.id).status === "AVAILABLE");
 
   r = await req("driver", "GET", "/api/profile");
   const balanceBeforePromptPay = r.data.user.walletBalance;
   r = await req("driver", "PATCH", `/api/charging-sessions/${newSessionId}`, { action: "pay", paymentMethod: "PROMPTPAY" });
-  check("pay with PromptPay", r.status === 200 && r.data.session.paymentMethod === "PromptPay QR", JSON.stringify(r.data).slice(0, 200));
+  check("PromptPay pay returns a QR, session not yet paid (202)", r.status === 202 && r.data.payment.status === "PENDING" && r.data.session.paymentStatus !== "PAID", JSON.stringify(r.data).slice(0, 200));
+  check("session QR is valid EMVCo for the session cost", validPromptPay(r.data.promptpay.payload, newSessionCost), `${r.data.promptpay?.payload} vs ${newSessionCost}`);
+  const ppPaymentId = r.data.payment.id;
+  r = await req("driver", "PATCH", `/api/charging-sessions/${newSessionId}`, { action: "pay", paymentMethod: "PROMPTPAY" });
+  check("asking again reuses the pending payment", r.status === 202 && r.data.payment.id === ppPaymentId);
+  r = await req("driver", "POST", `/api/payments/${ppPaymentId}/confirm`);
+  check("confirm the PromptPay payment", r.status === 200 && r.data.payment.status === "PAID");
+  r = await req("driver", "GET", `/api/charging-sessions/${newSessionId}`);
+  check("session is now paid by PromptPay", r.data.session.paymentStatus === "PAID" && r.data.session.paymentMethod === "PromptPay QR");
+  r = await req("driver", "PATCH", `/api/charging-sessions/${newSessionId}`, { action: "pay", paymentMethod: "PROMPTPAY" });
+  check("paid session cannot get a new QR → 409", r.status === 409);
   r = await req("driver", "GET", "/api/profile");
   check("PromptPay does not touch the wallet", r.data.user.walletBalance === balanceBeforePromptPay);
   r = await req("driver", "GET", "/api/wallet");

@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
-import type { PaymentDTO, PaymentStatus } from "@/lib/types";
+import type { PaymentDTO, PaymentStatus, PendingPromptPay } from "@/lib/types";
+import { PromptPayDialog } from "@/components/payments/PromptPayDialog";
 
 const PRESETS = [100, 300, 500, 1000];
 
@@ -48,6 +49,7 @@ export default function WalletPage() {
   const [method, setMethod] = useState<(typeof TOP_UP_METHODS)[number]["value"]>("CREDIT_CARD");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promptPay, setPromptPay] = useState<PendingPromptPay | null>(null);
 
   const { data, loading, error: loadError, reload } = useAsync(() => api.wallet());
   const balance = data?.balance ?? user.walletBalance;
@@ -63,6 +65,10 @@ export default function WalletPage() {
     setSubmitting(true);
     try {
       const res = await api.topUp(value, method);
+      if (res.promptpay) {
+        setPromptPay({ payment: res.payment, promptpay: res.promptpay });
+        return;
+      }
       toast.push(`Added ${thb(value)}. Balance ${thb(res.balance)}`);
       await refreshUser();
       void reload(true);
@@ -149,7 +155,7 @@ export default function WalletPage() {
               Top up {Number(amount) > 0 ? thb(Number(amount)) : ""}
             </Button>
             <p className="text-[11.5px] text-faint">
-              Demo mode: top-ups are approved immediately, no real money is charged.
+              Demo mode: card top-ups are approved immediately; PromptPay shows a QR to confirm. No real money moves.
             </p>
           </form>
         </div>
@@ -196,6 +202,17 @@ export default function WalletPage() {
           ) : null}
         </div>
       </div>
+
+      <PromptPayDialog
+        pending={promptPay}
+        onClose={() => setPromptPay(null)}
+        onConfirmed={(payment) => {
+          setPromptPay(null);
+          toast.push(`Added ${thb(payment.amount)} with PromptPay QR`);
+          void refreshUser();
+          void reload(true);
+        }}
+      />
     </Page>
   );
 }

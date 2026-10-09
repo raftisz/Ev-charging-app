@@ -300,6 +300,34 @@ console.log("\n=== Money shown to 2 decimals ===");
   await admin.ctx.close();
 }
 
+// ---------- PROMPTPAY ----------
+console.log("\n=== PromptPay top-up ===");
+{
+  const { ctx, page } = await newPage({ width: 1280, height: 900 }, "promptpay");
+  await login(page, "user4@example.com");
+  await page.goto(`${BASE}/wallet`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  const before = await page.locator('[data-testid="wallet-balance"]').innerText();
+  await page.click('button:has-text("฿500.00")');
+  await page.click('label:has-text("PromptPay QR")');
+  await page.click('button[type="submit"]:has-text("Top up")');
+  const qr = page.locator('[data-testid="promptpay-qr"]');
+  await qr.locator("svg").waitFor({ timeout: 8000 });
+  check("QR code drawn as SVG", (await qr.locator("svg path").count()) > 0);
+  const payload = await qr.getAttribute("data-payload");
+  check("QR payload carries the amount", /5406500\.00/.test(payload ?? ""), payload);
+  check("dialog shows the 2-decimal amount", (await page.locator("text=฿500.00").count()) > 0);
+  check("balance unchanged before confirming", (await page.locator('[data-testid="wallet-balance"]').innerText()) === before);
+  await page.screenshot({ path: `${OUT}/promptpay-qr.png` });
+  await page.click('button:has-text("ยืนยันการชำระ")');
+  await qr.waitFor({ state: "detached", timeout: 8000 });
+  await page.waitForTimeout(1200);
+  const after = await page.locator('[data-testid="wallet-balance"]').innerText();
+  const num = (t) => Number(t.replace(/[฿,]/g, ""));
+  check("balance up ฿500.00 after confirming", Math.abs(num(after) - num(before) - 500) < 0.01, `${before} → ${after}`);
+  await ctx.close();
+}
+
 // ---------- TIME ZONE ----------
 // A browser in UTC (as the Vercel server is) must still offer, book and show
 // Bangkok times: the slot picked is the slot booked and the time displayed.

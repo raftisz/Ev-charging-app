@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@/server/db";
 import { PAYMENT_METHOD_LABEL } from "@/lib/payments";
+import { thb } from "@/lib/format";
+import { badRequest, conflict, notFound } from "@/server/http";
+import { promptPayQr } from "@/server/promptpay";
 import type { PaymentDTO } from "@/lib/types";
 
 const paymentInclude = {
@@ -36,4 +39,109 @@ export async function listPayments(userId: number, take = 50) {
     take,
   });
   return payments.map(serializePayment);
+}
+
+/**
+ * Starts a PromptPay payment: a PENDING row and a QR for its exact amount.
+ * Asking again for the same session and amount returns the same pending row
+ * rather than piling up new ones.
+ */
+export async function startPromptPay(input: {
+  userId: number;
+  type: "CHARGE" | "TOPUP";
+  amount: number;
+  sessionId?: number;
+}) {
+  const existing = input.sessionId
+    ? await prisma.payment.findFirst({
+        where: {
+          sessionId: input.sessionId,
+          type: input.type,
+          method: "PROMPTPAY",
+          status: "PENDING",
+          amount: input.amount,
+        },
+        include: paymentInclude,
+        orderBy: { createdAt: "desc" },
+      })
+    : null;
+  const payment =
+    existing ??
+    (await prisma.payment.create({
+      data: {
+        userId: input.userId,
+        sessionId: input.sessionId,
+        type: input.type,
+        amount: input.amount,
+        method: "PROMPTPAY",
+        status: "PENDING",
+      },
+      include: paymentInclude,
+    }));
+  return { payment: serializePayment(payment), promptpay: promptPayQr(payment.amount) };
+}
+
+/**
+ * Marks a pending PromptPay payment as received. There is no bank feed, so
+ * the payer confirms it themselves (the demo "ยืนยันการชำระ" button). The
+ * payment, the session or wallet it settles, all change in one transaction,
+ * and only a PENDING row can be confirmed, so a second confirm gets 409.
+ */
+export async function confirmPromptPay(paymentId: number, userId: number) {
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+    if (!payment || payment.userId !== userId) throw notFound("That payment does not exist");
+    if (payment.method !== "PROMPTPAY") throw badRequest("Only PromptPay payments are confirmed this way");
+
+    const claimed = await tx.payment.updateMany({
+      where: { id: payment.id, status: "PENDING" },
+      data: { status: "PAID", providerRef: `PP-${payment.id}-${Date.now()}` },
+    });
+    if (claimed.count === 0) throw conflict("This payment is no longer pending");
+
+    let balance: number | null = null;
+    if (payment.type === "CHARGE" && payment.sessionId) {
+      const settled = await tx.chargingSession.updateMany({
+        where: {
+          id: payment.sessionId,
+          status: { not: "ACTIVE" },
+          paymentStatus: { in: ["PENDING", "FAILED"] },
+        },
+        data: { paymentStatus: "PAID", paymentMethod: PAYMENT_METHOD_LABEL.PROMPTPAY },
+      });
+      if (settled.count === 0) throw conflict("This session is already paid");
+    } else if (payment.type === "TOPUP") {
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: { walletBalance: { increment: payment.amount } },
+      });
+      balance = user.walletBalance;
+    }
+
+    const updated = await tx.payment.findUniqueOrThrow({
+      where: { id: payment.id },
+      include: paymentInclude,
+    });
+    return { payment: updated, balance };
+  });
+
+  const { payment, balance } = result;
+  await prisma.notification.create({
+    data:
+      payment.type === "TOPUP"
+        ? {
+            userId,
+            type: "PAYMENT",
+            title: "Wallet topped up",
+            body: `${thb(payment.amount)} added with PromptPay QR. New balance ${thb(balance ?? 0)}.`,
+          }
+        : {
+            userId,
+            type: "PAYMENT",
+            title: "Payment received",
+            body: `${thb(payment.amount)} paid with PromptPay QR for session #${payment.sessionId}.`,
+          },
+  });
+
+  return { payment: serializePayment(payment), balance };
 }

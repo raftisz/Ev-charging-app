@@ -4,18 +4,25 @@ import { handler, requireUser } from "@/server/http";
 import { topUpSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { thb } from "@/lib/format";
-import { PAYMENT_INCLUDE, serializePayment } from "@/server/payments";
+import { PAYMENT_INCLUDE, serializePayment, startPromptPay } from "@/server/payments";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Adds money to the wallet. There is no card or PromptPay provider wired up
- * yet, so the charge is treated as approved straight away.
+ * Adds money to the wallet. A card top-up is approved straight away (no card
+ * provider is connected yet); a PromptPay top-up returns a QR and is credited
+ * when it is confirmed at POST /api/payments/{id}/confirm.
  */
 export const POST = handler(async (request: Request) => {
   const user = await requireUser();
   const { amount, method } = topUpSchema.parse(await request.json().catch(() => ({})));
   const total = toSatang(amount);
+
+  // PromptPay credits the wallet only once the transfer is confirmed.
+  if (method === "PROMPTPAY") {
+    const started = await startPromptPay({ userId: user.id, type: "TOPUP", amount: total });
+    return NextResponse.json({ balance: user.walletBalance, ...started }, { status: 202 });
+  }
 
   const { balance, payment } = await prisma.$transaction(async (tx) => {
     const updated = await tx.user.update({

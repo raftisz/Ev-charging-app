@@ -4,6 +4,7 @@ import { badRequest, conflict, forbidden, handler, notFound, requireUser } from 
 import { paySessionSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { thb } from "@/lib/format";
+import { startPromptPay } from "@/server/payments";
 import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +90,19 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
     const { paymentMethod: method } = paySessionSchema.parse(body);
     const label = PAYMENT_METHOD_LABEL[method];
     const total = toSatang(session.cost);
+
+    // PromptPay is settled later, when the payer confirms the transfer, so
+    // here it only issues the QR. 202: accepted, not yet paid. Nothing is
+    // owed on a ฿0.00 session, so that settles straight away instead.
+    if (method === "PROMPTPAY" && total > 0) {
+      const started = await startPromptPay({
+        userId: session.userId,
+        type: "CHARGE",
+        amount: total,
+        sessionId: session.id,
+      });
+      return NextResponse.json({ session: serializeSession(session), ...started }, { status: 202 });
+    }
 
     // Both writes below are conditional, so two concurrent requests cannot
     // both settle the session and the wallet cannot be taken below zero.

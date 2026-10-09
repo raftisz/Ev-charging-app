@@ -13,9 +13,10 @@ import { StatTile } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState, ErrorState, FormError, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
-import type { PaymentStatus, SessionDTO } from "@/lib/types";
+import type { PaymentStatus, PendingPromptPay, SessionDTO } from "@/lib/types";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
+import { PromptPayDialog } from "@/components/payments/PromptPayDialog";
 
 const PAYMENT_TONE: Record<PaymentStatus, "green" | "amber" | "danger" | "neutral"> = {
   PAID: "green",
@@ -33,6 +34,7 @@ export default function HistoryPage() {
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
   const [paying, setPaying] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("WALLET");
+  const [promptPay, setPromptPay] = useState<PendingPromptPay | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
 
   const { data, loading, error, reload } = useAsync(() => api.sessions({}));
@@ -68,9 +70,13 @@ export default function HistoryPage() {
     setPaying(true);
     setPayError(null);
     try {
-      await api.paySession(payFor.id, method);
-      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
+      const res = await api.paySession(payFor.id, method);
       setPayFor(null);
+      if (res.payment && res.promptpay) {
+        setPromptPay({ payment: res.payment, promptpay: res.promptpay });
+        return;
+      }
+      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
       await refreshUser();
       void reload(true);
     } catch (err) {
@@ -261,6 +267,17 @@ export default function HistoryPage() {
           />
         </div>
       </Modal>
+
+      <PromptPayDialog
+        pending={promptPay}
+        onClose={() => setPromptPay(null)}
+        onConfirmed={(payment) => {
+          setPromptPay(null);
+          toast.push(`Paid ${thb(payment.amount)} with PromptPay QR`);
+          void refreshUser();
+          void reload(true);
+        }}
+      />
     </Page>
   );
 }
