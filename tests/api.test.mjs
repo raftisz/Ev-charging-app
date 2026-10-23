@@ -1,5 +1,6 @@
 // Exercises the REST API against a running server. The suite mutates data
-// (it stops sessions, cancels reservations, deletes a user), so reseed first:
+// (it stops sessions, cancels reservations, deletes a user and, when
+// CRON_SECRET is set, runs the demo reset), so reseed first:
 //   npm run seed && npm run test:api
 //
 // Start the server in UTC (`npm run dev:utc`), as Vercel runs, so the
@@ -13,13 +14,14 @@ function jar(name) {
   return jars.get(name);
 }
 
-async function req(who, method, path, body) {
+async function req(who, method, path, body, extraHeaders = {}) {
   const cookies = [...jar(who)].map(([k, v]) => `${k}=${v}`).join("; ");
   const res = await fetch(BASE + path, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(cookies ? { Cookie: cookies } : {}),
+      ...extraHeaders,
     },
     body: body ? JSON.stringify(body) : undefined,
     redirect: "manual",
@@ -42,6 +44,18 @@ function check(name, cond, extra = "") {
 }
 
 const section = (t) => console.log(`\n=== ${t} ===`);
+
+/** A charger nobody is using or holding, on a station other than `skip`. */
+async function findFreeCharger(who, skip = []) {
+  const { data } = await req(who, "GET", "/api/stations");
+  for (const st of data.stations) {
+    if (skip.includes(st.id) || st.availableCount === 0) continue;
+    const detail = await req(who, "GET", `/api/stations/${st.id}`);
+    const c = detail.data.station.chargers.find(x => x.status === "AVAILABLE");
+    if (c) return { stationId: st.id, charger: c };
+  }
+  throw new Error("no free charger left in the seeded data");
+}
 
 const BKK_TIME = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const BKK_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" });
@@ -221,14 +235,9 @@ const run = async () => {
   const balanceBefore = r.data.user.walletBalance;
 
   r = await req("admin", "PATCH", `/api/users/${driverId}`, { walletBalance: 0 });
-  check("admin empties the driver's wallet", r.status === 200 && r.data.user.walletBalance === 0);
-  r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "WALLET" });
-  check("wallet pay with too little balance → 409", r.status === 409, JSON.stringify(r.data));
-  r = await req("driver", "GET", `/api/charging-sessions/${live.id}`);
-  check("failed wallet pay leaves session unpaid", r.data.session.paymentStatus !== "PAID");
+  check("staff cannot set a wallet balance → 422", r.status === 422, String(r.status));
   r = await req("driver", "GET", "/api/profile");
-  check("failed wallet pay leaves balance untouched", r.data.user.walletBalance === 0);
-  await req("admin", "PATCH", `/api/users/${driverId}`, { walletBalance: balanceBefore });
+  check("balance unchanged by the refused edit", r.data.user.walletBalance === balanceBefore);
 
   r = await req("driver", "PATCH", `/api/charging-sessions/${live.id}`, { action: "pay", paymentMethod: "BITCOIN" });
   check("unknown payment method → 422", r.status === 422);
@@ -493,8 +502,8 @@ const run = async () => {
   r = await req("admin", "PATCH", `/api/users/${me.id}`, { isActive: false });
   check("admin cannot disable self → 400", r.status === 400);
 
-  r = await req("admin", "PATCH", `/api/users/${newUserId}`, { role: "OPERATOR", walletBalance: 500 });
-  check("admin updates a user", r.status === 200 && r.data.user.role === "OPERATOR" && r.data.user.walletBalance === 500);
+  r = await req("admin", "PATCH", `/api/users/${newUserId}`, { role: "OPERATOR" });
+  check("admin updates a user", r.status === 200 && r.data.user.role === "OPERATOR");
 
   r = await req("admin", "DELETE", `/api/users/${newUserId}`);
   check("admin deletes a user", r.status === 200);
@@ -502,9 +511,10 @@ const run = async () => {
   section("Stale session");
   // A token that is still cryptographically valid but whose account is gone
   // used to bounce between the proxy and the app layout forever.
-  await req("ghost", "POST", "/api/auth/login", { email: "user3@example.com", password: "password123" });
+  const ghostEmail = `ghost.${Date.now()}@test.local`;
+  await req("ghost", "POST", "/api/auth/register", { fullName: "Ghost Driver", email: ghostEmail, password: "password123" });
   const ghostCookie = [...jar("ghost")].map(([k, v]) => `${k}=${v}`).join("; ");
-  const ghost = (await req("admin", "GET", "/api/users")).data.users.find(u => u.email === "user3@example.com");
+  const ghost = (await req("admin", "GET", "/api/users")).data.users.find(u => u.email === ghostEmail);
   r = await req("admin", "DELETE", `/api/users/${ghost.id}`);
   check("admin deletes the signed-in driver", r.status === 200, JSON.stringify(r.data));
 
@@ -527,6 +537,142 @@ const run = async () => {
   check("stale session does not loop", hops < 5, `took ${hops} hops`);
   check("stale session lands on login", url.includes("/login") && finalStatus === 200, url);
   check("stale session cookie is cleared", cookie === "", cookie.slice(0, 30));
+
+  section("Wallet guard");
+  // A brand-new driver has ฿0.00, so any session that costs something cannot
+  // be paid from the wallet.
+  const brokeEmail = `broke.${Date.now()}@test.local`;
+  await req("broke", "POST", "/api/auth/register", { fullName: "Broke Driver", email: brokeEmail, password: "password123" });
+  const brokeAt = await findFreeCharger("broke");
+  r = await req("broke", "POST", "/api/charging-sessions", { stationId: brokeAt.stationId, chargerId: brokeAt.charger.id, startPercent: 20, targetPercent: 80 });
+  const brokeSession = r.data?.session?.id;
+  check("new driver starts a session", r.status === 201, JSON.stringify(r.data).slice(0, 160));
+  await new Promise((done) => setTimeout(done, 2500));
+  r = await req("broke", "PATCH", `/api/charging-sessions/${brokeSession}`, { action: "stop" });
+  check("it costs something", r.status === 200 && r.data.session.cost > 0, JSON.stringify(r.data?.session?.cost));
+  r = await req("broke", "PATCH", `/api/charging-sessions/${brokeSession}`, { action: "pay", paymentMethod: "WALLET" });
+  check("wallet pay with too little balance → 409", r.status === 409, JSON.stringify(r.data));
+  r = await req("broke", "GET", `/api/charging-sessions/${brokeSession}`);
+  check("failed wallet pay leaves session unpaid", r.data.session.paymentStatus !== "PAID");
+  r = await req("broke", "GET", "/api/profile");
+  check("failed wallet pay leaves balance untouched", r.data.user.walletBalance === 0);
+  const brokeId = r.data.user.id;
+
+  r = await req("broke", "POST", "/api/wallet/topup", { amount: 10000, method: "CREDIT_CARD" });
+  check("top up ฿10,000.00", r.status === 201 && r.data.balance === 10000, String(r.status));
+  r = await req("broke", "POST", "/api/wallet/topup", { amount: 10000, method: "CREDIT_CARD" });
+  check("second ฿10,000.00 stays within the ฿20,000.00 ceiling", r.status === 201 && r.data.balance === 20000, String(r.status));
+  r = await req("broke", "POST", "/api/wallet/topup", { amount: 20, method: "CREDIT_CARD" });
+  check("card top-up past the ceiling → 409", r.status === 409, String(r.status));
+  r = await req("broke", "POST", "/api/wallet/topup", { amount: 20, method: "PROMPTPAY" });
+  check("PromptPay top-up past the ceiling → 409", r.status === 409, String(r.status));
+  r = await req("broke", "GET", "/api/profile");
+  check("balance stops at the ceiling", r.data.user.walletBalance === 20000);
+
+  r = await req("admin", "DELETE", `/api/users/${brokeId}`);
+  check("an account with payments cannot be deleted → 409", r.status === 409, String(r.status));
+  r = await req("admin", "PATCH", `/api/users/${brokeId}`, { isActive: false });
+  check("it can be disabled instead", r.status === 200 && r.data.user.isActive === false);
+
+  section("Staff roles");
+  r = await req("operator", "POST", "/api/auth/login", { email: "operator@example.com", password: "password123" });
+  const operatorId = r.data.user.id;
+  const team = (await req("admin", "GET", "/api/users")).data.users;
+  const driver4 = team.find(u => u.email === "user4@example.com");
+  const adminRow = team.find(u => u.email === "admin@example.com");
+  r = await req("operator", "PATCH", `/api/users/${operatorId}`, { role: "ADMIN" });
+  check("operator cannot promote themselves → 403", r.status === 403, String(r.status));
+  r = await req("operator", "PATCH", `/api/users/${driver4.id}`, { role: "ADMIN" });
+  check("operator cannot change a driver's role → 403", r.status === 403, String(r.status));
+  r = await req("operator", "PATCH", `/api/users/${adminRow.id}`, { fullName: "Hacked" });
+  check("operator cannot edit an admin → 403", r.status === 403, String(r.status));
+  r = await req("operator", "PATCH", `/api/users/${driver4.id}`, { fullName: "Pichaya W." });
+  check("operator can still edit a driver's name", r.status === 200 && r.data.user.fullName === "Pichaya W.");
+  await req("operator", "PATCH", `/api/users/${driver4.id}`, { fullName: driver4.fullName });
+
+  section("Demo accounts");
+  r = await req("visitor", "POST", "/api/auth/demo", { as: "driver" });
+  check("one-click demo sign-in as the driver", r.status === 200 && r.data.user.email === "user1@example.com");
+  r = await req("visitor2", "POST", "/api/auth/demo", { as: "admin" });
+  check("one-click demo sign-in as the admin", r.status === 200 && r.data.user.role === "ADMIN");
+  r = await req("visitor3", "POST", "/api/auth/demo", { as: "root" });
+  check("unknown demo role → 422", r.status === 422);
+  r = await req("visitor", "PATCH", "/api/profile", { password: "takeover123" });
+  check("demo password cannot be changed → 403", r.status === 403, String(r.status));
+  r = await req("admin", "PATCH", `/api/users/${driver4.id}`, { isActive: false });
+  check("demo account cannot be disabled → 403", r.status === 403, String(r.status));
+  r = await req("admin", "PATCH", `/api/users/${driver4.id}`, { role: "ADMIN" });
+  check("demo account role cannot change → 403", r.status === 403, String(r.status));
+  r = await req("admin", "DELETE", `/api/users/${driver4.id}`);
+  check("demo account cannot be deleted → 403", r.status === 403, String(r.status));
+
+  section("Reserved chargers");
+  await req("d5", "POST", "/api/auth/login", { email: "user5@example.com", password: "password123" });
+  await req("d6", "POST", "/api/auth/login", { email: "user6@example.com", password: "password123" });
+  const heldAt = await findFreeCharger("d5");
+  const heldStation = heldAt.stationId;
+  const heldCharger = heldAt.charger;
+  const soon = new Date(Date.now() + 5 * 60_000).toISOString();
+  r = await req("d5", "POST", "/api/reservations", { stationId: heldStation, chargerId: heldCharger.id, startTime: soon, durationMinutes: 30 });
+  check("driver books a charger for five minutes from now", r.status === 201, JSON.stringify(r.data).slice(0, 160));
+  const heldReservation = r.data?.reservation?.id;
+  r = await req("d6", "POST", "/api/charging-sessions", { stationId: heldStation, chargerId: heldCharger.id, startPercent: 20, targetPercent: 80 });
+  check("another driver cannot take the reserved charger → 409", r.status === 409, JSON.stringify(r.data));
+  r = await req("d6", "POST", "/api/charging-sessions", { stationId: heldStation, chargerId: heldCharger.id, reservationId: heldReservation, startPercent: 20, targetPercent: 80 });
+  check("nor use someone else's reservation → 404", r.status === 404, String(r.status));
+  r = await req("d5", "POST", "/api/charging-sessions", { stationId: heldStation === 1 ? 2 : 1, chargerId: heldCharger.id, startPercent: 20, targetPercent: 80 });
+  check("charger and station must match → 400", r.status === 400, String(r.status));
+  r = await req("d5", "POST", "/api/charging-sessions", { stationId: heldStation, chargerId: heldCharger.id, reservationId: heldReservation, startPercent: 20, targetPercent: 80 });
+  check("the booker starts on their reservation", r.status === 201, JSON.stringify(r.data).slice(0, 160));
+  const heldSession = r.data?.session?.id;
+  r = await req("d5", "GET", "/api/reservations?scope=all");
+  check("the reservation is now ACTIVE", r.data.reservations.find(x => x.id === heldReservation)?.status === "ACTIVE");
+  await req("d5", "PATCH", `/api/charging-sessions/${heldSession}`, { action: "stop" });
+
+  section("Races");
+  await req("d7", "POST", "/api/auth/login", { email: "user7@example.com", password: "password123" });
+  await req("d8", "POST", "/api/auth/login", { email: "user8@example.com", password: "password123" });
+  const raceAt = await findFreeCharger("d7", [heldStation]);
+  const starts = await Promise.all(["d7", "d8"].map(who =>
+    req(who, "POST", "/api/charging-sessions", { stationId: raceAt.stationId, chargerId: raceAt.charger.id, startPercent: 20, targetPercent: 80 })));
+  check("two drivers start on one charger: exactly one gets it", starts.filter(x => x.status === 201).length === 1 && starts.some(x => x.status === 409), starts.map(x => x.status).join(","));
+  for (const [i, who] of ["d7", "d8"].entries()) {
+    if (starts[i].status === 201) await req(who, "PATCH", `/api/charging-sessions/${starts[i].data.session.id}`, { action: "stop" });
+  }
+
+  const raceDay = bkkDay(new Date(Date.now() + 50 * 3600_000));
+  r = await req("d7", "GET", `/api/stations/7/availability?date=${raceDay}&duration=45`);
+  const raceSlotCharger = r.data.chargers.find(c => c.bookable && c.slots.some(s => s.available));
+  const raceSlot = raceSlotCharger.slots.find(s => s.available);
+  const books = await Promise.all(["d7", "d8"].map(who =>
+    req(who, "POST", "/api/reservations", { stationId: 7, chargerId: raceSlotCharger.id, startTime: raceSlot.iso, durationMinutes: 45 })));
+  check("two drivers book one slot: exactly one gets it", books.filter(x => x.status === 201).length === 1 && books.some(x => x.status === 409), books.map(x => x.status).join(","));
+
+  section("Input checks");
+  r = await req("d7", "GET", "/api/charging-sessions?status=BOGUS");
+  check("unknown session status → 400", r.status === 400, String(r.status));
+  r = await req("d7", "GET", "/api/charging-sessions?limit=-3");
+  check("bad limit → 400", r.status === 400, String(r.status));
+  r = await req("d7", "GET", "/api/reservations?status=NOPE");
+  check("unknown reservation status → 400", r.status === 400, String(r.status));
+  r = await req("d7", "GET", "/api/payments/abc");
+  check("non-numeric payment id → 400", r.status === 400, String(r.status));
+  r = await req("d7", "GET", "/api/stations/3/availability?date=2026-13-45");
+  check("impossible date → 400", r.status === 400, String(r.status));
+
+  section("Sign-in throttling");
+  // A made-up client address keeps this from throttling the rest of the suite.
+  const probe = { "X-Forwarded-For": "203.0.113.77" };
+  const tries = [];
+  for (let i = 0; i < 6; i++) {
+    tries.push((await req("guesser", "POST", "/api/auth/login", { email: "user2@example.com", password: `wrong-${i}` }, probe)).status);
+  }
+  check("five wrong passwords → 401 each", tries.slice(0, 5).every(x => x === 401), tries.join(","));
+  check("the sixth is refused → 429", tries[5] === 429, tries.join(","));
+  r = await req("guesser", "POST", "/api/auth/login", { email: "user2@example.com", password: "password123" }, probe);
+  check("even the right password waits out the pause", r.status === 429 && Boolean(r.headers.get("retry-after")), String(r.status));
+  r = await req("elsewhere", "POST", "/api/auth/login", { email: "user2@example.com", password: "password123" }, { "X-Forwarded-For": "198.51.100.4" });
+  check("other addresses are unaffected", r.status === 200);
 
   section("Logout");
   r = await req("driver", "POST", "/api/auth/logout");
@@ -567,6 +713,19 @@ const run = async () => {
   for (const path of adminPages) {
     const res2 = await fetch(BASE + path, { headers: { Cookie: adminCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);
+  }
+
+  section("Demo reset");
+  res = await fetch(BASE + "/api/cron/reset-demo");
+  check("reset without the cron secret is refused", process.env.CRON_SECRET ? res.status === 401 : [401, 500].includes(res.status), String(res.status));
+  if (process.env.CRON_SECRET) {
+    res = await fetch(BASE + "/api/cron/reset-demo", { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } });
+    const body = await res.json();
+    check("reset with the cron secret reseeds", res.status === 200 && body.counts.stations === 20 && body.counts.users === 10, JSON.stringify(body).slice(0, 160));
+    r = await req("after", "POST", "/api/auth/demo", { as: "driver" });
+    check("demo sign-in works after a reset", r.status === 200);
+  } else {
+    console.log("  skip reset with the cron secret (CRON_SECRET not set)");
   }
 
   console.log(`\n${pass} passed, ${fail} failed`);
