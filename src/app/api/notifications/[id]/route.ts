@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, forbidden, handler, notFound, requireUser } from "@/server/http";
+import { forbidden, handler, notFound, parseId, requireUser } from "@/server/http";
 
 type Params = { params: Promise<{ id: string }> };
 
 async function load(ctx: Params, userId: number) {
-  const id = Number((await ctx.params).id);
-  if (!Number.isInteger(id)) throw badRequest("Invalid notification id");
+  const id = parseId((await ctx.params).id, "notification id");
   const row = await prisma.notification.findUnique({ where: { id } });
   if (!row) throw notFound("That notification does not exist");
   if (row.userId !== userId) throw forbidden();

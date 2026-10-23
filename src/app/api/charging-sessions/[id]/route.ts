@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/server/http";
+import { badRequest, conflict, forbidden, handler, notFound, parseId, requireUser } from "@/server/http";
 import { paySessionSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { thb } from "@/lib/format";
@@ -12,8 +12,7 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 async function load(ctx: Params, userId: number, isStaff: boolean) {
-  const id = Number((await ctx.params).id);
-  if (!Number.isInteger(id)) throw badRequest("Invalid session id");
+  const id = parseId((await ctx.params).id, "session id");
   const session = await prisma.chargingSession.findUnique({
     where: { id },
     include: SESSION_INCLUDE,

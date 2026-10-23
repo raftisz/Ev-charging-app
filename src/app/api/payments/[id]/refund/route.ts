@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { forbidden, handler, requireUser } from "@/server/http";
+import { forbidden, handler, parseId, requireUser } from "@/server/http";
 import { refundPayment } from "@/server/payments";
 
 export const dynamic = "force-dynamic";
@@ -10,5 +10,5 @@ type Params = { params: Promise<{ id: string }> };
 export const POST = handler(async (_r: Request, ctx: Params) => {
   const user = await requireUser();
   if (user.role !== "ADMIN") throw forbidden("Only an admin can issue refunds");
-  return NextResponse.json(await refundPayment(Number((await ctx.params).id)));
+  return NextResponse.json(await refundPayment(parseId((await ctx.params).id)));
 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, conflict, forbidden, handler, notFound, requireUser } from "@/server/http";
+import { conflict, forbidden, handler, notFound, parseId, requireUser } from "@/server/http";
 import { RESERVATION_INCLUDE, serializeReservation } from "@/server/reservations";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,7 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 async function load(ctx: Params, userId: number, isStaff: boolean) {
-  const id = Number((await ctx.params).id);
-  if (!Number.isInteger(id)) throw badRequest("Invalid reservation id");
+  const id = parseId((await ctx.params).id, "reservation id");
   const reservation = await prisma.reservation.findUnique({
     where: { id },
     include: RESERVATION_INCLUDE,

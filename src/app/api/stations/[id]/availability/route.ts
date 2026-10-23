@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, handler, notFound } from "@/server/http";
+import { badRequest, handler, intParam, notFound, parseId } from "@/server/http";
 import { chargerSlots } from "@/server/reservations";
 import { bangkokDay } from "@/lib/timezone";
 
@@ -9,13 +9,15 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 export const GET = handler(async (request: Request, ctx: Params) => {
-  const stationId = Number((await ctx.params).id);
-  if (!Number.isInteger(stationId)) throw badRequest("Invalid station id");
+  const stationId = parseId((await ctx.params).id, "station id");
 
   const url = new URL(request.url);
   const day = url.searchParams.get("date") ?? bangkokDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw badRequest("Use date=YYYY-MM-DD");
-  const duration = Number(url.searchParams.get("duration") ?? 45);
+  if (Number.isNaN(new Date(`${day}T00:00:00Z`).getTime())) {
+    throw badRequest("Use date=YYYY-MM-DD");
+  }
+  const duration = intParam(url.searchParams.get("duration"), 15, 240, "duration") ?? 45;
 
   const station = await prisma.station.findUnique({
     where: { id: stationId },

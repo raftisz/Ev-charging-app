@@ -79,3 +79,33 @@ export async function requireAdmin() {
   }
   return user;
 }
+
+/** A positive integer id from a route segment, or 400. */
+export function parseId(raw: string, label = "id") {
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) throw badRequest(`Invalid ${label}`);
+  return id;
+}
+
+/** A query value that must be one of `allowed`; absent is fine, anything else is 400. */
+export function enumParam<T extends string>(
+  value: string | null,
+  allowed: readonly T[],
+  name: string,
+): T | undefined {
+  if (value === null || value === "") return undefined;
+  if (!(allowed as readonly string[]).includes(value)) {
+    throw badRequest(`${name} must be one of: ${allowed.join(", ")}`);
+  }
+  return value as T;
+}
+
+/** An optional whole-number query value between min and max, or 400. */
+export function intParam(value: string | null, min: number, max: number, name: string) {
+  if (value === null || value === "") return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) {
+    throw badRequest(`${name} must be a whole number from ${min} to ${max}`);
+  }
+  return n;
+}

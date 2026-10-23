@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, handler, notFound, requireAdmin } from "@/server/http";
+import { badRequest, handler, notFound, parseId, requireAdmin } from "@/server/http";
 import { chargerUpdateSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
@@ -9,8 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export const PATCH = handler(async (request: Request, ctx: Params) => {
   await requireAdmin();
-  const id = Number((await ctx.params).id);
-  if (!Number.isInteger(id)) throw badRequest("Invalid charger id");
+  const id = parseId((await ctx.params).id, "charger id");
 
   const body = chargerUpdateSchema.parse(await request.json());
   const charger = await prisma.charger.findUnique({ where: { id } });
@@ -37,7 +36,7 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
 
 export const DELETE = handler(async (_r: Request, ctx: Params) => {
   await requireAdmin();
-  const id = Number((await ctx.params).id);
+  const id = parseId((await ctx.params).id);
   const charger = await prisma.charger.findUnique({ where: { id } });
   if (!charger) throw notFound("That charger does not exist");
 
