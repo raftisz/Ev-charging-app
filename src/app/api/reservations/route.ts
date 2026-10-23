@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { badRequest, conflict, handler, notFound, requireUser } from "@/server/http";
+import { badRequest, conflict, enumParam, handler, notFound, requireUser } from "@/server/http";
+import { lockCharger } from "@/server/locks";
 import { reservationSchema } from "@/lib/validation";
 import {
   RESERVATION_INCLUDE,
@@ -14,13 +15,21 @@ export const dynamic = "force-dynamic";
 export const GET = handler(async (request: Request) => {
   const user = await requireUser();
   const url = new URL(request.url);
-  const scope = url.searchParams.get("scope"); // upcoming | past | all
-  const status = url.searchParams.get("status");
+  const scope = enumParam(
+    url.searchParams.get("scope"),
+    ["upcoming", "past", "all"] as const,
+    "scope",
+  );
+  const status = enumParam(
+    url.searchParams.get("status"),
+    ["PENDING", "CONFIRMED", "ACTIVE", "COMPLETED", "CANCELLED", "EXPIRED"] as const,
+    "status",
+  );
   const isStaff = user.role === "ADMIN" || user.role === "OPERATOR";
   const all = url.searchParams.get("all") === "true" && isStaff;
 
   const where: Prisma.ReservationWhereInput = all ? {} : { userId: user.id };
-  if (status) where.status = status as Prisma.ReservationWhereInput["status"];
+  if (status) where.status = status;
   if (scope === "upcoming") {
     where.startTime = { gte: new Date() };
     where.status = { in: ["PENDING", "CONFIRMED", "ACTIVE"] };
@@ -64,31 +73,36 @@ export const POST = handler(async (request: Request) => {
   }
   const end = new Date(start.getTime() + body.durationMinutes * 60_000);
 
-  if (await hasClash(charger.id, start, end)) {
-    throw conflict("That slot was just taken. Pick another time.");
-  }
-
   const estimatedKwh = Number(
     (((body.durationMinutes / 60) * Math.min(charger.powerKw, 60)) * 0.62).toFixed(2),
   );
   const reservationFee = 20;
 
-  const reservation = await prisma.reservation.create({
-    data: {
-      userId: user.id,
-      stationId: charger.stationId,
-      chargerId: charger.id,
-      startTime: start,
-      endTime: end,
-      status: "CONFIRMED",
-      estimatedKwh,
-      reservationFee,
-      estimatedCost: Number(
-        (estimatedKwh * charger.station.pricePerKwh + reservationFee).toFixed(2),
-      ),
-      note: body.note || null,
-    },
-    include: RESERVATION_INCLUDE,
+  // The clash check and the insert share a transaction holding the charger's
+  // lock, so when two people book the same slot at once the first succeeds
+  // and the second sees the clash.
+  const reservation = await prisma.$transaction(async (tx) => {
+    await lockCharger(tx, charger.id);
+    if (await hasClash(charger.id, start, end, undefined, tx)) {
+      throw conflict("That slot was just taken. Pick another time.");
+    }
+    return tx.reservation.create({
+      data: {
+        userId: user.id,
+        stationId: charger.stationId,
+        chargerId: charger.id,
+        startTime: start,
+        endTime: end,
+        status: "CONFIRMED",
+        estimatedKwh,
+        reservationFee,
+        estimatedCost: Number(
+          (estimatedKwh * charger.station.pricePerKwh + reservationFee).toFixed(2),
+        ),
+        note: body.note || null,
+      },
+      include: RESERVATION_INCLUDE,
+    });
   });
 
   await prisma.charger.update({

@@ -88,8 +88,9 @@ export async function hasClash(
   start: Date,
   end: Date,
   ignoreReservationId?: number,
+  db: Pick<typeof prisma, "reservation"> = prisma,
 ) {
-  const clash = await prisma.reservation.findFirst({
+  const clash = await db.reservation.findFirst({
     where: {
       chargerId,
       id: ignoreReservationId ? { not: ignoreReservationId } : undefined,
