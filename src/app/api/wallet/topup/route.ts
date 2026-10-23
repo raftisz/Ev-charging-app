@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
-import { handler, requireUser } from "@/server/http";
-import { topUpSchema } from "@/lib/validation";
+import { conflict, handler, requireUser } from "@/server/http";
+import { WALLET_MAX, topUpSchema } from "@/lib/validation";
 import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { thb } from "@/lib/format";
 import { PAYMENT_INCLUDE, serializePayment, startPromptPay } from "@/server/payments";
@@ -18,6 +18,10 @@ export const POST = handler(async (request: Request) => {
   const { amount, method } = topUpSchema.parse(await request.json().catch(() => ({})));
   const total = toSatang(amount);
 
+  if (toSatang(user.walletBalance + total) > WALLET_MAX) {
+    throw conflict(`A wallet can hold at most ${thb(WALLET_MAX)}`);
+  }
+
   // PromptPay credits the wallet only once the transfer is confirmed.
   if (method === "PROMPTPAY") {
     const started = await startPromptPay({ userId: user.id, type: "TOPUP", amount: total });
@@ -25,10 +29,13 @@ export const POST = handler(async (request: Request) => {
   }
 
   const { balance, payment } = await prisma.$transaction(async (tx) => {
-    const updated = await tx.user.update({
-      where: { id: user.id },
+    // Conditional, so two top-ups racing each other cannot pass the ceiling.
+    const credited = await tx.user.updateMany({
+      where: { id: user.id, walletBalance: { lte: WALLET_MAX - total } },
       data: { walletBalance: { increment: total } },
     });
+    if (credited.count === 0) throw conflict(`A wallet can hold at most ${thb(WALLET_MAX)}`);
+    const updated = await tx.user.findUniqueOrThrow({ where: { id: user.id } });
     const payment = await tx.payment.create({
       data: { userId: user.id, type: "TOPUP", amount: total, method, status: "PAID" },
       include: PAYMENT_INCLUDE,

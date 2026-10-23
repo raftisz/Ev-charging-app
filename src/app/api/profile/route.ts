@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { hashPassword } from "@/server/auth";
-import { handler, requireUser } from "@/server/http";
+import { forbidden, handler, requireUser } from "@/server/http";
+import { isDemoAccount } from "@/lib/demo";
 import { profileSchema } from "@/lib/validation";
 import { serializeUser } from "@/server/users";
 
@@ -15,6 +16,10 @@ export const GET = handler(async () => {
 export const PATCH = handler(async (request: Request) => {
   const user = await requireUser();
   const body = profileSchema.parse(await request.json());
+  // The demo password is published; changing it would lock the next visitor out.
+  if (body.password && isDemoAccount(user.email)) {
+    throw forbidden("The demo account's password cannot be changed");
+  }
 
   const updated = await prisma.user.update({
     where: { id: user.id },

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/server/db";
 import { PAYMENT_METHOD_LABEL } from "@/lib/payments";
 import { thb } from "@/lib/format";
+import { WALLET_MAX } from "@/lib/validation";
 import { badRequest, conflict, notFound } from "@/server/http";
 import { promptPayQr } from "@/server/promptpay";
 import { bangkokDay } from "@/lib/timezone";
@@ -113,10 +114,12 @@ export async function confirmPromptPay(paymentId: number, userId: number) {
       });
       if (settled.count === 0) throw conflict("This session is already paid");
     } else if (payment.type === "TOPUP") {
-      const user = await tx.user.update({
-        where: { id: userId },
+      const credited = await tx.user.updateMany({
+        where: { id: userId, walletBalance: { lte: WALLET_MAX - payment.amount } },
         data: { walletBalance: { increment: payment.amount } },
       });
+      if (credited.count === 0) throw conflict(`A wallet can hold at most ${thb(WALLET_MAX)}`);
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       balance = user.walletBalance;
     }
 

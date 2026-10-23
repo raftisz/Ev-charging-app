@@ -27,19 +27,19 @@ export default function AdminUsersPage() {
   );
 
   const [editing, setEditing] = useState<Row | null>(null);
-  const [form, setForm] = useState({ fullName: "", role: "USER", walletBalance: "0", isActive: true });
+  const [form, setForm] = useState({ fullName: "", role: "USER", isActive: true });
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
 
   const users = (data?.users ?? []) as Row[];
+  const isAdmin = me?.role === "ADMIN";
 
   function openEdit(user: Row) {
     setForm({
       fullName: user.fullName,
       role: user.role,
-      walletBalance: String(user.walletBalance),
       isActive: user.isActive,
     });
     setFormError(null);
@@ -52,11 +52,11 @@ export default function AdminUsersPage() {
     if (form.fullName.trim().length < 2) return setFormError("Please enter a full name");
     setSaving(true);
     try {
+      // Roles are an admin decision; operators only send what they may change.
       await api.updateUser(editing.id, {
         fullName: form.fullName,
-        role: form.role,
-        walletBalance: Number(form.walletBalance),
-        isActive: form.isActive,
+        ...(isAdmin && form.role !== editing.role ? { role: form.role } : {}),
+        ...(form.isActive !== editing.isActive ? { isActive: form.isActive } : {}),
       });
       toast.push("User updated");
       setEditing(null);
@@ -195,6 +195,7 @@ export default function AdminUsersPage() {
             <Field label="Role">
               <Select
                 value={form.role}
+                disabled={!isAdmin}
                 onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
               >
                 <option value="USER">Driver</option>
@@ -202,12 +203,9 @@ export default function AdminUsersPage() {
                 <option value="ADMIN">Admin</option>
               </Select>
             </Field>
-            <Field label="Wallet balance (฿)">
-              <Input
-                value={form.walletBalance}
-                inputMode="decimal"
-                onChange={(e) => setForm((p) => ({ ...p, walletBalance: e.target.value }))}
-              />
+            <Field label="Wallet balance">
+              {/* Read-only: balances only change through payments and refunds. */}
+              <Input value={editing ? thb(editing.walletBalance) : ""} readOnly disabled />
             </Field>
           </div>
           <label className="flex items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5">
@@ -233,7 +231,7 @@ export default function AdminUsersPage() {
         title="Delete this account?"
         description={
           deleting
-            ? `${deleting.fullName} (${deleting.email}) and all of their reservations, sessions and notifications will be removed.`
+            ? `${deleting.fullName} (${deleting.email}) and all of their reservations, sessions and notifications will be removed. Accounts with payment history can only be disabled.`
             : undefined
         }
         footer={

@@ -55,6 +55,11 @@ export const paySessionSchema = z.object({
 
 export const TOP_UP_MIN = 20;
 export const TOP_UP_MAX = 10_000;
+/**
+ * The most a wallet can hold. Demo top-ups are free, so without a ceiling one
+ * visitor could inflate a balance without limit.
+ */
+export const WALLET_MAX = 20_000;
 
 export const topUpSchema = z.object({
   amount: z.coerce
@@ -98,8 +103,7 @@ export const userUpdateSchema = z.object({
   fullName: z.string().trim().min(2).optional(),
   role: z.enum(["USER", "OPERATOR", "ADMIN"]).optional(),
   isActive: z.boolean().optional(),
-  walletBalance: z.coerce.number().min(0).optional(),
-});
+}).strict();
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
