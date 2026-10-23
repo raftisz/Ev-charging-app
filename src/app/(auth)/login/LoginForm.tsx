@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
+import { DEMO_PASSWORD, DEMO_RESET_TIME } from "@/lib/demo";
 
 const DEMOS = [
-  { label: "Driver", email: "user1@example.com" },
-  { label: "Admin", email: "admin@example.com" },
-  { label: "Operator", email: "operator@example.com" },
-];
+  { as: "driver", label: "Driver", hint: "Live session, wallet, bookings" },
+  { as: "admin", label: "Admin", hint: "Dashboard, stations, refunds" },
+  { as: "operator", label: "Operator", hint: "Station management" },
+] as const;
 
 function Form() {
   const router = useRouter();
@@ -54,11 +55,22 @@ function Form() {
     }
   }
 
-  function applyDemo(demoEmail: string) {
-    setEmail(demoEmail);
-    setPassword("password123");
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
+
+  async function tryDemo(as: (typeof DEMOS)[number]["as"]) {
     setError(null);
     setFieldErrors({});
+    setDemoLoading(as);
+    try {
+      const { user } = await api.demoLogin(as);
+      toast.push(`Signed in as ${user.fullName}`);
+      router.replace(next);
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError ? err.message : "Could not open the demo. Try again.",
+      );
+      setDemoLoading(null);
+    }
   }
 
   return (
@@ -110,21 +122,31 @@ function Form() {
       </form>
 
       <div className="mt-6 vg-card p-4">
-        <p className="text-[12.5px] font-semibold text-muted">
-          Demo accounts · password123
+        <p className="text-[13px] font-semibold text-ink">Try the demo in one click</p>
+        <p className="mt-0.5 text-[12px] text-faint">
+          No sign-up needed. Demo data resets every day at {DEMO_RESET_TIME} (Bangkok time).
         </p>
-        <div className="mt-2.5 flex flex-wrap gap-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {DEMOS.map((demo) => (
             <button
-              key={demo.email}
+              key={demo.as}
               type="button"
-              onClick={() => applyDemo(demo.email)}
-              className="rounded-full bg-surface-alt px-3 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+              onClick={() => void tryDemo(demo.as)}
+              disabled={demoLoading !== null}
+              aria-busy={demoLoading === demo.as}
+              className="rounded-[14px] border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:border-brand disabled:opacity-60"
             >
-              {demo.label}
+              <span className="block text-[13px] font-semibold text-ink">
+                {demoLoading === demo.as ? "Opening…" : demo.label}
+              </span>
+              <span className="block text-[11.5px] text-faint">{demo.hint}</span>
             </button>
           ))}
         </div>
+        <p className="mt-2.5 text-[11.5px] text-faint">
+          Or sign in above with user1@example.com, admin@example.com or
+          operator@example.com · password {DEMO_PASSWORD}
+        </p>
       </div>
 
       <p className="mt-6 text-center text-[13.5px] text-muted">

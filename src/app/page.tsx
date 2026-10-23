@@ -70,6 +70,11 @@ export default async function OnboardingPage() {
               </code>
               <br />
               user1@example.com (driver) · admin@example.com (admin)
+              <br />
+              <Link href="/login" className="font-semibold text-brand">
+                Or try it in one click
+              </Link>{" "}
+              · resets daily
             </div>
           </div>
 

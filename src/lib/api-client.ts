@@ -100,6 +100,8 @@ export type AvailabilityPayload = {
 export const api = {
   register: (body: unknown) => post<{ user: UserDTO }>("/api/auth/register", body),
   login: (body: unknown) => post<{ user: UserDTO }>("/api/auth/login", body),
+  demoLogin: (as: "driver" | "admin" | "operator") =>
+    post<{ user: UserDTO }>("/api/auth/demo", { as }),
   logout: () => post<{ ok: true }>("/api/auth/logout"),
   me: () => get<{ user: UserDTO | null }>("/api/auth/me"),
 
