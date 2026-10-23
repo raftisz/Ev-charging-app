@@ -17,12 +17,24 @@ import { APP_TIME_ZONE, addDays, bangkokDate, bangkokDay, bangkokTime } from "@/
 
 const DURATIONS = [30, 45, 60, 90];
 
-const DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
+const DAY_PARTS = new Intl.DateTimeFormat("en-GB", {
   timeZone: APP_TIME_ZONE,
   weekday: "short",
   day: "numeric",
   month: "short",
 });
+
+/**
+ * "Sun 25 Oct", built from the parts rather than the formatted string: ICU
+ * versions disagree on the comma after the weekday ("Sun, 25 Oct"), so the
+ * server's Node and the visitor's browser could render different text and
+ * break hydration.
+ */
+function dayLabel(date: Date) {
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    DAY_PARTS.formatToParts(date).find((p) => p.type === type)?.value ?? "";
+  return `${part("weekday")} ${part("day")} ${part("month")}`;
+}
 
 /** The next seven booking days, counted in Bangkok so "Today" matches the stations. */
 function dayOptions() {
@@ -36,7 +48,7 @@ function dayOptions() {
           ? "Today"
           : i === 1
             ? "Tomorrow"
-            : DAY_LABEL.format(bangkokDate(value, "12:00")),
+            : dayLabel(bangkokDate(value, "12:00")),
     };
   });
 }
