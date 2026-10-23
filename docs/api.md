@@ -10,6 +10,7 @@ All routes except register/login and `GET /api/stations` require a session cooki
 |---|---|---|
 | POST | `/api/auth/register` | Create an account and start a session |
 | POST | `/api/auth/login` | Sign in |
+| POST | `/api/auth/demo` | One-click demo sign-in: `{ as: "driver" \| "admin" \| "operator" }` (off when `DEMO_MODE=off`) |
 | POST | `/api/auth/logout` | Sign out |
 | GET | `/api/auth/me` | Current user, or `null` |
 | GET | `/api/dashboard` | Driver dashboard payload (stats, live session, recommendations) |
@@ -25,7 +26,7 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET/POST | `/api/charging-sessions` | List · start charging |
 | GET/PATCH/DELETE | `/api/charging-sessions/{id}` | Detail · `action: "stop"` \| `"pay"` · delete (admin) |
 | GET | `/api/wallet` | Wallet balance and the latest 50 transactions (`Payment` rows) |
-| POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` (PromptPay: `202` + QR) |
+| POST | `/api/wallet/topup` | Add money: `{ amount: 20–10000, method: "CREDIT_CARD" \| "PROMPTPAY" }` (PromptPay: `202` + QR); a wallet holds at most ฿20,000 |
 | GET | `/api/payments/{id}` | One payment as a receipt (payer or admin; otherwise `404`) |
 | POST | `/api/payments/{id}/refund` | Refund a paid charge to the driver's wallet (`ADMIN` only) |
 | POST | `/api/payments/{id}/confirm` | Confirm a pending PromptPay payment (simulated, payer only) |
@@ -33,8 +34,9 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | PATCH/DELETE | `/api/notifications/{id}` | Mark read · delete |
 | GET/PATCH | `/api/profile` | View / update the signed-in user |
 | GET | `/api/users` | List users (admin) |
-| GET/PATCH/DELETE | `/api/users/{id}` | Detail · update role/wallet/active · delete (admin) |
+| GET/PATCH/DELETE | `/api/users/{id}` | Detail · update name/role/active · delete (staff; roles and staff accounts are admin-only; accounts with payments are disabled, not deleted) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
+| GET | `/api/cron/reset-demo` | Reseed the public demo (Vercel Cron, `Authorization: Bearer $CRON_SECRET`) |
 
 ## Station photos
 

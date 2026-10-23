@@ -74,6 +74,26 @@ has a free tier with no per-account instance limit. Use its **pooled**
 connection string (the host containing `-pooler`), which suits functions that
 open a connection per invocation.
 
+### Public demo
+
+A deploy is a public demo unless `DEMO_MODE` is set to `off`. The sign-in page
+then offers one-click demo accounts, and those accounts are protected: their
+password, role and active flag are fixed and they cannot be deleted.
+
+To put the demo back to its starting state every night, add a `CRON_SECRET`
+environment variable (any long random string, generated like `JWT_SECRET`).
+`vercel.json` schedules `GET /api/cron/reset-demo` for 20:00 UTC, which is
+03:00 in Bangkok, and Vercel sends the secret as a bearer token. The route
+refuses any other caller with `401`, and without `CRON_SECRET` it does nothing.
+The reset wipes the database, accounts registered on the demo included, and
+reseeds it with the same data as `npm run seed`. To run it by hand:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://<your-app>/api/cron/reset-demo
+```
+
+On other hosts, point any scheduler at the same URL with the same header.
+
 ### Render (manual), or any other Node host
 
 Create a PostgreSQL database first, then a web service with:

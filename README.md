@@ -1,5 +1,7 @@
 # Volt Grid — EV Charging Network
 
+[![CI](https://github.com/raftisz/Ev-charging-app/actions/workflows/ci.yml/badge.svg)](https://github.com/raftisz/Ev-charging-app/actions/workflows/ci.yml)
+
 A complete, working EV charging platform for the Bangkok network: drivers find a
 station, reserve a charger, run a live charging session, pay for it and review
 their history; operators and admins manage the network from a separate console.
@@ -69,7 +71,9 @@ Open <http://localhost:3000>.
 
 ### Demo accounts
 
-All demo accounts use the password `password123`.
+The sign-in page has **Try the demo** buttons that open the driver, admin or
+operator account in one click. You can also sign in by hand; all demo accounts
+use the password `password123`.
 
 | Email | Role | What it shows |
 |---|---|---|
@@ -78,8 +82,12 @@ All demo accounts use the password `password123`.
 | `admin@example.com` | Admin | Full admin console with CRUD on everything |
 | `operator@example.com` | Operator | Read + station/charger management, no user deletion |
 
-These are seed credentials for a local demo. Generate a fresh `JWT_SECRET`
-before deploying anywhere real.
+Because the password is public, the demo accounts are locked down: their
+password, role and active flag cannot be changed and they cannot be deleted.
+Anything else a visitor does is undone by the nightly reset
+(see [docs/deployment.md](docs/deployment.md#public-demo)). Set `DEMO_MODE=off`
+for a private deployment, and generate a fresh `JWT_SECRET` before deploying
+anywhere real.
 
 ---
 
@@ -108,9 +116,14 @@ With the dev server running:
 npm run test:api
 ```
 
-Covers 92 cases: auth and role boundaries, station search/filter/sort, favourites,
+Covers 224 cases: auth and role boundaries, station search/filter/sort, favourites,
 reservation clash detection, the full start → stop → pay session lifecycle,
-dashboard and admin aggregates, admin CRUD, and page-level route guards.
+payments and refunds, dashboard and admin aggregates, admin CRUD, page-level
+route guards, and the abuse cases a public demo invites: operators promoting
+themselves, wallet edits outside the ledger, the wallet ceiling, taking a
+charger someone else reserved, two drivers racing for one charger or one slot,
+malformed query values and password guessing. With `CRON_SECRET` set it also
+runs the demo reset.
 
 And the browser suite (once, `npx playwright install chromium`):
 
@@ -118,11 +131,18 @@ And the browser suite (once, `npx playwright install chromium`):
 npm run test:ui
 ```
 
-57 cases driving the real UI at 390px, 768px, 1024px, 1440px and 1920px:
+102 cases driving the real UI at 390px, 768px, 1024px, 1440px and 1920px:
 navigation shape per breakpoint, Leaflet tiles and markers, search and filters,
 loading / empty / error / success states, form validation, modals, the
 registration flow, and an assertion of zero horizontal overflow and zero console
 errors at every width. Screenshots are written to `tests/screenshots/`.
+
+### Continuous integration
+
+Every push to `main` and every pull request runs
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) against a fresh
+PostgreSQL 16: type check, lint, unit tests, migrations and seed, a production
+build, the API suite against `next start` in UTC, and the browser suite.
 
 ---
 
