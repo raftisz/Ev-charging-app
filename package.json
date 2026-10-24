@@ -20,6 +20,7 @@
     "test:promptpay": "tsx tests/promptpay.test.ts",
     "test:photos": "tsx tests/station-photos.test.ts",
     "test:i18n": "TZ=UTC tsx tests/i18n.test.ts",
+    "test:curve": "tsx tests/charge-curve.test.ts",
     "seed:if-empty": "tsx prisma/seed.ts --if-empty",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",

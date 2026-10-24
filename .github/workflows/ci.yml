@@ -67,6 +67,7 @@ jobs:
           npm run test:promptpay
           npm run test:photos
           npm run test:i18n
+          npm run test:curve
 
       - name: Apply migrations and seed
         run: |

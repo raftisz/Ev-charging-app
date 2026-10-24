@@ -1,10 +1,9 @@
 import "server-only";
 import { prisma } from "@/server/db";
 import type { PaymentStatus, SessionDTO } from "@/lib/types";
+import { minutesToReach, progressAt } from "@/lib/charge-curve";
 
 const DEFAULT_BATTERY_KWH = 64;
-/** Average delivered power as a fraction of rated power (charge curve taper). */
-const TAPER = 0.62;
 
 const sessionInclude = {
   station: { select: { id: true, name: true, address: true } },
@@ -26,8 +25,9 @@ type SessionRecord = Awaited<
 
 /**
  * An ACTIVE session keeps advancing after it is written, so its energy,
- * percent and cost are projected from elapsed wall-clock time on every read.
- * A finished session just reports its stored snapshot.
+ * percent, power and cost are projected on every read from elapsed
+ * wall-clock time along the charge curve in src/lib/charge-curve.ts. A
+ * finished session just reports its stored snapshot.
  */
 export function projectSession(session: SessionRecord) {
   const battery = session.user?.batteryKwh ?? DEFAULT_BATTERY_KWH;
@@ -45,27 +45,28 @@ export function projectSession(session: SessionRecord) {
       energyKwh: session.energyKwh,
       currentPercent: session.currentPercent,
       cost: session.cost,
+      currentKw: 0,
+      batteryKwh: battery,
     };
   }
 
-  const headroomKwh = ((session.targetPercent - session.startPercent) / 100) * battery;
-  const rawKwh = (session.powerKw * TAPER * minutesElapsed) / 60;
-  const energyKwh = Math.min(headroomKwh, rawKwh);
-  const currentPercent = Math.min(
-    session.targetPercent,
-    Math.round(session.startPercent + (energyKwh / battery) * 100),
-  );
-  const remainingKwh = Math.max(0, headroomKwh - energyKwh);
-  const minutesToTarget = Math.round(
-    (remainingKwh / Math.max(1, session.powerKw * TAPER)) * 60,
-  );
+  const curve = {
+    ratedKw: session.powerKw,
+    batteryKwh: battery,
+    startPercent: session.startPercent,
+    targetPercent: session.targetPercent,
+  };
+  const now = progressAt(curve, minutesElapsed);
+  const minutesToTarget = Math.max(0, Math.round(minutesToReach(curve) - minutesElapsed));
 
   return {
     minutesElapsed: Math.round(minutesElapsed),
     minutesToTarget,
-    energyKwh: Number(energyKwh.toFixed(2)),
-    currentPercent,
-    cost: Number((energyKwh * session.pricePerKwh).toFixed(2)),
+    energyKwh: Number(now.energyKwh.toFixed(2)),
+    currentPercent: Math.min(session.targetPercent, Math.floor(now.soc + 1e-6)),
+    cost: Number((now.energyKwh * session.pricePerKwh).toFixed(2)),
+    currentKw: Number(now.kw.toFixed(1)),
+    batteryKwh: battery,
   };
 }
 
@@ -87,6 +88,8 @@ export function serializeSession(session: SessionRecord): SessionDTO {
     paymentMethod: session.paymentMethod,
     minutesElapsed: live.minutesElapsed,
     minutesToTarget: live.minutesToTarget,
+    currentKw: live.currentKw,
+    batteryKwh: live.batteryKwh,
     station: session.station,
     charger: session.charger,
     user: session.user

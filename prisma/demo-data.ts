@@ -17,6 +17,8 @@ import type {
 import { STATION_ROWS, type ConnectorName } from "./stations";
 import { STATION_PHOTOS } from "../src/lib/station-photos";
 import { DEMO_PASSWORD } from "../src/lib/demo";
+import { minutesToReach, progressAt } from "../src/lib/charge-curve";
+import { addDays, bangkokDate, bangkokDay } from "../src/lib/timezone";
 
 const CONNECTOR: Record<ConnectorName, ConnectorType> = {
   CCS2: "CCS2",
@@ -227,24 +229,57 @@ export async function seedDemoData(
 
   log("• Seeding charging history");
   const now = new Date();
-  const historyDays = 45;
+  const today = bangkokDay(now);
+  // Ninety days, busier on weekdays and a little busier each week, with the
+  // morning, lunchtime and after-work peaks a city network sees. Times are
+  // Bangkok times whatever zone the seed runs in.
+  const historyDays = 90;
+  const HOUR_WEIGHTS = [
+    0.2, 0.1, 0.1, 0.1, 0.2, 0.5, 1.4, 3.2, 3.6, 2.2, 1.6, 1.8,
+    2.6, 2.4, 1.5, 1.4, 2.0, 3.0, 3.6, 3.2, 2.2, 1.4, 0.8, 0.4,
+  ];
+  const weightTotal = HOUR_WEIGHTS.reduce((s, w) => s + w, 0);
+  const pickHour = () => {
+    let r = rand() * weightTotal;
+    for (let h = 0; h < 24; h++) {
+      r -= HOUR_WEIGHTS[h];
+      if (r <= 0) return h;
+    }
+    return 18;
+  };
+  const pad = (n: number) => String(n).padStart(2, "0");
   let sessionCount = 0;
 
   for (let day = historyDays; day >= 1; day--) {
-    const perDay = 1 + Math.floor(rand() * 4);
+    const date = addDays(today, -day);
+    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+    const weekend = weekday === 0 || weekday === 6;
+    const growth = 1 + ((historyDays - day) / historyDays) * 0.6;
+    const perDay = Math.round((weekend ? 3 + rand() * 3 : 4 + rand() * 4) * growth);
     for (let n = 0; n < perDay; n++) {
       const station = pick(stations);
       const charger = pick(station.chargers);
-      const user = day % 3 === 0 ? primary : pick(users);
-      const start = new Date(now);
-      start.setDate(start.getDate() - day);
-      start.setHours(7 + Math.floor(rand() * 13), Math.floor(rand() * 60), 0, 0);
+      const user = n === 0 && day % 3 === 0 ? primary : pick(users);
+      const start = bangkokDate(date, `${pad(pickHour())}:${pad(Math.floor(rand() * 60))}`);
 
-      const minutes = 22 + Math.floor(rand() * 70);
-      const end = new Date(start.getTime() + minutes * 60_000);
-      const power = Math.min(charger.powerKw, 22 + rand() * 130);
-      const energy = round((power * minutes) / 60 / (1.4 + rand()), 2);
+      // Energy follows the same charge curve live sessions use.
       const startPercent = 12 + Math.floor(rand() * 35);
+      const targetPercent = pick([80, 80, 80, 90, 100]);
+      const curve = {
+        ratedKw: charger.powerKw,
+        batteryKwh: user.batteryKwh ?? 64,
+        startPercent,
+        targetPercent,
+      };
+      // Some drivers wait for the target, others leave after 20–90 minutes.
+      const minutes = Math.max(
+        8,
+        Math.round(Math.min(minutesToReach(curve), 20 + Math.floor(rand() * 70))),
+      );
+      const progress = progressAt(curve, minutes);
+      const end = new Date(start.getTime() + minutes * 60_000);
+      const power = charger.powerKw;
+      const energy = round(progress.energyKwh, 2);
 
       const paymentStatus = rand() > 0.06 ? "PAID" : "FAILED";
       const [paymentMethod, method] = pick([
@@ -263,8 +298,8 @@ export async function seedDemoData(
           startTime: start,
           endTime: end,
           startPercent,
-          currentPercent: Math.min(95, startPercent + Math.floor(energy)),
-          targetPercent: 80,
+          currentPercent: Math.floor(progress.soc),
+          targetPercent,
           energyKwh: energy,
           powerKw: round(power, 1),
           pricePerKwh: station.pricePerKwh,

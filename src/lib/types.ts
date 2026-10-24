@@ -140,6 +140,10 @@ export type SessionDTO = {
   paymentMethod: string | null;
   minutesElapsed: number;
   minutesToTarget: number;
+  /** What the car is drawing right now (kW); 0 once the session has ended. */
+  currentKw: number;
+  /** Battery size the projection uses, for drawing the charge curve. */
+  batteryKwh: number;
   station: { id: number; name: string; address: string };
   charger: { id: number; chargerCode: string; powerKw: number };
   user?: { id: number; fullName: string; email: string };
@@ -208,3 +212,56 @@ export type AdminStats = {
 };
 
 export type ApiError = { error: string; details?: unknown };
+
+/** What /api/live pushes for a driver: their active session, if any. */
+export type DriverSnapshot = { scope: "driver"; at: string; session: SessionDTO | null };
+
+/** What /api/live pushes for staff: every active session in the network. */
+export type NetworkSnapshot = {
+  scope: "network";
+  at: string;
+  sessions: SessionDTO[];
+  availableChargers: number;
+  totalChargers: number;
+  /** Sum of what every active session is drawing right now. */
+  networkKw: number;
+};
+
+export type LiveSnapshot = DriverSnapshot | NetworkSnapshot;
+
+export type PowerClass = "ac" | "dc" | "fast";
+
+export type AnalyticsTotals = {
+  sessions: number;
+  energyKwh: number;
+  revenue: number;
+  avgKwh: number;
+  avgMinutes: number;
+  avgRevenue: number;
+  drivers: number;
+  /** Share of all charger time spent charging, in percent. */
+  utilisation: number;
+};
+
+export type AnalyticsDTO = {
+  days: number;
+  from: string;
+  to: string;
+  totals: AnalyticsTotals;
+  /** The same figures for the period just before, for comparison. */
+  previous: AnalyticsTotals;
+  daily: { date: string; sessions: number; energyKwh: number; revenue: number }[];
+  /** Sessions started, [weekday Monday-first][hour 0–23], Bangkok time. */
+  heatmap: number[][];
+  stations: {
+    id: number;
+    name: string;
+    chargers: number;
+    sessions: number;
+    energyKwh: number;
+    revenue: number;
+    utilisation: number;
+  }[];
+  powerClasses: { key: PowerClass; sessions: number; energyKwh: number }[];
+  paymentMethods: { method: PaymentMethodCode; count: number; amount: number }[];
+};
