@@ -204,6 +204,12 @@ console.log("\n=== Desktop 1440x900 · admin ===");
   await page.waitForTimeout(800);
   check("period switch keeps the page", (await page.textContent("body")).includes("When drivers charge"));
   check("analytics in the admin nav", await page.locator('a[href="/admin/analytics"]').first().isVisible());
+
+  await page.goto(`${BASE}/admin/ocpp`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("[data-csms]", { timeout: 15000 }).catch(() => {});
+  text = await page.textContent("body");
+  check("OCPP console renders", text.includes("OCPP console") && text.includes("Message log") && (await page.locator("[data-csms]").count()) === 1);
+  await page.screenshot({ path: `${OUT}/desktop-admin-ocpp.png`, fullPage: true });
   await ctx.close();
 }
 
@@ -568,6 +574,7 @@ console.log("\n=== Thai ===");
     ["/admin/sessions", "รายได้ที่เก็บแล้ว"],
     ["/admin/users", "บัญชี"],
     ["/admin/analytics", "ช่วงเวลาที่คนมาชาร์จ"],
+    ["/admin/ocpp", "บันทึกข้อความ"],
   ]) {
     await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
     await page.waitForSelector(`text=${text}`, { timeout: 15000 }).catch(() => {});

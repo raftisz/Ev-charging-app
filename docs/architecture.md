@@ -6,7 +6,12 @@
 
 ```
 docker-compose.yml       # local PostgreSQL
-render.yaml              # Render blueprint: database + web service
+render.yaml              # Render blueprint: web service + OCPP CSMS
+ocpp/
+  csms.ts                # OCPP 1.6J central system (WebSocket + command API)
+  handlers.ts            # what the CSMS does with each charger message
+  protocol.ts            # OCPP-J framing, payload schemas, error codes
+  sim.ts                 # charge-point simulator (CLI and class)
 prisma/
   schema.prisma          # User, Station, Charger, Connector, Reservation,
                          # ChargingSession, Notification, Favorite
@@ -19,19 +24,22 @@ src/
     (app)/               # everything behind the session guard
       dashboard/ stations/ charging/ reservations/ history/
       profile/ settings/ favorites/ notifications/
-      admin/             # overview, stations, chargers, reservations,
-                         # sessions, users
+      admin/             # overview, analytics, stations, chargers, OCPP
+                         # console, reservations, sessions, users
     api/                 # the REST API (see docs/api.md)
   components/
     layout/              # AppShell (sidebar + topbar + tab bar), session context
     stations/            # station cards, Leaflet map
     ui/                  # Button, Badge, Field, Modal, Toast, States, Stat, Icons
   server/                # server-only: db client, auth, http helpers,
-                         # query + serialisation layer
+                         # query + serialisation layer, live snapshots,
+                         # analytics; ocpp/ talks to the CSMS (metering.ts
+                         # is shared with it and runs under plain Node)
   lib/                   # shared + client-safe: types, validation, formatting,
                          # geo, edge auth, API client, hooks
   proxy.ts               # route guard (Next 16's `middleware` successor)
-tests/                   # api.test.mjs (REST) and ui.test.mjs (Playwright)
+tests/                   # api.test.mjs (REST), ui.test.mjs (Playwright),
+                         # ocpp.test.mjs (OCPP 1.6J), unit tests
 docs/                    # this documentation and the design reference
 ```
 

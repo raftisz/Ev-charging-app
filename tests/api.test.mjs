@@ -796,7 +796,7 @@ const run = async () => {
     const res2 = await fetch(BASE + path, { headers: { Cookie: driverCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);
   }
-  const adminPages = ["/admin/stations", "/admin/chargers", "/admin/reservations", "/admin/sessions", "/admin/users", "/admin/analytics"];
+  const adminPages = ["/admin/stations", "/admin/chargers", "/admin/reservations", "/admin/sessions", "/admin/users", "/admin/analytics", "/admin/ocpp"];
   for (const path of adminPages) {
     const res2 = await fetch(BASE + path, { headers: { Cookie: adminCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);

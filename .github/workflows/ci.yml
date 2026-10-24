@@ -38,6 +38,8 @@ jobs:
       # Throwaway values that only exist for this job.
       JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else
       CRON_SECRET: ci-only-cron-secret
+      OCPP_CSMS_URL: http://localhost:9220
+      OCPP_COMMAND_SECRET: ci-only-ocpp-command-secret
       # Vercel runs in UTC; so do the tests, to keep Bangkok times honest.
       TZ: UTC
 
@@ -77,6 +79,16 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Start the CSMS
+        run: |
+          npm run ocpp:csms > csms.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9220/health && exit 0
+            sleep 1
+          done
+          cat csms.log
+          exit 1
+
       - name: Start the app
         run: |
           npx next start -p 3000 > server.log 2>&1 &
@@ -89,6 +101,11 @@ jobs:
 
       - name: API tests
         run: npm run test:api
+
+      - name: OCPP tests
+        run: |
+          npm run seed
+          npm run test:ocpp
 
       - name: Install Chromium for the browser tests
         run: npx playwright install --with-deps chromium
@@ -106,4 +123,5 @@ jobs:
           path: |
             tests/screenshots
             server.log
+            csms.log
           if-no-files-found: ignore

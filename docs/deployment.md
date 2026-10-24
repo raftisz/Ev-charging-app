@@ -74,6 +74,12 @@ has a free tier with no per-account instance limit. Use its **pooled**
 connection string (the host containing `-pooler`), which suits functions that
 open a connection per invocation.
 
+### OCPP (optional)
+
+The OCPP central system is a separate long-running process; see
+[ocpp.md](ocpp.md#deploying-the-csms). Without it the app runs every charger as
+a simulated session.
+
 ### Public demo
 
 A deploy is a public demo unless `DEMO_MODE` is set to `off`. The sign-in page

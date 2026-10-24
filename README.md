@@ -38,6 +38,18 @@ comes from the original Volt Grid canvas in the same folder.
 - CRUD on stations, chargers, reservations, sessions and users
 - Operators get read plus station/charger management; admins get everything
 
+**Real chargers over OCPP 1.6J**
+
+- A CSMS (central system) that chargers connect to over WebSocket, plus a
+  charge-point simulator to run the whole flow without hardware
+- Sessions on a connected charger start with RemoteStartTransaction, are
+  billed from the charger's meter, and stop automatically at the driver's
+  target
+- An admin OCPP console: connected charge points, live transactions, every
+  frame in and out, and commands (reset, availability, status)
+- Optional: without a CSMS every charger runs as a simulated session (see
+  [docs/ocpp.md](docs/ocpp.md))
+
 **In English and Thai**
 
 - Every screen, message, error and notification in both languages, switched
@@ -127,6 +139,9 @@ anywhere real.
 | `npm run test:ui` | Playwright browser suite at 5 viewport widths |
 | `npm run test:i18n` | English/Thai parity, date formats, error and notification translations |
 | `npm run test:curve` | The charge curve behind live sessions and the power chart |
+| `npm run test:ocpp` | OCPP 1.6J against the running app and CSMS, including a simulator run |
+| `npm run ocpp:csms` | Start the OCPP central system on :9220 |
+| `npm run ocpp:sim -- --station 1` | Connect simulated chargers |
 
 ### Testing
 
@@ -179,5 +194,6 @@ build, the API suite against `next start` in UTC, and the browser suite.
 | [docs/api.md](docs/api.md) | Every REST endpoint and its purpose |
 | [docs/i18n.md](docs/i18n.md) | How English and Thai are organised and how to add a message |
 | [docs/live-and-analytics.md](docs/live-and-analytics.md) | The charge curve, live updates over SSE, and the analytics console |
+| [docs/ocpp.md](docs/ocpp.md) | The CSMS, the simulator, a session over OCPP, deploying it |
 | [docs/deployment.md](docs/deployment.md) | Render, Vercel and any Node host · `GET /api/health` |
 | [docs/design-reference/](docs/design-reference/) | The visual concept and the original Volt Grid canvas |
