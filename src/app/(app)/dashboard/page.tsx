@@ -5,31 +5,33 @@ import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
-import { dayMonth, dayOfMonth, duration, fullDate, kwh, monthShort, relative, thb, time } from "@/lib/format";
-import { APP_TIME_ZONE, bangkokTime } from "@/lib/timezone";
+import { bangkokTime } from "@/lib/timezone";
 import { Button } from "@/components/ui/Button";
 import { BarChart, ProgressRing, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { StationHeroCard } from "@/components/stations/StationCard";
 import { Badge } from "@/components/ui/Badge";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function DashboardPage() {
   const { user } = useSession();
+  const { m, f } = useI18n();
+  const t = m.dashboard;
   const { data, loading, error, reload } = useAsync(() => api.dashboard());
 
   // The live session keeps advancing, so refresh it while one is running.
   usePolling(() => void reload(true), 15_000, Boolean(data?.activeSession));
 
   const hour = Number(bangkokTime(new Date()).slice(0, 2));
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? t.morning : hour < 18 ? t.afternoon : t.evening;
 
   return (
     <Page
-      title="Dashboard"
-      subtitle={`${fullDate(new Date())} · Bangkok network`}
+      title={t.title}
+      subtitle={t.subtitle(f.fullDate(new Date()))}
       action={
         <Button href="/stations" size="sm" variant="tint" className="max-sm:hidden">
-          Find a station
+          {t.findStation}
         </Button>
       }
     >
@@ -69,10 +71,10 @@ export default function DashboardPage() {
             <section>
               <div className="mb-3 flex items-baseline gap-2.5">
                 <h2 className="font-display text-[16px] font-semibold text-ink">
-                  Suggested for your next charge
+                  {t.suggested}
                 </h2>
                 <span className="hidden text-[12.5px] text-faint sm:inline">
-                  ranked by distance, price and live availability
+                  {t.suggestedNote}
                 </span>
               </div>
               {data.recommended.length ? (
@@ -83,9 +85,9 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <EmptyState
-                  title="No stations free right now"
-                  description="Every charger in the network is in use or offline. Try again shortly."
-                  action={{ label: "Open the map", href: "/map" }}
+                  title={t.noneFreeTitle}
+                  description={t.noneFreeBody}
+                  action={{ label: t.openMap, href: "/map" }}
                 />
               )}
             </section>
@@ -93,10 +95,10 @@ export default function DashboardPage() {
             <section className="vg-card overflow-hidden">
               <div className="flex items-center border-b border-line px-4 py-3.5">
                 <h2 className="flex-1 font-display text-[16px] font-semibold text-ink">
-                  Recent activity
+                  {t.recent}
                 </h2>
                 <Link href="/history" className="text-[12.5px] font-semibold text-brand">
-                  View all
+                  {t.viewAll}
                 </Link>
               </div>
               {data.recentSessions.length ? (
@@ -114,12 +116,12 @@ export default function DashboardPage() {
                           {session.station.name}
                         </div>
                         <div className="text-[12px] text-faint">
-                          {relative(session.startTime)} · {kwh(session.energyKwh)}
+                          {f.relative(session.startTime)} · {f.kwh(session.energyKwh)}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-display text-[13.5px] font-semibold text-ink">
-                          {thb(session.cost)}
+                          {f.thb(session.cost)}
                         </div>
                         <Badge
                           tone={
@@ -131,11 +133,9 @@ export default function DashboardPage() {
                           }
                           className="mt-0.5"
                         >
-                          {session.paymentStatus === "PAID"
-                            ? "Paid"
-                            : session.paymentStatus === "FAILED"
-                              ? "Failed"
-                              : "Unpaid"}
+                          {session.paymentStatus === "PAID" || session.paymentStatus === "FAILED"
+                            ? m.status.payment[session.paymentStatus]
+                            : t.unpaid}
                         </Badge>
                       </div>
                     </li>
@@ -145,9 +145,9 @@ export default function DashboardPage() {
                 <div className="px-4 py-8">
                   <EmptyState
                     icon="⚡"
-                    title="No charging sessions yet"
-                    description="Start a session at any available charger and it will show up here."
-                    action={{ label: "Find a station", href: "/stations" }}
+                    title={t.noSessionsTitle}
+                    description={t.noSessionsBody}
+                    action={{ label: t.findStation, href: "/stations" }}
                   />
                 </div>
               )}
@@ -156,25 +156,25 @@ export default function DashboardPage() {
 
           <div className="min-w-0 space-y-3.5">
             <div className="grid grid-cols-2 gap-2.5">
-              <QuickAction href="/map" glyph="◎" label="Find" tint="bg-brand-tint" fg="text-brand" />
-              <QuickAction href="/reservations/new" glyph="▦" label="Reserve" tint="bg-brand-tint" fg="text-brand" />
-              <QuickAction href="/charging" glyph="⬒" label="Scan" tint="bg-grid-green-tint" fg="text-grid-green" />
-              <QuickAction href="/history" glyph="฿" label="Wallet" tint="bg-surface-alt" fg="text-muted" />
+              <QuickAction href="/map" glyph="◎" label={t.quick.find} tint="bg-brand-tint" fg="text-brand" />
+              <QuickAction href="/reservations/new" glyph="▦" label={t.quick.reserve} tint="bg-brand-tint" fg="text-brand" />
+              <QuickAction href="/charging" glyph="⬒" label={t.quick.scan} tint="bg-grid-green-tint" fg="text-grid-green" />
+              <QuickAction href="/history" glyph="฿" label={t.quick.wallet} tint="bg-surface-alt" fg="text-muted" />
             </div>
 
             <div className="vg-card p-4">
               <div className="font-display text-[15px] font-semibold text-ink">
-                Next reservation
+                {t.nextReservation}
               </div>
               {data.nextReservation ? (
                 <>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[16px] bg-brand-tint">
                       <span className="font-display text-[16px] leading-none font-bold text-brand">
-                        {dayOfMonth(data.nextReservation.startTime)}
+                        {f.dayOfMonth(data.nextReservation.startTime)}
                       </span>
                       <span className="text-[9.5px] font-semibold text-brand uppercase">
-                        {monthShort(data.nextReservation.startTime)}
+                        {f.monthShort(data.nextReservation.startTime)}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -182,26 +182,26 @@ export default function DashboardPage() {
                         {data.nextReservation.station.name}
                       </div>
                       <div className="mt-0.5 text-[12.5px] text-muted">
-                        {time(data.nextReservation.startTime)} –{" "}
-                        {time(data.nextReservation.endTime)} · Charger{" "}
-                        {data.nextReservation.charger.chargerCode}
+                        {f.time(data.nextReservation.startTime)} –{" "}
+                        {f.time(data.nextReservation.endTime)} ·{" "}
+                        {t.charger(data.nextReservation.charger.chargerCode)}
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 rounded-[14px] bg-brand-pale px-3.5 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
-                    The charger is held for 15 minutes past your slot start.
+                    {t.heldNote}
                   </div>
                   <Button href="/reservations" variant="secondary" size="sm" fullWidth className="mt-3">
-                    Manage reservations
+                    {t.manageReservations}
                   </Button>
                 </>
               ) : (
                 <div className="mt-3">
                   <p className="text-[13px] leading-relaxed text-faint">
-                    Nothing booked. Hold a charger so it is waiting when you arrive.
+                    {t.nothingBooked}
                   </p>
                   <Button href="/reservations/new" variant="tint" size="sm" fullWidth className="mt-3">
-                    Reserve a slot
+                    {t.reserveSlot}
                   </Button>
                 </div>
               )}
@@ -210,43 +210,42 @@ export default function DashboardPage() {
             <div className="vg-card p-4">
               <div className="mb-3 flex items-baseline">
                 <div className="flex-1 font-display text-[15px] font-semibold text-ink">
-                  This month
+                  {t.thisMonth}
                 </div>
-                <span className="text-[12px] text-faint">
-                  {new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, month: "long" }).format(new Date())}
-                </span>
+                <span className="text-[12px] text-faint">{f.monthLong(new Date())}</span>
               </div>
               <div className="mb-4 grid grid-cols-2 gap-2.5">
                 <StatTile
                   tint="lilac"
                   glyph="⚡"
-                  value={kwh(data.stats.monthEnergyKwh, 0)}
-                  label="Energy charged"
+                  value={f.kwh(data.stats.monthEnergyKwh, 0)}
+                  label={t.energyCharged}
                 />
                 <StatTile
                   tint="amber"
                   glyph="฿"
-                  value={thb(data.stats.monthSpend)}
-                  label="Spent"
+                  value={f.thb(data.stats.monthSpend)}
+                  label={t.spent}
                 />
                 <StatTile
                   tint="mint"
                   glyph="◐"
                   value={String(data.stats.monthSessions)}
-                  label="Sessions"
+                  label={t.sessions}
                 />
                 <StatTile
                   tint="blue"
                   glyph="♺"
                   value={`${data.stats.co2SavedKg} kg`}
-                  label="CO₂ avoided"
+                  label={t.co2}
                 />
               </div>
               <BarChart
                 data={data.stats.dailyEnergy.map((d) => d.kwh)}
+                ariaLabel={t.dailyEnergy}
                 labels={[
-                  dayMonth(data.stats.dailyEnergy[0]?.date ?? new Date()),
-                  dayMonth(
+                  f.dayMonth(data.stats.dailyEnergy[0]?.date ?? new Date()),
+                  f.dayMonth(
                     data.stats.dailyEnergy[data.stats.dailyEnergy.length - 1]?.date ??
                       new Date(),
                   ),
@@ -256,16 +255,16 @@ export default function DashboardPage() {
 
             <div className="vg-card p-4">
               <div className="mb-2.5 font-display text-[15px] font-semibold text-ink">
-                Network status
+                {t.networkStatus}
               </div>
-              <NetRow label="Chargers free now" value={String(data.stats.availableChargers)} dot="#12A150" />
+              <NetRow label={t.chargersFree} value={String(data.stats.availableChargers)} dot="#12A150" />
               <NetRow
-                label="Stations open"
-                value={`${data.stats.openStations} of ${data.stats.totalStations}`}
+                label={t.stationsOpen}
+                value={t.stationsOpenValue(data.stats.openStations, data.stats.totalStations)}
                 dot="#1A66F0"
               />
-              <NetRow label="Sites with 100 kW+" value={String(data.stats.fastSites)} dot="#E8871A" />
-              <NetRow label="Network utilisation" value={`${data.stats.utilization}%`} dot="#8A94A6" />
+              <NetRow label={t.fastSites} value={String(data.stats.fastSites)} dot="#E8871A" />
+              <NetRow label={t.utilisation} value={`${data.stats.utilization}%`} dot="#8A94A6" />
             </div>
           </div>
         </div>
@@ -279,6 +278,8 @@ function LiveSessionCard({
 }: {
   session: NonNullable<Awaited<ReturnType<typeof api.dashboard>>["activeSession"]>;
 }) {
+  const { m, f } = useI18n();
+  const t = m.dashboard;
   const reached = session.currentPercent >= session.targetPercent;
 
   return (
@@ -292,18 +293,18 @@ function LiveSessionCard({
           <span className="relative h-2 w-2 rounded-full bg-grid-green-pale" />
         </span>
         <span className="text-[11.5px] font-semibold tracking-[0.08em] text-grid-green-pale uppercase">
-          {reached ? "Target reached" : "Charging now"}
+          {reached ? t.targetReached : t.chargingNow}
         </span>
         <div className="flex-1" />
         <span className="text-[12px] font-medium text-grid-green-pale">
-          Fast · {Math.round(session.powerKw)} kW
+          {t.fastPower(Math.round(session.powerKw))}
         </span>
       </div>
 
       <div className="flex items-center gap-4 lg:gap-6">
         <ProgressRing percent={(session.currentPercent / session.targetPercent) * 100} size={86} stroke={9}>
           <span className="font-display text-[21px] font-bold">{session.currentPercent}</span>
-          <span className="-mt-0.5 text-[10px] font-medium text-grid-green-pale">percent</span>
+          <span className="-mt-0.5 text-[10px] font-medium text-grid-green-pale">{t.percent}</span>
         </ProgressRing>
 
         <div className="min-w-0 flex-1">
@@ -311,22 +312,22 @@ function LiveSessionCard({
             {session.station.name}
           </div>
           <div className="mt-1 mb-3 truncate text-[13px] text-grid-green-pale">
-            Charger {session.charger.chargerCode} · started {time(session.startTime)}
+            {t.startedAt(session.charger.chargerCode, f.time(session.startTime))}
           </div>
           <div className="grid grid-cols-3 gap-3 lg:grid-cols-4">
             {reached ? (
-              <LiveStat value="Ready" label={`at ${session.targetPercent}%`} />
+              <LiveStat value={t.ready} label={t.atPercent(session.targetPercent)} />
             ) : (
               <LiveStat
-                value={duration(session.minutesToTarget)}
-                label={`to ${session.targetPercent}%`}
+                value={f.duration(session.minutesToTarget)}
+                label={t.toPercent(session.targetPercent)}
               />
             )}
-            <LiveStat value={kwh(session.energyKwh)} label="delivered" />
-            <LiveStat value={thb(session.cost)} label="so far" />
+            <LiveStat value={f.kwh(session.energyKwh)} label={t.delivered} />
+            <LiveStat value={f.thb(session.cost)} label={t.soFar} />
             <LiveStat
-              value={duration(session.minutesElapsed)}
-              label="elapsed"
+              value={f.duration(session.minutesElapsed)}
+              label={t.elapsed}
               className="hidden lg:block"
             />
           </div>
@@ -354,6 +355,7 @@ function LiveStat({
 }
 
 function NoSessionCard() {
+  const { m } = useI18n();
   return (
     <div className="vg-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-tint font-display text-lg font-bold text-brand">
@@ -361,14 +363,14 @@ function NoSessionCard() {
       </span>
       <div className="flex-1">
         <div className="font-display text-[16px] font-semibold text-ink">
-          Nothing charging right now
+          {m.dashboard.nothingCharging}
         </div>
         <p className="mt-1 text-[13px] leading-relaxed text-faint">
-          Pick an available charger and start a session. Progress, energy and cost update live.
+          {m.dashboard.nothingChargingBody}
         </p>
       </div>
       <Button href="/stations" size="md">
-        Find a charger
+        {m.dashboard.findCharger}
       </Button>
     </div>
   );

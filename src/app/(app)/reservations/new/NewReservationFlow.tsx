@@ -6,49 +6,30 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { kw, kwh, thb } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDetailDTO } from "@/lib/types";
 import { StationPhoto } from "@/components/stations/StationPhoto";
-import { APP_TIME_ZONE, addDays, bangkokDate, bangkokDay, bangkokTime } from "@/lib/timezone";
+import { addDays, bangkokDate, bangkokDay, bangkokTime } from "@/lib/timezone";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { Format } from "@/i18n/format";
 
 const DURATIONS = [30, 45, 60, 90];
 
-const DAY_PARTS = new Intl.DateTimeFormat("en-GB", {
-  timeZone: APP_TIME_ZONE,
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-});
-
-/**
- * "Sun 25 Oct", built from the parts rather than the formatted string: ICU
- * versions disagree on the comma after the weekday ("Sun, 25 Oct"), so the
- * server's Node and the visitor's browser could render different text and
- * break hydration.
- */
-function dayLabel(date: Date) {
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    DAY_PARTS.formatToParts(date).find((p) => p.type === type)?.value ?? "";
-  return `${part("weekday")} ${part("day")} ${part("month")}`;
-}
-
 /** The next seven booking days, counted in Bangkok so "Today" matches the stations. */
-function dayOptions() {
-  const today = bangkokDay();
+function dayOptions(today: string, labels: { today: string; tomorrow: string }, format: Format) {
   return Array.from({ length: 7 }, (_, i) => {
     const value = addDays(today, i);
     return {
       value,
       label:
         i === 0
-          ? "Today"
+          ? labels.today
           : i === 1
-            ? "Tomorrow"
-            : dayLabel(bangkokDate(value, "12:00")),
+            ? labels.tomorrow
+            : format.weekdayDayMonth(bangkokDate(value, "12:00")),
     };
   });
 }
@@ -57,6 +38,8 @@ export function NewReservationFlow() {
   const params = useSearchParams();
   const router = useRouter();
   const toast = useToast();
+  const { m, f } = useI18n();
+  const t = m.reservations;
 
   const [stationId, setStationId] = useState<number | null>(
     params.get("station") ? Number(params.get("station")) : null,
@@ -68,7 +51,10 @@ export function NewReservationFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const days = useMemo(() => dayOptions(), []);
+  const days = useMemo(
+    () => dayOptions(bangkokDay(), { today: t.today, tomorrow: t.tomorrow }, f),
+    [t, f],
+  );
 
   const stationsQuery = useAsync(() => api.stations({ sort: "distance" }), []);
   const stations = stationsQuery.data?.stations ?? [];
@@ -119,21 +105,21 @@ export function NewReservationFlow() {
         startTime: slotIso,
         durationMinutes,
       });
-      toast.push("Reservation confirmed");
+      toast.push(t.confirmed);
       router.push("/reservations");
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Could not create the reservation",
+        err instanceof ApiRequestError ? err.message : t.createFailed,
       );
       setSubmitting(false);
     }
   }
 
-  const steps = ["Station", "Charger", "Time", "Confirm"];
+  const steps = t.steps;
   const stepIndex = !stationId ? 0 : !chargerId ? 1 : !slotIso ? 2 : 3;
 
   return (
-    <Page title="Reserve a charger" subtitle={station?.name ?? "Pick a station to start"}>
+    <Page title={t.newTitle} subtitle={station?.name ?? t.pickStation}>
       <ol className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
         {steps.map((label, i) => (
           <li key={label} className="flex items-center gap-2">
@@ -169,7 +155,9 @@ export function NewReservationFlow() {
       <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
         <div className="min-w-0 space-y-4">
           <section className="vg-card p-4">
-            <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">1. Station</h2>
+            <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
+              {t.stepStation}
+            </h2>
             {stationsQuery.loading && !stationsQuery.data ? (
               <div className="vg-skeleton h-11 rounded-xl" />
             ) : (
@@ -180,12 +168,12 @@ export function NewReservationFlow() {
                   setChargerId(null);
                   setSlotIso(null);
                 }}
-                aria-label="Choose a station"
+                aria-label={t.chooseStation}
               >
-                <option value="">Choose a station…</option>
+                <option value="">{t.chooseStationOption}</option>
                 {stations.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} · {thb(s.pricePerKwh)}/kWh · {s.availableCount}/{s.chargerCount} free
+                    {t.stationOption(s.name, f.thb(s.pricePerKwh), s.availableCount, s.chargerCount)}
                   </option>
                 ))}
               </Select>
@@ -196,7 +184,7 @@ export function NewReservationFlow() {
             <section className="vg-card p-4">
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <h2 className="flex-1 font-display text-[15px] font-semibold text-ink">
-                  2. Day and duration
+                  {t.stepDay}
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -206,7 +194,7 @@ export function NewReservationFlow() {
                     setDay(e.target.value);
                     setSlotIso(null);
                   }}
-                  aria-label="Choose a day"
+                  aria-label={t.chooseDay}
                 >
                   {days.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -230,7 +218,7 @@ export function NewReservationFlow() {
                           : "bg-white text-muted shadow-[0_4px_12px_-9px_rgba(30,58,138,0.6)] hover:text-ink",
                       )}
                     >
-                      {minutes}m
+                      {t.minutesShort(minutes)}
                     </button>
                   ))}
                 </div>
@@ -241,7 +229,7 @@ export function NewReservationFlow() {
           {stationId ? (
             <section className="vg-card p-4">
               <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
-                3. Charger and time
+                {t.stepTime}
               </h2>
 
               {availability.error ? (
@@ -252,7 +240,7 @@ export function NewReservationFlow() {
               {dayIsFull ? (
                 <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5">
                   <span className="flex-1 text-[13px] leading-relaxed text-muted">
-                    No slots left on this day. Bookings run 08:00 to 20:30.
+                    {t.dayFull}
                   </span>
                   {nextDay ? (
                     <Button
@@ -263,14 +251,14 @@ export function NewReservationFlow() {
                         setSlotIso(null);
                       }}
                     >
-                      Try {days.find((d) => d.value === nextDay)?.label}
+                      {t.tryDay(days.find((d) => d.value === nextDay)?.label ?? "")}
                     </Button>
                   ) : null}
                 </div>
               ) : null}
 
               {chargers.length === 0 && availability.data ? (
-                <EmptyState title="This station has no chargers yet" />
+                <EmptyState title={t.noChargers} />
               ) : null}
 
               <div className="space-y-4">
@@ -290,16 +278,16 @@ export function NewReservationFlow() {
                           {charger.chargerCode}
                         </span>
                         <span className="text-[13.5px] font-semibold text-ink">
-                          {kw(charger.powerKw)}
+                          {f.kw(charger.powerKw)}
                         </span>
                         <span className="text-[12.5px] text-faint">
-                          {charger.bookable ? `${free} slots free` : "Out of service"}
+                          {charger.bookable ? t.slotsFree(free) : t.outOfService}
                         </span>
                       </div>
 
                       {charger.bookable && free === 0 ? (
                         <p className="mb-2 text-[12.5px] text-faint">
-                          Fully booked or past for this day.
+                          {t.fullyBooked}
                         </p>
                       ) : null}
 
@@ -318,9 +306,9 @@ export function NewReservationFlow() {
                                 }}
                                 title={
                                   slot.reason === "booked"
-                                    ? "Already booked"
+                                    ? t.alreadyBooked
                                     : slot.reason === "past"
-                                      ? "That time has passed"
+                                      ? t.passed
                                       : undefined
                                 }
                                 className={clsx(
@@ -356,39 +344,41 @@ export function NewReservationFlow() {
               </StationPhoto>
             ) : null}
             <div className="p-4">
-              <h2 className="font-display text-[15px] font-semibold text-ink">Summary</h2>
+              <h2 className="font-display text-[15px] font-semibold text-ink">{t.summary}</h2>
               {station ? (
                 <dl className="mt-3 space-y-2 text-[13px]">
-                  <SummaryRow label="Station" value={station.name} />
+                  <SummaryRow label={t.station} value={station.name} />
                   <SummaryRow
-                    label="Charger"
+                    label={t.charger}
                     value={
                       selectedCharger
-                        ? `${selectedCharger.chargerCode} · ${kw(selectedCharger.powerKw)}`
-                        : "Not selected"
+                        ? `${selectedCharger.chargerCode} · ${f.kw(selectedCharger.powerKw)}`
+                        : t.notSelected
                     }
                   />
                   <SummaryRow
-                    label="When"
+                    label={t.when}
                     value={
                       slotIso
                         ? `${days.find((d) => d.value === day)?.label} · ${bangkokTime(new Date(slotIso))}`
-                        : "Not selected"
+                        : t.notSelected
                     }
                   />
-                  <SummaryRow label="Duration" value={`${durationMinutes} minutes`} />
+                  <SummaryRow label={t.duration} value={t.minutes(durationMinutes)} />
                   {estimate ? (
                     <>
-                      <SummaryRow label="Estimated energy" value={kwh(estimate.energy)} />
+                      <SummaryRow label={t.estimatedEnergy} value={f.kwh(estimate.energy)} />
                       <SummaryRow
-                        label={`Energy at ${thb(station.pricePerKwh)}/kWh`}
-                        value={thb(estimate.energyCost)}
+                        label={t.energyAt(f.thb(station.pricePerKwh))}
+                        value={f.thb(estimate.energyCost)}
                       />
-                      <SummaryRow label="Reservation fee" value={thb(estimate.fee)} />
+                      <SummaryRow label={t.fee} value={f.thb(estimate.fee)} />
                       <div className="flex justify-between border-t border-line pt-2.5">
-                        <span className="text-[13.5px] font-semibold text-ink">Estimated total</span>
+                        <span className="text-[13.5px] font-semibold text-ink">
+                          {t.estimatedTotal}
+                        </span>
                         <span className="font-display text-[16px] font-bold text-ink">
-                          {thb(estimate.total)}
+                          {f.thb(estimate.total)}
                         </span>
                       </div>
                     </>
@@ -396,7 +386,7 @@ export function NewReservationFlow() {
                 </dl>
               ) : (
                 <p className="mt-2 text-[13px] leading-relaxed text-faint">
-                  Choose a station, a charger and a time slot. The estimate updates as you go.
+                  {t.summaryHint}
                 </p>
               )}
 
@@ -414,10 +404,10 @@ export function NewReservationFlow() {
                 loading={submitting}
                 onClick={submit}
               >
-                Confirm reservation
+                {t.confirm}
               </Button>
               <p className="mt-2.5 text-center text-[12px] text-faint">
-                Free to cancel any time before the slot starts.
+                {t.freeCancel}
               </p>
             </div>
           </div>

@@ -13,24 +13,21 @@ import { CloseIcon, SearchIcon } from "@/components/ui/Icons";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDTO } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const StationMap = dynamic(() => import("@/components/stations/StationMap"), {
   ssr: false,
   loading: () => <div className="vg-skeleton h-full w-full rounded-[16px]" />,
 });
 
-const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "available", label: "Available now" },
-  { key: "fast", label: "Fast 100 kW+" },
-  { key: "value", label: "Best value" },
-  { key: "favorites", label: "Favourites" },
-] as const;
+const FILTERS = ["all", "available", "fast", "value", "favorites"] as const;
+const SORTS = ["distance", "price", "power", "rating", "name"] as const;
 
-type FilterKey = (typeof FILTERS)[number]["key"];
+type FilterKey = (typeof FILTERS)[number];
 
 export default function StationsPage() {
   const toast = useToast();
+  const { m } = useI18n();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState("distance");
@@ -65,7 +62,7 @@ export default function StationsPage() {
     try {
       if (next) await api.addFavorite(station.id);
       else await api.removeFavorite(station.id);
-      toast.push(next ? "Saved to favourites" : "Removed from favourites");
+      toast.push(next ? m.stations.saved : m.stations.removed);
       if (filter === "favorites") void reload(true);
     } catch {
       setData({
@@ -74,18 +71,18 @@ export default function StationsPage() {
           s.id === station.id ? { ...s, isFavorite: !next } : s,
         ),
       });
-      toast.push("Could not update favourites", "error");
+      toast.push(m.stations.favoriteFailed, "error");
     }
   }
 
   const summary =
     query || filter !== "all"
-      ? `${stations.length} of ${data?.total ?? 0} stations match`
-      : `${stations.length} stations in the Bangkok network`;
+      ? m.stations.summaryFiltered(stations.length, data?.total ?? 0)
+      : m.stations.summaryAll(stations.length);
 
   return (
     <Page
-      title="Stations & map"
+      title={m.stations.title}
       subtitle={summary}
       action={
         <Button
@@ -94,7 +91,7 @@ export default function StationsPage() {
           className="lg:hidden"
           onClick={() => setShowMap((v) => !v)}
         >
-          {showMap ? "List" : "Map"}
+          {showMap ? m.stations.list : m.stations.map}
         </Button>
       }
     >
@@ -107,14 +104,14 @@ export default function StationsPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or address"
-              aria-label="Search stations"
+              placeholder={m.stations.searchPlaceholder}
+              aria-label={m.stations.searchLabel}
               className="vg-input vg-search"
             />
             {query ? (
               <button
                 onClick={() => setQuery("")}
-                aria-label="Clear search"
+                aria-label={m.stations.clearSearch}
                 className="absolute top-1/2 right-4 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-surface-alt text-faint hover:text-ink"
               >
                 <CloseIcon size={11} />
@@ -124,31 +121,31 @@ export default function StationsPage() {
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            aria-label="Sort stations"
+            aria-label={m.stations.sortLabel}
             className="w-[150px] shrink-0 rounded-full"
           >
-            <option value="distance">Nearest</option>
-            <option value="price">Cheapest</option>
-            <option value="power">Fastest</option>
-            <option value="rating">Top rated</option>
-            <option value="name">A to Z</option>
+            {SORTS.map((key) => (
+              <option key={key} value={key}>
+                {m.stations.sort[key]}
+              </option>
+            ))}
           </Select>
         </div>
 
         <div className="vg-scroll-x -mx-4 flex gap-2 px-4 lg:mx-0 lg:flex-wrap lg:px-0">
-          {FILTERS.map((f) => (
+          {FILTERS.map((key) => (
             <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              aria-pressed={filter === f.key}
+              key={key}
+              onClick={() => setFilter(key)}
+              aria-pressed={filter === key}
               className={clsx(
                 "shrink-0 rounded-full px-4 py-2.5 text-[12.5px] font-semibold transition-all",
-                filter === f.key
+                filter === key
                   ? "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.9)]"
                   : "bg-white text-muted shadow-[0_4px_14px_-10px_rgba(30,58,138,0.5)] hover:text-ink",
               )}
             >
-              {f.label}
+              {m.stations.filter[key]}
             </button>
           ))}
         </div>
@@ -161,9 +158,9 @@ export default function StationsPage() {
 
           {data && stations.length === 0 ? (
             <EmptyState
-              title="No stations match those filters"
-              description="Try clearing the search box or switching back to All."
-              action={{ label: "Reset filters", onClick: () => { setQuery(""); setFilter("all"); } }}
+              title={m.stations.emptyTitle}
+              description={m.stations.emptyBody}
+              action={{ label: m.stations.resetFilters, onClick: () => { setQuery(""); setFilter("all"); } }}
             />
           ) : null}
 

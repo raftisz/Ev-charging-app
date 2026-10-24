@@ -4,9 +4,9 @@ import Link from "next/link";
 import clsx from "clsx";
 import { StationStatusBadge } from "@/components/ui/Badge";
 import { HeartIcon, PinIcon, StarIcon } from "@/components/ui/Icons";
-import { km, kw, thb } from "@/lib/format";
 import type { StationDTO } from "@/lib/types";
 import { StationPhoto } from "@/components/stations/StationPhoto";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function StationCard({
   station,
@@ -17,12 +17,13 @@ export function StationCard({
   onToggleFavorite?: (station: StationDTO) => void;
   className?: string;
 }) {
+  const { m, f } = useI18n();
   return (
     <div className={clsx("vg-card relative p-4.5 px-5 py-4.5 transition-shadow hover:shadow-[var(--shadow-raised)]", className)}>
       {onToggleFavorite ? (
         <button
           onClick={() => onToggleFavorite(station)}
-          aria-label={station.isFavorite ? "Remove from favourites" : "Save to favourites"}
+          aria-label={station.isFavorite ? m.stations.removeFavorite : m.stations.saveFavorite}
           aria-pressed={station.isFavorite}
           className={clsx(
             "absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full transition-colors",
@@ -49,11 +50,11 @@ export function StationCard({
           </div>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] text-muted">
-            <span>{km(station.distanceKm)}</span>
+            <span>{f.km(station.distanceKm)}</span>
             <span aria-hidden className="text-line-strong">·</span>
-            <span>{station.etaMin} min away</span>
+            <span>{m.stations.minAway(station.etaMin)}</span>
             <span aria-hidden className="text-line-strong">·</span>
-            <span>up to {kw(station.maxPowerKw)}</span>
+            <span>{m.stations.upTo(f.kw(station.maxPowerKw))}</span>
             <span className="flex items-center gap-1 text-ink">
               <StarIcon className="text-amber" />
               {station.rating.toFixed(1)}
@@ -68,8 +69,8 @@ export function StationCard({
             />
             <div className="flex-1" />
             <span className="font-display text-[15px] font-bold text-ink">
-              {thb(station.pricePerKwh)}
-              <span className="font-sans text-[11px] font-normal text-faint">/kWh</span>
+              {f.thb(station.pricePerKwh)}
+              <span className="font-sans text-[11px] font-normal text-faint">{m.stations.perKwh}</span>
             </span>
           </div>
         </div>
@@ -80,12 +81,13 @@ export function StationCard({
 
 /** The horizontally scrolling recommendation card used on the dashboard. */
 export function StationHeroCard({ station }: { station: StationDTO }) {
+  const { m, f } = useI18n();
   const badge =
     station.maxPowerKw >= 150
-      ? { text: "Fastest nearby", tone: "text-brand" }
+      ? { text: m.stations.fastestNearby, tone: "text-brand" }
       : station.pricePerKwh <= 7.5
-        ? { text: "Best value", tone: "text-grid-green" }
-        : { text: "Closest to you", tone: "text-ink" };
+        ? { text: m.stations.bestValue, tone: "text-grid-green" }
+        : { text: m.stations.closest, tone: "text-ink" };
 
   return (
     <Link
@@ -105,7 +107,8 @@ export function StationHeroCard({ station }: { station: StationDTO }) {
       <div className="p-3.5">
         <div className="font-display text-[14.5px] font-semibold text-ink">{station.name}</div>
         <div className="mt-1 truncate text-[12.5px] text-faint">
-          {km(station.distanceKm)} · {kw(station.maxPowerKw)} · {station.openingHours}
+          {f.km(station.distanceKm)} · {f.kw(station.maxPowerKw)} ·{" "}
+          {m.stations.hours[station.openingHours] ?? station.openingHours}
         </div>
         <div className="mt-2.5 flex items-center gap-2">
           <StationStatusBadge
@@ -115,8 +118,8 @@ export function StationHeroCard({ station }: { station: StationDTO }) {
           />
           <div className="flex-1" />
           <span className="font-display text-[13px] font-bold text-ink">
-            {thb(station.pricePerKwh)}
-            <span className="font-sans text-[11px] font-normal text-faint">/kWh</span>
+            {f.thb(station.pricePerKwh)}
+            <span className="font-sans text-[11px] font-normal text-faint">{m.stations.perKwh}</span>
           </span>
         </div>
       </div>

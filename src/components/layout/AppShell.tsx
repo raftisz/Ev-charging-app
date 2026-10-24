@@ -5,11 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { api } from "@/lib/api-client";
-import { thb } from "@/lib/format";
 import type { UserDTO } from "@/lib/types";
 import { BellIcon, BoltMark, MenuIcon, SearchIcon } from "@/components/ui/Icons";
 import { DRIVER_NAV, DRIVER_TABS, ADMIN_NAV, isActive, type NavItem } from "@/components/layout/nav";
 import { useToast } from "@/components/ui/Toast";
+import { LanguageSwitch } from "@/components/layout/LanguageSwitch";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function AppShell({
   user,
@@ -31,6 +32,7 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const toast = useToast();
+  const { m, f } = useI18n();
   const [drawer, setDrawer] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -41,11 +43,11 @@ export function AppShell({
     setSigningOut(true);
     try {
       await api.logout();
-      toast.push("Signed out", "info");
+      toast.push(m.nav.signedOut, "info");
       router.replace("/login");
       router.refresh();
     } catch {
-      toast.push("Could not sign out. Try again.", "error");
+      toast.push(m.nav.signOutFailed, "error");
       setSigningOut(false);
     }
   }
@@ -55,11 +57,11 @@ export function AppShell({
       <Link href={variant === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 px-2 pb-5">
         <BoltMark className="text-brand" />
         <span className="font-display text-[16px] font-bold tracking-[-0.01em] text-ink">
-          Volt Grid
+          {m.common.appName}
         </span>
         {variant === "admin" ? (
           <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
-            ADMIN
+            {m.nav.admin}
           </span>
         ) : null}
       </Link>
@@ -77,10 +79,10 @@ export function AppShell({
           href="/wallet"
           className="mb-3 block rounded-[18px] bg-grid-green p-4 text-white shadow-[0_12px_26px_-16px_rgba(5,150,105,0.9)] transition-opacity hover:opacity-95"
         >
-          <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
-          <div className="font-display text-[20px] font-bold">{thb(user.walletBalance)}</div>
+          <div className="text-[12px] text-grid-green-pale">{m.nav.walletBalance}</div>
+          <div className="font-display text-[20px] font-bold">{f.thb(user.walletBalance)}</div>
           <div className="mt-2 text-[11.5px] font-semibold text-grid-green-pale">
-            Top up & transactions →
+            {m.nav.topUpLink}
           </div>
         </Link>
       ) : null}
@@ -90,10 +92,14 @@ export function AppShell({
           href={variant === "admin" ? "/dashboard" : "/admin"}
           className="mb-3 flex items-center justify-between rounded-full bg-brand-tint px-4 py-2.5 text-[12.5px] font-semibold text-brand transition-colors hover:bg-[#d8e6ff]"
         >
-          {variant === "admin" ? "Driver app" : "Admin console"}
+          {variant === "admin" ? m.nav.driverApp : m.nav.adminConsole}
           <span aria-hidden>→</span>
         </Link>
       ) : null}
+
+      <div className="mb-3 sm:hidden">
+        <LanguageSwitch />
+      </div>
 
       <div className="flex items-center gap-2.5 rounded-[18px] bg-surface p-2.5">
         <Avatar user={user} />
@@ -104,11 +110,11 @@ export function AppShell({
         <button
           onClick={signOut}
           disabled={signingOut}
-          title="Sign out"
-          aria-label="Sign out"
+          title={m.nav.signOut}
+          aria-label={m.nav.signOut}
           className="rounded-full px-2.5 py-1.5 text-[11.5px] font-semibold text-muted transition-colors hover:bg-white hover:text-danger disabled:opacity-50"
         >
-          Exit
+          {m.nav.exit}
         </button>
       </div>
     </div>
@@ -125,7 +131,7 @@ export function AppShell({
       {drawer ? (
         <div className="fixed inset-0 z-[120] lg:hidden">
           <button
-            aria-label="Close menu"
+            aria-label={m.nav.closeMenu}
             className="absolute inset-0 bg-ink/40"
             onClick={() => setDrawer(false)}
           />
@@ -143,7 +149,7 @@ export function AppShell({
           <button
             className="-ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-[0_4px_14px_-8px_rgba(30,58,138,0.5)] lg:hidden"
             onClick={() => setDrawer(true)}
-            aria-label="Open menu"
+            aria-label={m.nav.openMenu}
           >
             <MenuIcon />
           </button>
@@ -159,17 +165,21 @@ export function AppShell({
 
           {action}
 
+          <div className="hidden sm:block">
+            <LanguageSwitch />
+          </div>
+
           <Link
             href="/stations"
             className="hidden h-[42px] w-[300px] items-center gap-2.5 rounded-full bg-white px-4 text-[13.5px] text-faint shadow-[0_4px_14px_-8px_rgba(30,58,138,0.4)] transition-shadow hover:shadow-[0_8px_22px_-10px_rgba(30,58,138,0.45)] xl:flex"
           >
             <SearchIcon />
-            Search stations, sessions, payments
+            {m.nav.search}
           </Link>
 
           <Link
             href="/notifications"
-            aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
+            aria-label={m.nav.notifications(unread)}
             className="relative flex h-[42px] w-[42px] items-center justify-center rounded-full bg-white text-ink shadow-[0_4px_14px_-8px_rgba(30,58,138,0.4)] transition-shadow hover:shadow-[0_8px_22px_-10px_rgba(30,58,138,0.45)]"
           >
             <BellIcon size={16} />
@@ -190,6 +200,7 @@ export function AppShell({
 }
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+  const { m } = useI18n();
   return (
     <Link
       href={item.href}
@@ -204,7 +215,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
         {item.glyph}
       </span>
       <span className={clsx("text-[14px]", active ? "font-semibold" : "font-medium")}>
-        {item.label}
+        {m.nav[item.label]}
       </span>
     </Link>
   );
@@ -223,6 +234,7 @@ export function Avatar({ user, size = 32 }: { user: UserDTO; size?: number }) {
 }
 
 function TabBar({ pathname }: { pathname: string }) {
+  const { m } = useI18n();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 bg-white/95 px-3 pt-2.5 pb-[max(env(safe-area-inset-bottom),14px)] shadow-[0_-8px_30px_-16px_rgba(30,58,138,0.35)] backdrop-blur-md lg:hidden">
       {DRIVER_TABS.map((item) => {
@@ -248,7 +260,7 @@ function TabBar({ pathname }: { pathname: string }) {
                 active ? "text-brand" : "text-faint-soft",
               )}
             >
-              {item.label}
+              {m.nav[item.label]}
             </span>
           </Link>
         );

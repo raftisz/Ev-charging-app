@@ -1,36 +1,44 @@
+import type { Messages } from "@/i18n/messages";
+
+type NavMessages = Messages["nav"];
+type NavLabel = {
+  [K in keyof NavMessages]: NavMessages[K] extends string ? K : never;
+}[keyof NavMessages];
+
 export type NavItem = {
   href: string;
-  label: string;
+  /** Key into the `nav` message group. */
+  label: NavLabel;
   glyph: string;
   /** Extra path prefixes that should keep this item highlighted. */
   match?: string[];
 };
 
 export const DRIVER_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", glyph: "⌂" },
-  { href: "/stations", label: "Stations & map", glyph: "◎", match: ["/stations", "/map"] },
-  { href: "/charging", label: "Charging session", glyph: "⚡" },
-  { href: "/reservations", label: "Reservations", glyph: "▦" },
-  { href: "/history", label: "History & payments", glyph: "≡" },
-  { href: "/wallet", label: "Wallet", glyph: "฿" },
-  { href: "/profile", label: "Profile", glyph: "◍", match: ["/profile", "/settings", "/favorites"] },
+  { href: "/dashboard", label: "dashboard", glyph: "⌂" },
+  { href: "/stations", label: "stationsMap", glyph: "◎", match: ["/stations", "/map"] },
+  { href: "/charging", label: "charging", glyph: "⚡" },
+  { href: "/reservations", label: "reservations", glyph: "▦" },
+  { href: "/history", label: "historyPayments", glyph: "≡" },
+  { href: "/wallet", label: "wallet", glyph: "฿" },
+  { href: "/profile", label: "profile", glyph: "◍", match: ["/profile", "/settings", "/favorites"] },
 ];
 
 export const DRIVER_TABS: NavItem[] = [
-  { href: "/dashboard", label: "Home", glyph: "⌂" },
-  { href: "/stations", label: "Stations", glyph: "◎", match: ["/stations", "/map"] },
-  { href: "/charging", label: "Charging", glyph: "⚡" },
-  { href: "/history", label: "Activity", glyph: "≡", match: ["/history", "/reservations"] },
-  { href: "/profile", label: "Profile", glyph: "◍", match: ["/profile", "/favorites", "/wallet"] },
+  { href: "/dashboard", label: "tabHome", glyph: "⌂" },
+  { href: "/stations", label: "tabStations", glyph: "◎", match: ["/stations", "/map"] },
+  { href: "/charging", label: "tabCharging", glyph: "⚡" },
+  { href: "/history", label: "tabActivity", glyph: "≡", match: ["/history", "/reservations"] },
+  { href: "/profile", label: "tabProfile", glyph: "◍", match: ["/profile", "/favorites", "/wallet"] },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin", label: "Overview", glyph: "⌂" },
-  { href: "/admin/stations", label: "Stations", glyph: "◎" },
-  { href: "/admin/chargers", label: "Chargers", glyph: "⚡" },
-  { href: "/admin/reservations", label: "Reservations", glyph: "▦" },
-  { href: "/admin/sessions", label: "Sessions", glyph: "◐" },
-  { href: "/admin/users", label: "Users", glyph: "◍" },
+  { href: "/admin", label: "overview", glyph: "⌂" },
+  { href: "/admin/stations", label: "stations", glyph: "◎" },
+  { href: "/admin/chargers", label: "chargers", glyph: "⚡" },
+  { href: "/admin/reservations", label: "reservations", glyph: "▦" },
+  { href: "/admin/sessions", label: "sessions", glyph: "◐" },
+  { href: "/admin/users", label: "users", glyph: "◍" },
 ];
 
 export function isActive(pathname: string, item: NavItem) {

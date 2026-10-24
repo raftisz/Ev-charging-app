@@ -1,0 +1,48 @@
+import { defineMessages } from "@/i18n/define";
+
+export const wallet = defineMessages(
+  {
+    title: "Wallet",
+    subtitle: "Top up and see every payment",
+    balance: "Wallet balance",
+    topUp: "Top up",
+    amount: "Amount (฿)",
+    payWith: "Pay with",
+    topUpAmount: (amount: string) => `Top up ${amount}`,
+    demoNote:
+      "Demo mode: card top-ups are approved immediately; PromptPay shows a QR to confirm. No real money moves.",
+    amountRange: (min: string, max: string) => `Enter an amount between ${min} and ${max}`,
+    added: (amount: string, balance: string) => `Added ${amount}. Balance ${balance}`,
+    addedWith: (amount: string, method: string) => `Added ${amount} with ${method}`,
+    failed: "Top-up failed",
+    transactions: "Transactions",
+    emptyTitle: "No transactions yet",
+    emptyBody: "Top-ups and charging payments will show up here.",
+    describeTopUp: "Wallet top-up",
+    describeRefund: (session: string) => `Refund · session #${session}`,
+    describeCharge: (session: string) => `Charging session #${session}`,
+    receiptFor: (what: string) => `Receipt for ${what}`,
+  },
+  {
+    title: "กระเป๋าเงิน",
+    subtitle: "เติมเงินและดูทุกรายการชำระเงิน",
+    balance: "ยอดเงินในกระเป๋า",
+    topUp: "เติมเงิน",
+    amount: "จำนวนเงิน (฿)",
+    payWith: "ชำระด้วย",
+    topUpAmount: (amount: string) => `เติมเงิน ${amount}`,
+    demoNote:
+      "โหมดทดสอบ: เติมด้วยบัตรจะอนุมัติทันที ส่วนพร้อมเพย์จะแสดง QR ให้ยืนยัน ไม่มีการโอนเงินจริง",
+    amountRange: (min: string, max: string) => `กรอกจำนวนเงินระหว่าง ${min} ถึง ${max}`,
+    added: (amount: string, balance: string) => `เติมเงิน ${amount} แล้ว ยอดคงเหลือ ${balance}`,
+    addedWith: (amount: string, method: string) => `เติมเงิน ${amount} ด้วย${method}แล้ว`,
+    failed: "เติมเงินไม่สำเร็จ",
+    transactions: "รายการเคลื่อนไหว",
+    emptyTitle: "ยังไม่มีรายการ",
+    emptyBody: "รายการเติมเงินและการชำระค่าชาร์จจะแสดงที่นี่",
+    describeTopUp: "เติมเงินเข้ากระเป๋า",
+    describeRefund: (session: string) => `คืนเงิน · รายการชาร์จ #${session}`,
+    describeCharge: (session: string) => `รายการชาร์จ #${session}`,
+    receiptFor: (what: string) => `ใบเสร็จของ ${what}`,
+  },
+);

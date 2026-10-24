@@ -5,10 +5,10 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
-import { dateTime, dayMonth, duration, fullDate, kwh, relative, thb, time } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { AreaChart, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const STATION_TONE: Record<string, string> = {
   AVAILABLE: "#12A150",
@@ -18,6 +18,8 @@ const STATION_TONE: Record<string, string> = {
 };
 
 export default function AdminOverviewPage() {
+  const { m, f } = useI18n();
+  const t = m.admin;
   const { data, loading, error, reload } = useAsync(() => api.adminStats());
   usePolling(() => void reload(true), 20_000, true);
 
@@ -26,8 +28,8 @@ export default function AdminOverviewPage() {
   return (
     <Page
       variant="admin"
-      title="Overview"
-      subtitle={`${fullDate(new Date())} · live network figures`}
+      title={t.overviewTitle}
+      subtitle={t.overviewSubtitle(f.fullDate(new Date()))}
     >
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? (
@@ -41,14 +43,14 @@ export default function AdminOverviewPage() {
       {stats ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="Total stations" value={String(stats.totalStations)} hint={`${stats.totalChargers} chargers`} />
-            <StatTile label="Available chargers" value={String(stats.availableChargers)} tone="green" hint={`${stats.utilization}% utilisation`} />
-            <StatTile label="Active sessions" value={String(stats.activeSessions)} tone="brand" />
-            <StatTile label="Total energy" value={kwh(stats.totalEnergyKwh, 0)} />
-            <StatTile label="Revenue (all time)" value={thb(stats.revenue)} />
-            <StatTile label="Revenue (30 days)" value={thb(stats.revenue30d)} tone="green" />
-            <StatTile label="Reservations" value={String(stats.reservations)} hint={`${stats.upcomingReservations} upcoming`} />
-            <StatTile label="Users" value={String(stats.totalUsers)} hint={`${stats.activeUsers} active`} />
+            <StatTile label={t.totalStations} value={String(stats.totalStations)} hint={t.chargersCount(stats.totalChargers)} />
+            <StatTile label={t.availableChargers} value={String(stats.availableChargers)} tone="green" hint={t.utilisation(stats.utilization)} />
+            <StatTile label={t.activeSessions} value={String(stats.activeSessions)} tone="brand" />
+            <StatTile label={t.totalEnergy} value={f.kwh(stats.totalEnergyKwh, 0)} />
+            <StatTile label={t.revenueAll} value={f.thb(stats.revenue)} />
+            <StatTile label={t.revenue30} value={f.thb(stats.revenue30d)} tone="green" />
+            <StatTile label={t.reservations} value={String(stats.reservations)} hint={t.upcomingCount(stats.upcomingReservations)} />
+            <StatTile label={t.users} value={String(stats.totalUsers)} hint={t.activeCount(stats.activeUsers)} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
@@ -56,19 +58,22 @@ export default function AdminOverviewPage() {
               <section className="vg-card p-4">
                 <div className="mb-3 flex items-baseline gap-2.5">
                   <h2 className="font-display text-[16px] font-semibold text-ink">
-                    Revenue, last 30 days
+                    {t.revenueChart}
                   </h2>
                   <span className="text-[12.5px] text-faint">
-                    {thb(stats.revenue30d)} across {stats.revenueByDay.filter((d) => d.revenue > 0).length} active days
+                    {t.revenueNote(
+                      f.thb(stats.revenue30d),
+                      stats.revenueByDay.filter((d) => d.revenue > 0).length,
+                    )}
                   </span>
                 </div>
                 <AreaChart
                   data={stats.revenueByDay.map((d) => d.revenue)}
                   height={130}
-                  ariaLabel="Revenue over the last 30 days"
+                  ariaLabel={t.revenueAria}
                   labels={[
-                    stats.revenueByDay[0] ? dayMonth(stats.revenueByDay[0].date) : "30 days ago",
-                    "Today",
+                    stats.revenueByDay[0] ? f.dayMonth(stats.revenueByDay[0].date) : t.daysAgo30,
+                    t.today,
                   ]}
                 />
               </section>
@@ -76,10 +81,10 @@ export default function AdminOverviewPage() {
               <section className="vg-card overflow-hidden">
                 <div className="flex items-center border-b border-line px-4 py-3.5">
                   <h2 className="flex-1 font-display text-[16px] font-semibold text-ink">
-                    Live charging sessions
+                    {t.liveSessions}
                   </h2>
                   <Link href="/admin/sessions" className="text-[12.5px] font-semibold text-brand">
-                    All sessions
+                    {t.allSessions}
                   </Link>
                 </div>
                 {data.activeSessions.length ? (
@@ -98,21 +103,24 @@ export default function AdminOverviewPage() {
                             {s.station.name} · {s.charger.chargerCode}
                           </div>
                           <div className="text-[12px] text-faint">
-                            {s.user?.fullName} · started {time(s.startTime)} ·{" "}
-                            {duration(s.minutesElapsed)}
+                            {t.liveLine(
+                              s.user?.fullName ?? "",
+                              f.time(s.startTime),
+                              f.duration(s.minutesElapsed),
+                            )}
                           </div>
                         </div>
                         <Badge tone="brand">{s.currentPercent}%</Badge>
-                        <span className="text-[12.5px] text-muted">{kwh(s.energyKwh)}</span>
+                        <span className="text-[12.5px] text-muted">{f.kwh(s.energyKwh)}</span>
                         <span className="font-display text-[13.5px] font-semibold text-ink">
-                          {thb(s.cost)}
+                          {f.thb(s.cost)}
                         </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
                   <div className="px-4 py-8">
-                    <EmptyState icon="⚡" title="No sessions running right now" />
+                    <EmptyState icon="⚡" title={t.noneRunning} />
                   </div>
                 )}
               </section>
@@ -120,7 +128,7 @@ export default function AdminOverviewPage() {
               <section className="vg-card overflow-hidden">
                 <div className="border-b border-line px-4 py-3.5">
                   <h2 className="font-display text-[16px] font-semibold text-ink">
-                    Recent activity
+                    {t.recentActivity}
                   </h2>
                 </div>
                 <ul>
@@ -137,17 +145,17 @@ export default function AdminOverviewPage() {
                           {s.station.name}
                         </div>
                         <div className="text-[12px] text-faint">
-                          {s.user?.fullName} · {relative(s.startTime)}
+                          {s.user?.fullName} · {f.relative(s.startTime)}
                         </div>
                       </div>
                       <span className="hidden text-[12.5px] text-muted sm:inline">
-                        {kwh(s.energyKwh)}
+                        {f.kwh(s.energyKwh)}
                       </span>
                       <span className="font-display text-[13.5px] font-semibold text-ink">
-                        {thb(s.cost)}
+                        {f.thb(s.cost)}
                       </span>
                       <Badge tone={s.paymentStatus === "PAID" ? "green" : "amber"}>
-                        {s.paymentStatus === "PAID" ? "Paid" : "Unpaid"}
+                        {s.paymentStatus === "PAID" ? m.status.payment.PAID : t.unpaid}
                       </Badge>
                     </li>
                   ))}
@@ -158,7 +166,7 @@ export default function AdminOverviewPage() {
             <div className="min-w-0 space-y-3.5">
               <div className="vg-card p-4">
                 <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
-                  Station status
+                  {t.stationStatus}
                 </h2>
                 {stats.statusBreakdown.map((row) => (
                   <div key={row.status} className="flex items-center gap-2.5 py-1.5">
@@ -167,7 +175,7 @@ export default function AdminOverviewPage() {
                       style={{ background: STATION_TONE[row.status] }}
                     />
                     <span className="flex-1 text-[13px] text-muted">
-                      {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                      {m.status.station[row.status as keyof typeof m.status.station] ?? row.status}
                     </span>
                     <span className="font-display text-[13px] font-semibold text-ink">
                       {row.count}
@@ -176,12 +184,12 @@ export default function AdminOverviewPage() {
                 ))}
                 <div className="mt-3 border-t border-surface-alt pt-3">
                   <h3 className="mb-2 text-[12px] font-semibold tracking-[0.06em] text-faint uppercase">
-                    Chargers
+                    {t.chargers}
                   </h3>
                   {stats.chargerBreakdown.map((row) => (
                     <div key={row.status} className="flex items-center gap-2.5 py-1">
                       <span className="flex-1 text-[13px] text-muted">
-                        {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                        {m.status.charger[row.status as keyof typeof m.status.charger] ?? row.status}
                       </span>
                       <span className="font-display text-[13px] font-semibold text-ink">
                         {row.count}
@@ -193,7 +201,7 @@ export default function AdminOverviewPage() {
 
               <div className="vg-card p-4">
                 <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
-                  Top stations by revenue
+                  {t.topStations}
                 </h2>
                 <ol className="space-y-2.5">
                   {stats.topStations.map((s, i) => (
@@ -214,7 +222,7 @@ export default function AdminOverviewPage() {
                       </Link>
                       <span className="text-[11.5px] text-faint">{s.sessions}×</span>
                       <span className="font-display text-[13px] font-semibold text-ink">
-                        {thb(s.revenue)}
+                        {f.thb(s.revenue)}
                       </span>
                     </li>
                   ))}
@@ -223,7 +231,7 @@ export default function AdminOverviewPage() {
 
               <div className="vg-card p-4">
                 <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
-                  Upcoming reservations
+                  {t.upcomingReservations}
                 </h2>
                 {data.upcomingReservations.length ? (
                   <ul className="space-y-2.5">
@@ -237,14 +245,14 @@ export default function AdminOverviewPage() {
                             {r.station.name}
                           </div>
                           <div className="text-[11.5px] text-faint">
-                            {dateTime(r.startTime)} · {r.user?.fullName}
+                            {f.dateTime(r.startTime)} · {r.user?.fullName}
                           </div>
                         </div>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[13px] text-faint">No upcoming reservations.</p>
+                  <p className="text-[13px] text-faint">{t.noUpcoming}</p>
                 )}
               </div>
             </div>

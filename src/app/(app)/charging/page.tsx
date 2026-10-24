@@ -5,7 +5,6 @@ import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
 import { useSession } from "@/components/layout/SessionProvider";
-import { duration, kw, kwh, thb, time } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressRing } from "@/components/ui/Stat";
@@ -13,13 +12,16 @@ import { EmptyState, ErrorState, FormError } from "@/components/ui/States";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import type { PendingPromptPay, SessionDTO } from "@/lib/types";
-import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
+import type { PaymentMethod } from "@/lib/payments";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import { PromptPayDialog } from "@/components/payments/PromptPayDialog";
 
 export default function ChargingPage() {
   const toast = useToast();
   const { user, refreshUser } = useSession();
+  const { m, f } = useI18n();
+  const t = m.charging;
   const [stopping, setStopping] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
@@ -53,13 +55,13 @@ export default function ChargingPage() {
     setStopping(true);
     try {
       const { session: finished } = await api.stopSession(session.id);
-      toast.push(`Session complete · ${kwh(finished.energyKwh)} delivered`);
+      toast.push(t.stopped(f.kwh(finished.energyKwh)));
       setConfirmStop(false);
       setPayFor(finished);
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not stop the session",
+        err instanceof ApiRequestError ? err.message : t.stopFailed,
         "error",
       );
     } finally {
@@ -78,11 +80,11 @@ export default function ChargingPage() {
         setPromptPay({ payment: res.payment, promptpay: res.promptpay });
         return;
       }
-      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
+      toast.push(m.payments.paidWith(f.thb(payFor.cost), m.status.paymentMethod[method]));
       await refreshUser();
       void reload(true);
     } catch (err) {
-      setPayError(err instanceof ApiRequestError ? err.message : "Payment failed");
+      setPayError(err instanceof ApiRequestError ? err.message : m.payments.failed);
     } finally {
       setPaying(false);
     }
@@ -90,11 +92,9 @@ export default function ChargingPage() {
 
   return (
     <Page
-      title="Charging session"
+      title={t.title}
       subtitle={
-        session
-          ? `${targetReached ? "Target reached" : "Live"} · started ${time(session.startTime)}`
-          : "No session running"
+        session ? t.subtitleLive(targetReached, f.time(session.startTime)) : t.subtitleNone
       }
     >
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
@@ -104,14 +104,14 @@ export default function ChargingPage() {
         <div className="space-y-4">
           <EmptyState
             icon="⚡"
-            title="Nothing charging right now"
-            description="Pick an available charger at any station and start a session. Energy, cost and time to target update live on this page."
-            action={{ label: "Find a charger", href: "/stations" }}
+            title={t.emptyTitle}
+            description={t.emptyBody}
+            action={{ label: t.findCharger, href: "/stations" }}
           />
           {data.unpaid.length ? (
             <section>
               <h2 className="mb-3 font-display text-[16px] font-semibold text-ink">
-                Waiting for payment
+                {t.waiting}
               </h2>
               <ul className="space-y-3">
                 {data.unpaid.map((s) => (
@@ -121,12 +121,11 @@ export default function ChargingPage() {
                         {s.station.name}
                       </div>
                       <div className="mt-0.5 text-[12.5px] text-faint">
-                        {time(s.startTime)} · {kwh(s.energyKwh)} · charger{" "}
-                        {s.charger.chargerCode}
+                        {t.unpaidLine(f.time(s.startTime), f.kwh(s.energyKwh), s.charger.chargerCode)}
                       </div>
                     </div>
                     <span className="font-display text-[16px] font-bold text-ink">
-                      {thb(s.cost)}
+                      {f.thb(s.cost)}
                     </span>
                     <Button
                       size="sm"
@@ -135,7 +134,7 @@ export default function ChargingPage() {
                         setPayError(null);
                       }}
                     >
-                      Pay now
+                      {m.payments.payNow}
                     </Button>
                   </li>
                 ))}
@@ -155,11 +154,11 @@ export default function ChargingPage() {
                   <span className="relative h-2 w-2 rounded-full bg-grid-green-pale" />
                 </span>
                 <span className="text-[11.5px] font-semibold tracking-[0.08em] text-grid-green-pale uppercase">
-                  {targetReached ? "Target reached" : "Charging now"}
+                  {targetReached ? t.targetReached : t.chargingNow}
                 </span>
                 <div className="flex-1" />
                 <span className="text-[12.5px] text-grid-green-pale">
-                  {kw(session.powerKw)} · {thb(session.pricePerKwh)}/kWh
+                  {f.kw(session.powerKw)} · {m.payments.perKwh(f.thb(session.pricePerKwh))}
                 </span>
               </div>
 
@@ -174,7 +173,7 @@ export default function ChargingPage() {
                     <span className="text-[16px]">%</span>
                   </span>
                   <span className="mt-1 text-[11px] font-medium text-grid-green-pale">
-                    target {session.targetPercent}%
+                    {t.target(session.targetPercent)}
                   </span>
                 </ProgressRing>
 
@@ -183,16 +182,16 @@ export default function ChargingPage() {
                     {session.station.name}
                   </div>
                   <div className="mt-1 mb-4 text-center text-[13px] text-grid-green-pale sm:text-left">
-                    Charger {session.charger.chargerCode} · started {time(session.startTime)}
+                    {t.startedAt(session.charger.chargerCode, f.time(session.startTime))}
                   </div>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <Metric
-                      label={targetReached ? "Status" : "Time to target"}
-                      value={targetReached ? "Ready" : duration(session.minutesToTarget)}
+                      label={targetReached ? t.status : t.timeToTarget}
+                      value={targetReached ? t.ready : f.duration(session.minutesToTarget)}
                     />
-                    <Metric label="Energy delivered" value={kwh(session.energyKwh)} />
-                    <Metric label="Charging speed" value={kw(session.powerKw)} />
-                    <Metric label="Cost so far" value={thb(session.cost)} />
+                    <Metric label={t.energyDelivered} value={f.kwh(session.energyKwh)} />
+                    <Metric label={t.speed} value={f.kw(session.powerKw)} />
+                    <Metric label={t.costSoFar} value={f.thb(session.cost)} />
                   </div>
                 </div>
               </div>
@@ -206,14 +205,13 @@ export default function ChargingPage() {
                 />
               </div>
               <div className="mt-2 flex justify-between text-[11.5px] text-grid-green-pale">
-                <span>{session.startPercent}% at start</span>
-                <span>{session.targetPercent}% target</span>
+                <span>{t.atStart(session.startPercent)}</span>
+                <span>{t.targetPct(session.targetPercent)}</span>
               </div>
 
               {targetReached ? (
                 <div className="mt-4 rounded-xl bg-white/15 px-3.5 py-3 text-[12.5px] leading-relaxed font-medium text-white">
-                  Your battery has reached the {session.targetPercent}% target. Stop the session
-                  to release the charger and settle the bill.
+                  {t.reachedNote(session.targetPercent)}
                 </div>
               ) : null}
 
@@ -224,7 +222,7 @@ export default function ChargingPage() {
                   className="border-transparent bg-white text-grid-green-dark hover:bg-white/90"
                   href={`/stations/${session.station.id}`}
                 >
-                  Station details
+                  {t.stationDetails}
                 </Button>
                 <Button
                   fullWidth
@@ -235,53 +233,52 @@ export default function ChargingPage() {
                   }
                   onClick={() => setConfirmStop(true)}
                 >
-                  Stop charging
+                  {t.stop}
                 </Button>
               </div>
             </div>
 
             <div className="vg-card p-4">
               <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">
-                Session detail
+                {t.detail}
               </h2>
               <dl className="grid gap-x-8 gap-y-2 text-[13px] sm:grid-cols-2">
-                <Row label="Session" value={`#${session.id}`} />
-                <Row label="Started" value={time(session.startTime)} />
-                <Row label="Elapsed" value={duration(session.minutesElapsed)} />
+                <Row label={t.session} value={`#${session.id}`} />
+                <Row label={t.started} value={f.time(session.startTime)} />
+                <Row label={t.elapsed} value={f.duration(session.minutesElapsed)} />
                 <Row
-                  label="Vehicle"
+                  label={t.vehicle}
                   value={
                     user.vehicleMake
                       ? `${user.vehicleMake} ${user.vehicleModel ?? ""}`.trim()
-                      : "Not set"
+                      : t.notSet
                   }
                 />
                 <Row
-                  label="Connector"
-                  value={`Charger ${session.charger.chargerCode} · ${kw(session.charger.powerKw)}`}
+                  label={t.connector}
+                  value={t.connectorValue(session.charger.chargerCode, f.kw(session.charger.powerKw))}
                 />
-                <Row label="Rate" value={`${thb(session.pricePerKwh)} per kWh`} />
+                <Row label={t.rate} value={t.perKwh(f.thb(session.pricePerKwh))} />
               </dl>
             </div>
           </div>
 
           <div className="min-w-0 space-y-3.5">
             <div className="vg-card p-4">
-              <div className="font-display text-[15px] font-semibold text-ink">Payment</div>
+              <div className="font-display text-[15px] font-semibold text-ink">{t.payment}</div>
               <p className="mt-1.5 text-[13px] leading-relaxed text-faint">
-                You will be asked to pay once the session stops. Wallet balance right now is{" "}
-                <span className="font-semibold text-ink">{thb(user.walletBalance)}</span>.
+                {t.paymentNote}{" "}
+                <span className="font-semibold text-ink">{f.thb(user.walletBalance)}</span>
               </p>
               <div className="mt-3 rounded-[14px] bg-brand-pale px-3.5 py-2.5 text-[12px] leading-[1.45] font-medium text-brand-dark">
-                Charging slows down sharply above 80%. Stopping at the target keeps the cost per
-                kWh sensible.
+                {t.slowNote}
               </div>
             </div>
 
             {data?.unpaid.length ? (
               <div className="vg-card p-4">
                 <div className="mb-2 font-display text-[15px] font-semibold text-ink">
-                  Waiting for payment
+                  {t.waiting}
                 </div>
                 <ul className="space-y-2.5">
                   {data.unpaid.map((s) => (
@@ -290,11 +287,11 @@ export default function ChargingPage() {
                         <div className="truncate text-[13px] font-medium text-ink">
                           {s.station.name}
                         </div>
-                        <div className="text-[12px] text-faint">{kwh(s.energyKwh)}</div>
+                        <div className="text-[12px] text-faint">{f.kwh(s.energyKwh)}</div>
                       </div>
-                      <Badge tone="amber">{thb(s.cost)}</Badge>
+                      <Badge tone="amber">{f.thb(s.cost)}</Badge>
                       <Button size="sm" variant="tint" onClick={() => setPayFor(s)}>
-                        Pay
+                        {m.payments.pay}
                       </Button>
                     </li>
                   ))}
@@ -308,19 +305,15 @@ export default function ChargingPage() {
       <Modal
         open={confirmStop}
         onClose={() => setConfirmStop(false)}
-        title="Stop this charging session?"
-        description={
-          session
-            ? `${kwh(session.energyKwh)} delivered so far, costing ${thb(session.cost)}. The charger is released immediately and you can pay right after.`
-            : undefined
-        }
+        title={t.stopTitle}
+        description={session ? t.stopBody(f.kwh(session.energyKwh), f.thb(session.cost)) : undefined}
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setConfirmStop(false)}>
-              Keep charging
+              {t.keepCharging}
             </Button>
             <Button variant="danger" fullWidth loading={stopping} onClick={stop}>
-              Stop charging
+              {t.stop}
             </Button>
           </>
         }
@@ -329,19 +322,23 @@ export default function ChargingPage() {
       <Modal
         open={Boolean(payFor)}
         onClose={() => setPayFor(null)}
-        title="Pay for this session"
+        title={m.payments.payTitle}
         description={
           payFor
-            ? `${payFor.station.name} · ${kwh(payFor.energyKwh)} at ${thb(payFor.pricePerKwh)}/kWh.`
+            ? m.payments.payDescription(
+                payFor.station.name,
+                f.kwh(payFor.energyKwh),
+                f.thb(payFor.pricePerKwh),
+              )
             : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setPayFor(null)}>
-              Later
+              {m.payments.later}
             </Button>
             <Button variant="green" fullWidth loading={paying} onClick={pay}>
-              Pay {payFor ? thb(payFor.cost) : ""}
+              {m.payments.payAmount(payFor ? f.thb(payFor.cost) : "")}
             </Button>
           </>
         }
@@ -356,12 +353,12 @@ export default function ChargingPage() {
           />
           {payFor ? (
             <dl className="rounded-[16px] bg-surface p-4 text-[13px]">
-              <Row label="Energy" value={kwh(payFor.energyKwh)} />
-              <Row label={`Rate`} value={`${thb(payFor.pricePerKwh)}/kWh`} />
+              <Row label={m.payments.energy} value={f.kwh(payFor.energyKwh)} />
+              <Row label={m.payments.rate} value={m.payments.perKwh(f.thb(payFor.pricePerKwh))} />
               <div className="mt-2 flex justify-between border-t border-line pt-2">
-                <span className="font-semibold text-ink">Total</span>
+                <span className="font-semibold text-ink">{m.payments.total}</span>
                 <span className="font-display text-[16px] font-bold text-ink">
-                  {thb(payFor.cost)}
+                  {f.thb(payFor.cost)}
                 </span>
               </div>
             </dl>
@@ -374,7 +371,7 @@ export default function ChargingPage() {
         onClose={() => setPromptPay(null)}
         onConfirmed={(payment) => {
           setPromptPay(null);
-          toast.push(`Paid ${thb(payment.amount)} with PromptPay QR`);
+          toast.push(m.payments.paidWith(f.thb(payment.amount), m.status.paymentMethod.PROMPTPAY));
           void refreshUser();
           void reload(true);
         }}

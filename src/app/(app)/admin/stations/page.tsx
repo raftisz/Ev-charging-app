@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { kw, thb } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { StationStatusBadge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -14,6 +13,7 @@ import { PlusIcon, SearchIcon } from "@/components/ui/Icons";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDTO } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type FormState = {
   name: string;
@@ -45,6 +45,8 @@ const BLANK: FormState = {
 
 export default function AdminStationsPage() {
   const toast = useToast();
+  const { m, f } = useI18n();
+  const t = m.admin;
   const [query, setQuery] = useState("");
   const { data, loading, error, reload } = useAsync(
     () => api.stations({ q: query.trim() || undefined, sort: "name" }),
@@ -90,10 +92,10 @@ export default function AdminStationsPage() {
 
   async function save() {
     setFormError(null);
-    if (form.name.trim().length < 2) return setFormError("Station needs a name");
-    if (form.address.trim().length < 4) return setFormError("Station needs an address");
+    if (form.name.trim().length < 2) return setFormError(t.needName);
+    if (form.address.trim().length < 4) return setFormError(t.needAddress);
     if (Number.isNaN(Number(form.pricePerKwh)) || Number(form.pricePerKwh) <= 0) {
-      return setFormError("Price per kWh must be a positive number");
+      return setFormError(t.needPrice);
     }
 
     setSaving(true);
@@ -107,16 +109,16 @@ export default function AdminStationsPage() {
     try {
       if (editing) {
         await api.updateStation(editing.id, payload);
-        toast.push("Station updated");
+        toast.push(t.stationUpdated);
       } else {
         await api.createStation(payload);
-        toast.push("Station created");
+        toast.push(t.stationCreated);
       }
       setEditing(null);
       setCreating(false);
       void reload(true);
     } catch (err) {
-      setFormError(err instanceof ApiRequestError ? err.message : "Could not save the station");
+      setFormError(err instanceof ApiRequestError ? err.message : t.stationSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -127,12 +129,12 @@ export default function AdminStationsPage() {
     setBusy(true);
     try {
       await api.deleteStation(deleting.id);
-      toast.push("Station deleted");
+      toast.push(t.stationDeleted);
       setDeleting(null);
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not delete the station",
+        err instanceof ApiRequestError ? err.message : t.stationDeleteFailed,
         "error",
       );
     } finally {
@@ -143,44 +145,45 @@ export default function AdminStationsPage() {
   const formFields = (
     <div className="space-y-3.5">
       <FormError message={formError} />
-      <Field label="Name">
+      <Field label={t.stationName}>
         <Input value={form.name} onChange={set("name")} placeholder="Sukhumvit Supercharge Hub" />
       </Field>
-      <Field label="Address">
-        <Input value={form.address} onChange={set("address")} placeholder="100 Charging Road, Bangkok" />
+      <Field label={t.stationAddress}>
+        <Input value={form.address} onChange={set("address")} placeholder={t.addressPlaceholder} />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="City">
+        <Field label={t.stationCity}>
           <Input value={form.city} onChange={set("city")} />
         </Field>
-        <Field label="Operator">
+        <Field label={t.stationOperator}>
           <Input value={form.operator} onChange={set("operator")} />
         </Field>
-        <Field label="Latitude">
+        <Field label={t.latitude}>
           <Input value={form.latitude} onChange={set("latitude")} inputMode="decimal" />
         </Field>
-        <Field label="Longitude">
+        <Field label={t.longitude}>
           <Input value={form.longitude} onChange={set("longitude")} inputMode="decimal" />
         </Field>
-        <Field label="Price per kWh (฿)">
+        <Field label={t.pricePerKwh}>
           <Input value={form.pricePerKwh} onChange={set("pricePerKwh")} inputMode="decimal" />
         </Field>
-        <Field label="Rating">
+        <Field label={t.rating}>
           <Input value={form.rating} onChange={set("rating")} inputMode="decimal" />
         </Field>
-        <Field label="Status">
+        <Field label={t.status}>
           <Select value={form.status} onChange={set("status")}>
-            <option value="AVAILABLE">Available</option>
-            <option value="BUSY">Busy</option>
-            <option value="OFFLINE">Offline</option>
-            <option value="MAINTENANCE">Maintenance</option>
+            {(["AVAILABLE", "BUSY", "OFFLINE", "MAINTENANCE"] as const).map((s) => (
+              <option key={s} value={s}>
+                {m.status.station[s]}
+              </option>
+            ))}
           </Select>
         </Field>
-        <Field label="Opening hours">
+        <Field label={t.openingHours}>
           <Input value={form.openingHours} onChange={set("openingHours")} />
         </Field>
       </div>
-      <Field label="Amenities" hint="Comma separated">
+      <Field label={t.amenities} hint={t.commaSeparated}>
         <Input value={form.amenities} onChange={set("amenities")} />
       </Field>
     </div>
@@ -189,11 +192,11 @@ export default function AdminStationsPage() {
   return (
     <Page
       variant="admin"
-      title="Stations"
-      subtitle={`${stations.length} stations`}
+      title={t.stationsTitle}
+      subtitle={t.stationsCount(stations.length)}
       action={
         <Button size="sm" icon={<PlusIcon />} onClick={openCreate}>
-          <span className="hidden sm:inline">New station</span>
+          <span className="hidden sm:inline">{t.newStation}</span>
         </Button>
       }
     >
@@ -204,8 +207,8 @@ export default function AdminStationsPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search stations by name or address"
-          aria-label="Search stations"
+          placeholder={t.searchStations}
+          aria-label={t.searchStationsLabel}
           className="vg-input pl-10"
         />
       </div>
@@ -214,17 +217,17 @@ export default function AdminStationsPage() {
       {loading && !data ? <ListSkeleton count={6} /> : null}
       {data && stations.length === 0 ? (
         <EmptyState
-          title="No stations match"
-          description="Try a different search, or add a new station to the network."
-          action={{ label: "New station", onClick: openCreate }}
+          title={t.noStationsTitle}
+          description={t.noStationsBody}
+          action={{ label: t.newStation, onClick: openCreate }}
         />
       ) : null}
 
       {stations.length ? (
         <div className="vg-card overflow-hidden">
           <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
-            {["Station", "Status", "Chargers", "Price", "Location", ""].map((c) => (
-              <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
+            {t.stationColumns.map((c, i) => (
+              <span key={i} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
               </span>
             ))}
@@ -252,17 +255,17 @@ export default function AdminStationsPage() {
                   />
                 </div>
                 <div className="text-[13px] text-muted">
-                  {s.chargerCount} · up to {kw(s.maxPowerKw)}
+                  {t.chargersUpTo(s.chargerCount, f.kw(s.maxPowerKw))}
                 </div>
                 <div className="font-display text-[13.5px] font-semibold text-ink">
-                  {thb(s.pricePerKwh)}
+                  {f.thb(s.pricePerKwh)}
                 </div>
                 <div className="text-[12.5px] text-faint">
                   {s.latitude.toFixed(3)}, {s.longitude.toFixed(3)}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="secondary" onClick={() => openEdit(s)}>
-                    Edit
+                    {t.edit}
                   </Button>
                   <Button
                     size="sm"
@@ -270,7 +273,7 @@ export default function AdminStationsPage() {
                     className="text-danger hover:bg-danger-tint"
                     onClick={() => setDeleting(s)}
                   >
-                    Delete
+                    {t.delete}
                   </Button>
                 </div>
               </li>
@@ -285,8 +288,8 @@ export default function AdminStationsPage() {
           setCreating(false);
           setEditing(null);
         }}
-        title={editing ? `Edit ${editing.name}` : "New station"}
-        description="Coordinates place the station on the map. Chargers are managed separately."
+        title={editing ? t.editStation(editing.name) : t.newStation}
+        description={t.stationFormHint}
         footer={
           <>
             <Button
@@ -297,10 +300,10 @@ export default function AdminStationsPage() {
                 setEditing(null);
               }}
             >
-              Cancel
+              {t.cancel}
             </Button>
             <Button fullWidth loading={saving} onClick={save}>
-              {editing ? "Save changes" : "Create station"}
+              {editing ? t.save : t.createStation}
             </Button>
           </>
         }
@@ -311,19 +314,15 @@ export default function AdminStationsPage() {
       <Modal
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
-        title="Delete this station?"
-        description={
-          deleting
-            ? `${deleting.name} and its ${deleting.chargerCount} chargers, reservations and session history will be removed. This cannot be undone.`
-            : undefined
-        }
+        title={t.deleteStationTitle}
+        description={deleting ? t.deleteStationBody(deleting.name, deleting.chargerCount) : undefined}
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setDeleting(null)}>
-              Keep it
+              {t.keepIt}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={confirmDelete}>
-              Delete station
+              {t.deleteStation}
             </Button>
           </>
         }

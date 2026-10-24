@@ -7,7 +7,6 @@ import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
 import { useSession } from "@/components/layout/SessionProvider";
-import { dateTime, duration, kwh, thb } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/Stat";
@@ -15,7 +14,8 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState, ErrorState, FormError, ListSkeleton, StatSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { PaymentStatus, PendingPromptPay, SessionDTO } from "@/lib/types";
-import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
+import type { PaymentMethod } from "@/lib/payments";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PaymentMethodPicker } from "@/components/payments/PaymentMethodPicker";
 import { PromptPayDialog } from "@/components/payments/PromptPayDialog";
 
@@ -26,7 +26,7 @@ const PAYMENT_TONE: Record<PaymentStatus, "green" | "amber" | "danger" | "neutra
   REFUNDED: "neutral",
 };
 
-const FILTERS = ["All", "Paid", "Unpaid"] as const;
+const FILTERS = ["all", "paid", "unpaid"] as const;
 
 /** Still owes money. A refunded session is settled, not unpaid. */
 const isUnpaid = (s: SessionDTO) => s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED";
@@ -34,7 +34,9 @@ const isUnpaid = (s: SessionDTO) => s.paymentStatus === "PENDING" || s.paymentSt
 export default function HistoryPage() {
   const { user, refreshUser } = useSession();
   const toast = useToast();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const { m, f } = useI18n();
+  const t = m.history;
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [payFor, setPayFor] = useState<SessionDTO | null>(null);
   const [paying, setPaying] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("WALLET");
@@ -45,8 +47,8 @@ export default function HistoryPage() {
   const sessions = useMemo(() => data?.sessions ?? [], [data]);
 
   const filtered = useMemo(() => {
-    if (filter === "Paid") return sessions.filter((s) => s.paymentStatus === "PAID");
-    if (filter === "Unpaid")
+    if (filter === "paid") return sessions.filter((s) => s.paymentStatus === "PAID");
+    if (filter === "unpaid")
       return sessions.filter((s) => s.status !== "ACTIVE" && isUnpaid(s));
     return sessions;
   }, [sessions, filter]);
@@ -80,11 +82,11 @@ export default function HistoryPage() {
         setPromptPay({ payment: res.payment, promptpay: res.promptpay });
         return;
       }
-      toast.push(`Paid ${thb(payFor.cost)} with ${PAYMENT_METHOD_LABEL[method]}`);
+      toast.push(m.payments.paidWith(f.thb(payFor.cost), m.status.paymentMethod[method]));
       await refreshUser();
       void reload(true);
     } catch (err) {
-      setPayError(err instanceof ApiRequestError ? err.message : "Payment failed");
+      setPayError(err instanceof ApiRequestError ? err.message : m.payments.failed);
     } finally {
       setPaying(false);
     }
@@ -92,8 +94,8 @@ export default function HistoryPage() {
 
   return (
     <Page
-      title="History & payments"
-      subtitle={`Wallet balance ${thb(user.walletBalance)}`}
+      title={t.title}
+      subtitle={t.subtitle(f.thb(user.walletBalance))}
     >
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? (
@@ -106,30 +108,30 @@ export default function HistoryPage() {
       {data ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="Sessions" value={String(totals.sessions)} />
-            <StatTile label="Energy charged" value={kwh(totals.energy, 0)} />
-            <StatTile label="Paid" value={thb(totals.spend)} tone="green" />
+            <StatTile label={t.sessions} value={String(totals.sessions)} />
+            <StatTile label={t.energy} value={f.kwh(totals.energy, 0)} />
+            <StatTile label={t.paid} value={f.thb(totals.spend)} tone="green" />
             <StatTile
-              label="Outstanding"
-              value={thb(totals.outstanding)}
+              label={t.outstanding}
+              value={f.thb(totals.outstanding)}
               tone={totals.outstanding > 0 ? "brand" : "default"}
             />
           </div>
 
           <div className="mt-4 mb-3 flex gap-1 rounded-full bg-surface-alt p-1 lg:w-fit">
-            {FILTERS.map((f) => (
+            {FILTERS.map((key) => (
               <button
-                key={f}
-                onClick={() => setFilter(f)}
-                aria-pressed={filter === f}
+                key={key}
+                onClick={() => setFilter(key)}
+                aria-pressed={filter === key}
                 className={clsx(
                   "flex-1 rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
-                  filter === f
+                  filter === key
                     ? "bg-brand text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.9)]"
                     : "text-muted hover:text-ink",
                 )}
               >
-                {f}
+                {t.filters[key]}
               </button>
             ))}
           </div>
@@ -137,16 +139,18 @@ export default function HistoryPage() {
           {filtered.length === 0 ? (
             <EmptyState
               icon="≡"
-              title={filter === "All" ? "No sessions yet" : `No ${filter.toLowerCase()} sessions`}
-              description="Charging sessions and their receipts appear here once you have charged."
-              action={{ label: "Find a station", href: "/stations" }}
+              title={
+                filter === "all" ? t.emptyAll : filter === "paid" ? t.emptyPaid : t.emptyUnpaid
+              }
+              description={t.emptyBody}
+              action={{ label: t.findStation, href: "/stations" }}
             />
           ) : (
             <>
               {/* Table on desktop, cards on mobile */}
               <div className="vg-card hidden overflow-hidden lg:block">
                 <div className="grid grid-cols-[1.6fr_1fr_0.8fr_0.8fr_0.9fr] border-b border-line bg-surface px-4 py-2.5">
-                  {["Station", "When", "Energy", "Amount", "Status"].map((c, i) => (
+                  {t.columns.map((c, i) => (
                     <span
                       key={c}
                       className={clsx(
@@ -178,28 +182,28 @@ export default function HistoryPage() {
                         {s.station.name}
                       </span>
                     </div>
-                    <span className="text-[13px] text-muted">{dateTime(s.startTime)}</span>
-                    <span className="text-right text-[13px] text-muted">{kwh(s.energyKwh)}</span>
+                    <span className="text-[13px] text-muted">{f.dateTime(s.startTime)}</span>
+                    <span className="text-right text-[13px] text-muted">{f.kwh(s.energyKwh)}</span>
                     <span className="text-right font-display text-[13.5px] font-semibold text-ink">
-                      {thb(s.cost)}
+                      {f.thb(s.cost)}
                     </span>
                     <span className="flex justify-end">
                       {s.status === "ACTIVE" ? (
-                        <Badge tone="brand">Charging</Badge>
+                        <Badge tone="brand">{t.charging}</Badge>
                       ) : s.paymentStatus === "PAID" || s.paymentStatus === "REFUNDED" ? (
                         <span className="flex items-center gap-2">
                           <Badge tone={PAYMENT_TONE[s.paymentStatus]}>
-                            {s.paymentStatus === "PAID" ? "Paid" : "Refunded"}
+                            {m.status.payment[s.paymentStatus]}
                           </Badge>
                           {s.receiptId ? (
                             <Link href={`/receipts/${s.receiptId}`} className="text-[12px] font-semibold text-brand">
-                              Receipt
+                              {t.receipt}
                             </Link>
                           ) : null}
                         </span>
                       ) : (
                         <Button size="sm" variant="tint" onClick={() => openPay(s)}>
-                          Pay {thb(s.cost)}
+                          {m.payments.payAmount(f.thb(s.cost))}
                         </Button>
                       )}
                     </span>
@@ -219,32 +223,30 @@ export default function HistoryPage() {
                           {s.station.name}
                         </div>
                         <div className="mt-0.5 text-[12.5px] text-faint">
-                          {dateTime(s.startTime)} · {duration(s.minutesElapsed)}
+                          {f.dateTime(s.startTime)} · {f.duration(s.minutesElapsed)}
                         </div>
                       </div>
                       <Badge tone={s.status === "ACTIVE" ? "brand" : PAYMENT_TONE[s.paymentStatus]}>
-                        {s.status === "ACTIVE"
-                          ? "Charging"
-                          : s.paymentStatus.charAt(0) + s.paymentStatus.slice(1).toLowerCase()}
+                        {s.status === "ACTIVE" ? t.charging : m.status.payment[s.paymentStatus]}
                       </Badge>
                     </div>
                     <div className="mt-3 flex items-center gap-3 border-t border-surface-alt pt-3">
-                      <span className="text-[12.5px] text-muted">{kwh(s.energyKwh)}</span>
+                      <span className="text-[12.5px] text-muted">{f.kwh(s.energyKwh)}</span>
                       <span className="text-line-strong">·</span>
                       <span className="text-[12.5px] text-muted">
-                        {thb(s.pricePerKwh)}/kWh
+                        {m.payments.perKwh(f.thb(s.pricePerKwh))}
                       </span>
                       <div className="flex-1" />
                       <span className="font-display text-[15px] font-bold text-ink">
-                        {thb(s.cost)}
+                        {f.thb(s.cost)}
                       </span>
                       {s.status !== "ACTIVE" && (s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED") ? (
                         <Button size="sm" onClick={() => openPay(s)}>
-                          Pay
+                          {m.payments.pay}
                         </Button>
                       ) : s.receiptId ? (
                         <Link href={`/receipts/${s.receiptId}`} className="text-[12.5px] font-semibold text-brand">
-                          Receipt
+                          {t.receipt}
                         </Link>
                       ) : null}
                     </div>
@@ -259,17 +261,19 @@ export default function HistoryPage() {
       <Modal
         open={Boolean(payFor)}
         onClose={() => setPayFor(null)}
-        title="Pay for this session"
+        title={m.payments.payTitle}
         description={
-          payFor ? `${payFor.station.name} · ${kwh(payFor.energyKwh)} · ${thb(payFor.cost)}` : undefined
+          payFor
+            ? `${payFor.station.name} · ${f.kwh(payFor.energyKwh)} · ${f.thb(payFor.cost)}`
+            : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setPayFor(null)}>
-              Cancel
+              {m.common.cancel}
             </Button>
             <Button variant="green" fullWidth loading={paying} onClick={pay}>
-              Pay {payFor ? thb(payFor.cost) : ""}
+              {m.payments.payAmount(payFor ? f.thb(payFor.cost) : "")}
             </Button>
           </>
         }
@@ -290,7 +294,7 @@ export default function HistoryPage() {
         onClose={() => setPromptPay(null)}
         onConfirmed={(payment) => {
           setPromptPay(null);
-          toast.push(`Paid ${thb(payment.amount)} with PromptPay QR`);
+          toast.push(m.payments.paidWith(f.thb(payment.amount), m.status.paymentMethod.PROMPTPAY));
           void refreshUser();
           void reload(true);
         }}

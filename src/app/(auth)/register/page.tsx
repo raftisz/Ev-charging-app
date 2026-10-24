@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { getI18n } from "@/i18n/server";
 import { RegisterForm } from "./RegisterForm";
 
-export const metadata: Metadata = { title: "Create an account · Volt Grid" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getI18n();
+  return { title: m.meta.page(m.auth.registerTitle) };
+}
 
 export default function RegisterPage() {
   return <RegisterForm />;

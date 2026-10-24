@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import Link from "next/link";
-import { kw, thb } from "@/lib/format";
 import type { StationDTO } from "@/lib/types";
 import { ORIGIN } from "@/lib/geo";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const STATUS_COLOR: Record<string, string> = {
   AVAILABLE: "#10B981",
@@ -29,6 +29,8 @@ export default function StationMap({
   onSelect?: (station: StationDTO) => void;
   className?: string;
 }) {
+  const { m, f, locale } = useI18n();
+  const textRef = useRef({ m, f });
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Map<number, Marker>>(new Map());
@@ -36,11 +38,13 @@ export default function StationMap({
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    textRef.current = { m, f };
   });
 
   const signature = useMemo(
-    () => stations.map((s) => `${s.id}:${s.status}:${s.availableCount}`).join("|"),
-    [stations],
+    () =>
+      `${locale}|` + stations.map((s) => `${s.id}:${s.status}:${s.availableCount}`).join("|"),
+    [stations, locale],
   );
 
   useEffect(() => {
@@ -63,21 +67,24 @@ export default function StationMap({
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19,
         }).addTo(mapRef.current);
-
-        L.circleMarker([ORIGIN.lat, ORIGIN.lng], {
-          radius: 7,
-          color: "#fff",
-          weight: 3,
-          fillColor: "#2563EB",
-          fillOpacity: 1,
-        })
-          .bindTooltip("You are here", { direction: "top" })
-          .addTo(mapRef.current);
       }
 
       const map = mapRef.current;
+      const { m: text, f: fmt } = textRef.current;
       for (const marker of markersRef.current.values()) marker.remove();
       markersRef.current.clear();
+
+      // Rebuilt with the markers so its tooltip follows the language.
+      const origin = L.circleMarker([ORIGIN.lat, ORIGIN.lng], {
+        radius: 7,
+        color: "#fff",
+        weight: 3,
+        fillColor: "#2563EB",
+        fillOpacity: 1,
+      })
+        .bindTooltip(text.stations.youAreHere, { direction: "top" })
+        .addTo(map);
+      markersRef.current.set(-1, origin as unknown as Marker);
 
       for (const station of stations) {
         const color = STATUS_COLOR[station.status] ?? "#94A3B8";
@@ -95,9 +102,9 @@ export default function StationMap({
                <div style="font:600 14px Poppins,sans-serif;color:#0F172A">${station.name}</div>
                <div style="font-size:12px;color:#94A3B8;margin-top:3px">${station.address}</div>
                <div style="font-size:12.5px;color:#64748B;margin-top:7px">
-                 ${station.availableCount} of ${station.chargerCount} free · ${kw(station.maxPowerKw)} · ${thb(station.pricePerKwh)}/kWh
+                 ${text.stations.popupFree(station.availableCount, station.chargerCount)} · ${fmt.kw(station.maxPowerKw)} · ${fmt.thb(station.pricePerKwh)}${text.stations.perKwh}
                </div>
-               <a href="/stations/${station.id}" style="display:inline-block;margin-top:9px;font:600 12.5px Inter;color:#2563EB">View station →</a>
+               <a href="/stations/${station.id}" style="display:inline-block;margin-top:9px;font:600 12.5px Inter;color:#2563EB">${text.stations.viewStation}</a>
              </div>`,
           );
 
@@ -146,17 +153,15 @@ export default function StationMap({
 }
 
 function MapLegend() {
-  const items = [
-    ["Available", STATUS_COLOR.AVAILABLE],
-    ["Busy", STATUS_COLOR.BUSY],
-    ["Offline", STATUS_COLOR.OFFLINE],
-    ["Maintenance", STATUS_COLOR.MAINTENANCE],
-  ] as const;
+  const { m } = useI18n();
+  const items = (["AVAILABLE", "BUSY", "OFFLINE", "MAINTENANCE"] as const).map(
+    (key) => [m.status.station[key], STATUS_COLOR[key]] as const,
+  );
 
   return (
     <div className="pointer-events-none absolute right-3 bottom-3 z-[500] rounded-[16px] bg-white/95 px-3.5 py-3 shadow-[var(--shadow-card)] backdrop-blur">
       <div className="mb-1.5 text-[10.5px] font-semibold tracking-[0.06em] text-faint uppercase">
-        Station status
+        {m.stations.legendTitle}
       </div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-1">
         {items.map(([label, color]) => (

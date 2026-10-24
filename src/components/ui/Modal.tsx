@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function Modal({
   open,
@@ -17,6 +18,7 @@ export function Modal({
   children?: ReactNode;
   footer?: ReactNode;
 }) {
+  const { m } = useI18n();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -35,7 +37,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center sm:items-center">
       <button
-        aria-label="Close dialog"
+        aria-label={m.common.closeDialog}
         onClick={onClose}
         className="absolute inset-0 bg-ink/40 backdrop-blur-[3px]"
       />

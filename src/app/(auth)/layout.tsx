@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BoltMark } from "@/components/ui/Icons";
+import { LanguageSwitch } from "@/components/layout/LanguageSwitch";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,6 +13,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             Volt Grid
           </span>
         </Link>
+        <div className="flex-1" />
+        <LanguageSwitch />
       </header>
       <main className="flex flex-1 items-start justify-center px-5 pb-16 sm:items-center">
         <div className="w-full max-w-[420px]">{children}</div>

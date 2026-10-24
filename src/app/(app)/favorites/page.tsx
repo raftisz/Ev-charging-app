@@ -7,33 +7,35 @@ import { StationCard } from "@/components/stations/StationCard";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { StationDTO } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function FavoritesPage() {
   const toast = useToast();
+  const { m } = useI18n();
   const { data, loading, error, reload } = useAsync(() => api.favorites());
   const stations = data?.stations ?? [];
 
   async function remove(station: StationDTO) {
     try {
       await api.removeFavorite(station.id);
-      toast.push("Removed from favourites");
+      toast.push(m.stations.removed);
       void reload(true);
     } catch {
-      toast.push("Could not update favourites", "error");
+      toast.push(m.stations.favoriteFailed, "error");
     }
   }
 
   return (
-    <Page title="Favourite stations" subtitle={`${stations.length} saved`}>
+    <Page title={m.stations.favoritesTitle} subtitle={m.stations.savedCount(stations.length)}>
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? <ListSkeleton count={3} /> : null}
 
       {data && stations.length === 0 ? (
         <EmptyState
           icon="♥"
-          title="No favourites yet"
-          description="Tap the heart on any station to keep it at the top of your list."
-          action={{ label: "Browse stations", href: "/stations" }}
+          title={m.stations.noFavoritesTitle}
+          description={m.stations.noFavoritesBody}
+          action={{ label: m.stations.browse, href: "/stations" }}
         />
       ) : null}
 

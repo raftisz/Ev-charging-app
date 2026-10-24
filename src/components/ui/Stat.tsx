@@ -83,12 +83,14 @@ export function BarChart({
   pale = "var(--color-brand-tint)",
   labels,
   format = (v: number) => String(v),
+  ariaLabel = "Daily totals",
 }: {
   data: number[];
   height?: number;
   accent?: string;
   pale?: string;
   labels?: [string, string];
+  ariaLabel?: string;
   format?: (value: number) => string;
 }) {
   const max = Math.max(...data, 1);
@@ -100,7 +102,7 @@ export function BarChart({
         className="flex items-end gap-[3px]"
         style={{ height }}
         role="img"
-        aria-label="Daily totals"
+        aria-label={ariaLabel}
       >
         {data.map((value, i) => (
           <div

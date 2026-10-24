@@ -9,17 +9,15 @@ import { Field, Input } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { DEMO_PASSWORD, DEMO_RESET_TIME } from "@/lib/demo";
+import { useI18n } from "@/i18n/I18nProvider";
 
-const DEMOS = [
-  { as: "driver", label: "Driver", hint: "Live session, wallet, bookings" },
-  { as: "admin", label: "Admin", hint: "Dashboard, stations, refunds" },
-  { as: "operator", label: "Operator", hint: "Station management" },
-] as const;
+const DEMOS = ["driver", "admin", "operator"] as const;
 
 function Form() {
   const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
+  const { m } = useI18n();
   const next = params.get("next") || "/dashboard";
   const expired = params.get("expired") === "1";
 
@@ -35,8 +33,8 @@ function Form() {
     setFieldErrors({});
 
     const errors: Record<string, string> = {};
-    if (!email.trim()) errors.email = "Enter your email address";
-    if (!password) errors.password = "Enter your password";
+    if (!email.trim()) errors.email = m.auth.enterEmail;
+    if (!password) errors.password = m.auth.enterPassword;
     if (Object.keys(errors).length) {
       setFieldErrors(errors);
       return;
@@ -45,11 +43,11 @@ function Form() {
     setLoading(true);
     try {
       const { user } = await api.login({ email, password });
-      toast.push(`Welcome back, ${user.fullName.split(" ")[0]}`);
+      toast.push(m.auth.welcomeName(user.fullName.split(" ")[0]));
       router.replace(next);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Could not sign in. Try again.",
+        err instanceof ApiRequestError ? err.message : m.auth.signInFailed,
       );
       setLoading(false);
     }
@@ -57,17 +55,17 @@ function Form() {
 
   const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
-  async function tryDemo(as: (typeof DEMOS)[number]["as"]) {
+  async function tryDemo(as: (typeof DEMOS)[number]) {
     setError(null);
     setFieldErrors({});
     setDemoLoading(as);
     try {
       const { user } = await api.demoLogin(as);
-      toast.push(`Signed in as ${user.fullName}`);
+      toast.push(m.auth.signedInAs(user.fullName));
       router.replace(next);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Could not open the demo. Try again.",
+        err instanceof ApiRequestError ? err.message : m.auth.demoFailed,
       );
       setDemoLoading(null);
     }
@@ -76,25 +74,23 @@ function Form() {
   return (
     <div>
       <h1 className="font-display text-[27px] font-bold tracking-[-0.02em] text-ink">
-        Welcome back
+        {m.auth.welcomeBack}
       </h1>
-      <p className="mt-2 text-[14px] text-muted">
-        Sign in to see live stations, your reservations and any session running now.
-      </p>
+      <p className="mt-2 text-[14px] text-muted">{m.auth.signInLead}</p>
 
       {expired ? (
         <div
           role="status"
           className="mt-5 rounded-[14px] bg-amber-tint px-4 py-3 text-[13px] leading-relaxed font-medium text-amber-dark"
         >
-          Your session is no longer valid. Please sign in again.
+          {m.auth.expired}
         </div>
       ) : null}
 
       <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
         <FormError message={error} />
 
-        <Field label="Email" error={fieldErrors.email}>
+        <Field label={m.auth.email} error={fieldErrors.email}>
           <Input
             type="email"
             value={email}
@@ -105,7 +101,7 @@ function Form() {
           />
         </Field>
 
-        <Field label="Password" error={fieldErrors.password}>
+        <Field label={m.auth.password} error={fieldErrors.password}>
           <Input
             type="password"
             value={password}
@@ -117,42 +113,39 @@ function Form() {
         </Field>
 
         <Button type="submit" size="lg" fullWidth loading={loading}>
-          Sign in
+          {m.auth.signIn}
         </Button>
       </form>
 
       <div className="mt-6 vg-card p-4">
-        <p className="text-[13px] font-semibold text-ink">Try the demo in one click</p>
-        <p className="mt-0.5 text-[12px] text-faint">
-          No sign-up needed. Demo data resets every day at {DEMO_RESET_TIME} (Bangkok time).
-        </p>
+        <p className="text-[13px] font-semibold text-ink">{m.auth.demoTitle}</p>
+        <p className="mt-0.5 text-[12px] text-faint">{m.auth.demoLead(DEMO_RESET_TIME)}</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {DEMOS.map((demo) => (
             <button
-              key={demo.as}
+              key={demo}
               type="button"
-              onClick={() => void tryDemo(demo.as)}
+              onClick={() => void tryDemo(demo)}
               disabled={demoLoading !== null}
-              aria-busy={demoLoading === demo.as}
+              aria-busy={demoLoading === demo}
               className="rounded-[14px] border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:border-brand disabled:opacity-60"
             >
               <span className="block text-[13px] font-semibold text-ink">
-                {demoLoading === demo.as ? "Opening…" : demo.label}
+                {demoLoading === demo ? m.auth.opening : m.auth.demo[demo]}
               </span>
-              <span className="block text-[11.5px] text-faint">{demo.hint}</span>
+              <span className="block text-[11.5px] text-faint">{m.auth.demoHint[demo]}</span>
             </button>
           ))}
         </div>
         <p className="mt-2.5 text-[11.5px] text-faint">
-          Or sign in above with user1@example.com, admin@example.com or
-          operator@example.com · password {DEMO_PASSWORD}
+          {m.auth.demoManual(DEMO_PASSWORD)}
         </p>
       </div>
 
       <p className="mt-6 text-center text-[13.5px] text-muted">
-        No account yet?{" "}
+        {m.auth.noAccount}{" "}
         <Link href="/register" className="font-semibold text-brand">
-          Create one
+          {m.auth.createOne}
         </Link>
       </p>
     </div>

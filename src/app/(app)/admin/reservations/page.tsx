@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { dateTime, kwh, thb } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
@@ -12,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { ReservationDTO, ReservationStatus } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const TONE: Record<ReservationStatus, "green" | "brand" | "amber" | "danger" | "neutral"> = {
   CONFIRMED: "brand",
@@ -24,6 +24,8 @@ const TONE: Record<ReservationStatus, "green" | "brand" | "amber" | "danger" | "
 
 export default function AdminReservationsPage() {
   const toast = useToast();
+  const { m, f } = useI18n();
+  const t = m.admin;
   const [status, setStatus] = useState("");
   const [cancelling, setCancelling] = useState<ReservationDTO | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,14 +36,14 @@ export default function AdminReservationsPage() {
   );
   const reservations = data?.reservations ?? [];
 
-  async function updateStatus(reservation: ReservationDTO, next: string) {
+  async function updateStatus(reservation: ReservationDTO, next: ReservationStatus) {
     try {
       await api.updateReservation(reservation.id, next);
-      toast.push(`Reservation #${reservation.id} → ${next.toLowerCase()}`);
+      toast.push(t.reservationMoved(reservation.id, m.status.reservation[next].toLowerCase()));
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not update the reservation",
+        err instanceof ApiRequestError ? err.message : t.reservationUpdateFailed,
         "error",
       );
     }
@@ -58,19 +60,19 @@ export default function AdminReservationsPage() {
   return (
     <Page
       variant="admin"
-      title="Reservations"
-      subtitle={`${reservations.length} reservations across the network`}
+      title={t.reservations}
+      subtitle={t.reservationsSubtitle(reservations.length)}
     >
       <div className="mb-4 max-w-xs">
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          aria-label="Filter by status"
+          aria-label={t.filterByStatus}
         >
-          <option value="">All statuses</option>
-          {Object.keys(TONE).map((s) => (
+          <option value="">{t.allStatuses}</option>
+          {(Object.keys(TONE) as ReservationStatus[]).map((s) => (
             <option key={s} value={s}>
-              {s.charAt(0) + s.slice(1).toLowerCase()}
+              {m.status.reservation[s]}
             </option>
           ))}
         </Select>
@@ -79,14 +81,14 @@ export default function AdminReservationsPage() {
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? <ListSkeleton count={6} /> : null}
       {data && reservations.length === 0 ? (
-        <EmptyState icon="▦" title="No reservations match that filter" />
+        <EmptyState icon="▦" title={t.noReservations} />
       ) : null}
 
       {reservations.length ? (
         <div className="vg-card overflow-hidden">
           <div className="hidden grid-cols-[0.5fr_1.6fr_1.4fr_1fr_0.9fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
-            {["#", "Station", "Driver", "When", "Est.", "Status", ""].map((c) => (
-              <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
+            {t.reservationColumns.map((c, i) => (
+              <span key={i} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
               </span>
             ))}
@@ -104,19 +106,19 @@ export default function AdminReservationsPage() {
                     <div className="truncate text-[13.5px] font-medium text-ink">
                       {r.station.name}
                     </div>
-                    <div className="text-[12px] text-faint">Charger {r.charger.chargerCode}</div>
+                    <div className="text-[12px] text-faint">{t.chargerLabel(r.charger.chargerCode)}</div>
                   </div>
                   <div className="min-w-0">
                     <div className="truncate text-[13px] text-ink">{r.user?.fullName}</div>
                     <div className="truncate text-[12px] text-faint">{r.user?.email}</div>
                   </div>
-                  <span className="text-[13px] text-muted">{dateTime(r.startTime)}</span>
+                  <span className="text-[13px] text-muted">{f.dateTime(r.startTime)}</span>
                   <span className="text-[12.5px] text-muted">
-                    {kwh(r.estimatedKwh)} · {thb(r.estimatedCost)}
+                    {f.kwh(r.estimatedKwh)} · {f.thb(r.estimatedCost)}
                   </span>
                   <span>
                     <Badge tone={TONE[r.status]}>
-                      {r.status.charAt(0) + r.status.slice(1).toLowerCase()}
+                      {m.status.reservation[r.status]}
                     </Badge>
                   </span>
                   <div className="flex gap-2">
@@ -127,7 +129,7 @@ export default function AdminReservationsPage() {
                           variant="secondary"
                           onClick={() => updateStatus(r, "COMPLETED")}
                         >
-                          Complete
+                          {t.complete}
                         </Button>
                         <Button
                           size="sm"
@@ -135,7 +137,7 @@ export default function AdminReservationsPage() {
                           className="text-danger hover:bg-danger-tint"
                           onClick={() => setCancelling(r)}
                         >
-                          Cancel
+                          {t.cancel}
                         </Button>
                       </>
                     ) : (
@@ -152,19 +154,23 @@ export default function AdminReservationsPage() {
       <Modal
         open={Boolean(cancelling)}
         onClose={() => setCancelling(null)}
-        title="Cancel this reservation?"
+        title={t.cancelReservationTitle}
         description={
           cancelling
-            ? `#${cancelling.id} · ${cancelling.station.name} for ${cancelling.user?.fullName}. The charger is released immediately.`
+            ? t.cancelReservationBody(
+                cancelling.id,
+                cancelling.station.name,
+                cancelling.user?.fullName ?? "",
+              )
             : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setCancelling(null)}>
-              Keep it
+              {t.keepIt}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={confirmCancel}>
-              Cancel reservation
+              {t.cancelReservation}
             </Button>
           </>
         }

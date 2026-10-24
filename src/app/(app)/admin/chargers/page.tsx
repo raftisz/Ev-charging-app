@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { kw } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { ChargerStatusBadge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -13,6 +12,9 @@ import { PlusIcon } from "@/components/ui/Icons";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { ChargerStatus } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
+
+const CHARGER_STATUSES = ["AVAILABLE", "CHARGING", "RESERVED", "OFFLINE", "MAINTENANCE"] as const;
 
 type Row = {
   id: number;
@@ -33,6 +35,8 @@ const BLANK = {
 
 export default function AdminChargersPage() {
   const toast = useToast();
+  const { m, f } = useI18n();
+  const t = m.admin;
   const [stationFilter, setStationFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -81,9 +85,9 @@ export default function AdminChargersPage() {
 
   async function save() {
     setFormError(null);
-    if (!form.stationId) return setFormError("Pick a station");
-    if (!form.chargerCode.trim()) return setFormError("Charger needs a code, e.g. A1");
-    if (Number(form.powerKw) <= 0) return setFormError("Power must be a positive number");
+    if (!form.stationId) return setFormError(t.pickStation);
+    if (!form.chargerCode.trim()) return setFormError(t.needCode);
+    if (Number(form.powerKw) <= 0) return setFormError(t.needPower);
 
     setSaving(true);
     try {
@@ -94,7 +98,7 @@ export default function AdminChargersPage() {
           connectorType: form.connectorType,
           status: form.status,
         });
-        toast.push("Charger updated");
+        toast.push(t.chargerUpdated);
       } else {
         await api.createCharger({
           stationId: Number(form.stationId),
@@ -103,13 +107,13 @@ export default function AdminChargersPage() {
           connectorType: form.connectorType,
           status: form.status,
         });
-        toast.push("Charger added");
+        toast.push(t.chargerAdded);
       }
       setEditing(null);
       setCreating(false);
       void reload(true);
     } catch (err) {
-      setFormError(err instanceof ApiRequestError ? err.message : "Could not save the charger");
+      setFormError(err instanceof ApiRequestError ? err.message : t.chargerSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -120,12 +124,12 @@ export default function AdminChargersPage() {
     setBusy(true);
     try {
       await api.deleteCharger(deleting.id);
-      toast.push("Charger removed");
+      toast.push(t.chargerRemoved);
       setDeleting(null);
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not remove the charger",
+        err instanceof ApiRequestError ? err.message : t.chargerRemoveFailed,
         "error",
       );
     } finally {
@@ -136,11 +140,11 @@ export default function AdminChargersPage() {
   return (
     <Page
       variant="admin"
-      title="Chargers"
-      subtitle={`${chargers.length} chargers`}
+      title={t.chargersTitle}
+      subtitle={t.chargersCount(chargers.length)}
       action={
         <Button size="sm" icon={<PlusIcon />} onClick={openCreate}>
-          <span className="hidden sm:inline">Add charger</span>
+          <span className="hidden sm:inline">{t.addCharger}</span>
         </Button>
       }
     >
@@ -148,9 +152,9 @@ export default function AdminChargersPage() {
         <Select
           value={stationFilter}
           onChange={(e) => setStationFilter(e.target.value)}
-          aria-label="Filter by station"
+          aria-label={t.filterByStation}
         >
-          <option value="">All stations</option>
+          <option value="">{t.allStations}</option>
           {stations.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -160,12 +164,12 @@ export default function AdminChargersPage() {
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label="Filter by status"
+          aria-label={t.filterByStatus}
         >
-          <option value="">All statuses</option>
-          {["AVAILABLE", "CHARGING", "RESERVED", "OFFLINE", "MAINTENANCE"].map((s) => (
+          <option value="">{t.allStatuses}</option>
+          {CHARGER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s.charAt(0) + s.slice(1).toLowerCase()}
+              {m.status.charger[s]}
             </option>
           ))}
         </Select>
@@ -176,17 +180,17 @@ export default function AdminChargersPage() {
       {data && chargers.length === 0 ? (
         <EmptyState
           icon="⚡"
-          title="No chargers match"
-          description="Change the filters, or add a charger to a station."
-          action={{ label: "Add charger", onClick: openCreate }}
+          title={t.noChargersTitle}
+          description={t.noChargersBody}
+          action={{ label: t.addCharger, onClick: openCreate }}
         />
       ) : null}
 
       {chargers.length ? (
         <div className="vg-card overflow-hidden">
           <div className="hidden grid-cols-[0.6fr_2fr_1fr_1fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
-            {["Code", "Station", "Connector", "Power", "Status", ""].map((c) => (
-              <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
+            {t.chargerColumns.map((c, i) => (
+              <span key={i} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
               </span>
             ))}
@@ -204,13 +208,13 @@ export default function AdminChargersPage() {
                 <span className="text-[13px] text-muted">
                   {c.connectors.map((x) => x.label).join(", ") || "—"}
                 </span>
-                <span className="text-[13px] text-muted">{kw(c.powerKw)}</span>
+                <span className="text-[13px] text-muted">{f.kw(c.powerKw)}</span>
                 <span>
                   <ChargerStatusBadge status={c.status as ChargerStatus} />
                 </span>
                 <div className="flex gap-2">
                   <Button size="sm" variant="secondary" onClick={() => openEdit(c)}>
-                    Edit
+                    {t.edit}
                   </Button>
                   <Button
                     size="sm"
@@ -218,7 +222,7 @@ export default function AdminChargersPage() {
                     className="text-danger hover:bg-danger-tint"
                     onClick={() => setDeleting(c)}
                   >
-                    Remove
+                    {t.remove}
                   </Button>
                 </div>
               </li>
@@ -233,7 +237,7 @@ export default function AdminChargersPage() {
           setCreating(false);
           setEditing(null);
         }}
-        title={editing ? `Edit charger ${editing.chargerCode}` : "Add a charger"}
+        title={editing ? t.editCharger(editing.chargerCode) : t.addACharger}
         footer={
           <>
             <Button
@@ -244,19 +248,19 @@ export default function AdminChargersPage() {
                 setEditing(null);
               }}
             >
-              Cancel
+              {t.cancel}
             </Button>
             <Button fullWidth loading={saving} onClick={save}>
-              {editing ? "Save changes" : "Add charger"}
+              {editing ? t.save : t.addCharger}
             </Button>
           </>
         }
       >
         <div className="space-y-3.5">
           <FormError message={formError} />
-          <Field label="Station">
+          <Field label={t.station}>
             <Select value={form.stationId} onChange={set("stationId")} disabled={Boolean(editing)}>
-              <option value="">Choose a station…</option>
+              <option value="">{t.chooseStation}</option>
               {stations.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -265,24 +269,24 @@ export default function AdminChargersPage() {
             </Select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Charger code">
+            <Field label={t.chargerCode}>
               <Input value={form.chargerCode} onChange={set("chargerCode")} placeholder="A1" />
             </Field>
-            <Field label="Power (kW)">
+            <Field label={t.power}>
               <Input value={form.powerKw} onChange={set("powerKw")} inputMode="numeric" />
             </Field>
-            <Field label="Connector">
+            <Field label={t.connector}>
               <Select value={form.connectorType} onChange={set("connectorType")}>
                 <option value="CCS2">CCS2</option>
                 <option value="TYPE2">Type 2</option>
                 <option value="CHADEMO">CHAdeMO</option>
               </Select>
             </Field>
-            <Field label="Status">
+            <Field label={t.status}>
               <Select value={form.status} onChange={set("status")}>
-                {["AVAILABLE", "CHARGING", "RESERVED", "OFFLINE", "MAINTENANCE"].map((s) => (
+                {CHARGER_STATUSES.map((s) => (
                   <option key={s} value={s}>
-                    {s.charAt(0) + s.slice(1).toLowerCase()}
+                    {m.status.charger[s]}
                   </option>
                 ))}
               </Select>
@@ -294,19 +298,17 @@ export default function AdminChargersPage() {
       <Modal
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
-        title="Remove this charger?"
+        title={t.removeChargerTitle}
         description={
-          deleting
-            ? `Charger ${deleting.chargerCode} at ${deleting.station.name} will be removed along with its reservations and session history.`
-            : undefined
+          deleting ? t.removeChargerBody(deleting.chargerCode, deleting.station.name) : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setDeleting(null)}>
-              Keep it
+              {t.keepIt}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={confirmDelete}>
-              Remove charger
+              {t.removeCharger}
             </Button>
           </>
         }

@@ -1,0 +1,38 @@
+import { defineMessages } from "@/i18n/define";
+
+export const history = defineMessages(
+  {
+    title: "History & payments",
+    subtitle: (balance: string) => `Wallet balance ${balance}`,
+    sessions: "Sessions",
+    energy: "Energy charged",
+    paid: "Paid",
+    outstanding: "Outstanding",
+    filters: { all: "All", paid: "Paid", unpaid: "Unpaid" },
+    emptyAll: "No sessions yet",
+    emptyPaid: "No paid sessions",
+    emptyUnpaid: "No unpaid sessions",
+    emptyBody: "Charging sessions and their receipts appear here once you have charged.",
+    findStation: "Find a station",
+    columns: ["Station", "When", "Energy", "Amount", "Status"],
+    charging: "Charging",
+    receipt: "Receipt",
+  },
+  {
+    title: "ประวัติและการชำระเงิน",
+    subtitle: (balance: string) => `ยอดเงินในกระเป๋า ${balance}`,
+    sessions: "จำนวนครั้ง",
+    energy: "พลังงานที่ชาร์จ",
+    paid: "ชำระแล้ว",
+    outstanding: "ค้างชำระ",
+    filters: { all: "ทั้งหมด", paid: "ชำระแล้ว", unpaid: "ยังไม่ชำระ" },
+    emptyAll: "ยังไม่มีประวัติการชาร์จ",
+    emptyPaid: "ไม่มีรายการที่ชำระแล้ว",
+    emptyUnpaid: "ไม่มีรายการค้างชำระ",
+    emptyBody: "ประวัติการชาร์จและใบเสร็จจะแสดงที่นี่หลังจากคุณชาร์จครั้งแรก",
+    findStation: "ค้นหาสถานี",
+    columns: ["สถานี", "เวลา", "พลังงาน", "ยอดเงิน", "สถานะ"],
+    charging: "กำลังชาร์จ",
+    receipt: "ใบเสร็จ",
+  },
+);

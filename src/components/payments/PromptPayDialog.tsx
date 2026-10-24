@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { api, ApiRequestError } from "@/lib/api-client";
-import { thb } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { FormError } from "@/components/ui/States";
 import type { PaymentDTO, PendingPromptPay } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 /**
  * Shows the PromptPay QR for a pending payment and lets the payer confirm
@@ -22,6 +22,8 @@ export function PromptPayDialog({
   onClose: () => void;
   onConfirmed: (payment: PaymentDTO) => void;
 }) {
+  const { m, f } = useI18n();
+  const qrFailed = m.payments.qrFailed;
   const [svg, setSvg] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,13 +34,13 @@ export function PromptPayDialog({
     let live = true;
     QRCode.toString(payload, { type: "svg", margin: 1, errorCorrectionLevel: "M" })
       .then((markup) => live && setSvg(markup))
-      .catch(() => live && setError("Could not draw the QR code"));
+      .catch(() => live && setError(qrFailed));
     return () => {
       live = false;
       setSvg(null);
       setError(null);
     };
-  }, [payload]);
+  }, [payload, qrFailed]);
 
   async function confirm() {
     if (!pending) return;
@@ -48,7 +50,7 @@ export function PromptPayDialog({
       const res = await api.confirmPayment(pending.payment.id);
       onConfirmed(res.payment);
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Could not confirm the payment");
+      setError(err instanceof ApiRequestError ? err.message : m.payments.confirmFailed);
     } finally {
       setConfirming(false);
     }
@@ -58,15 +60,15 @@ export function PromptPayDialog({
     <Modal
       open={Boolean(pending)}
       onClose={onClose}
-      title="Scan to pay with PromptPay"
-      description={pending ? `Amount ${thb(pending.promptpay.amount)}` : undefined}
+      title={m.payments.qrTitle}
+      description={pending ? m.payments.amount(f.thb(pending.promptpay.amount)) : undefined}
       footer={
         <>
           <Button variant="secondary" fullWidth onClick={onClose}>
-            Later
+            {m.payments.later}
           </Button>
           <Button variant="green" fullWidth loading={confirming} onClick={confirm}>
-            ยืนยันการชำระ
+            {m.payments.confirm}
           </Button>
         </>
       }
@@ -76,25 +78,25 @@ export function PromptPayDialog({
           <div
             className="mx-auto aspect-square w-[220px] rounded-[16px] bg-white p-2 ring-1 ring-line [&>svg]:h-full [&>svg]:w-full"
             role="img"
-            aria-label={`PromptPay QR code for ${thb(pending.promptpay.amount)}`}
+            aria-label={m.payments.qrAlt(f.thb(pending.promptpay.amount))}
             data-testid="promptpay-qr"
             data-payload={pending.promptpay.payload}
             // SVG markup generated locally by the qrcode library from our own payload.
             dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
           />
           <div className="font-display text-[22px] font-bold text-ink">
-            {thb(pending.promptpay.amount)}
+            {f.thb(pending.promptpay.amount)}
           </div>
           <div className="text-[12.5px] text-faint">
-            PromptPay to {pending.promptpay.recipient}
+            {m.payments.payTo(pending.promptpay.recipient)}
           </div>
           {pending.promptpay.isDemoRecipient ? (
             <p className="rounded-[12px] bg-amber-tint px-3 py-2 text-[12px] text-amber-dark">
-              Demo recipient: this QR cannot be used to transfer real money.
+              {m.payments.demoRecipient}
             </p>
           ) : null}
           <p className="text-[12px] text-faint">
-            Demo mode: after scanning, press ยืนยันการชำระ to mark the transfer as received.
+            {m.payments.demoConfirm}
           </p>
           <FormError message={error} />
         </div>

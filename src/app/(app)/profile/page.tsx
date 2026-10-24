@@ -7,7 +7,6 @@ import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { fullDate, kwh, thb } from "@/lib/format";
 import { Avatar } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -15,11 +14,14 @@ import { Field, Input } from "@/components/ui/Field";
 import { FormError, StatSkeleton } from "@/components/ui/States";
 import { StatTile } from "@/components/ui/Stat";
 import { useToast } from "@/components/ui/Toast";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function ProfilePage() {
   const { user, setUser } = useSession();
   const toast = useToast();
   const router = useRouter();
+  const { m, f } = useI18n();
+  const t = m.account;
 
   const [form, setForm] = useState({
     fullName: user.fullName,
@@ -51,7 +53,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setError(null);
     if (form.fullName.trim().length < 2) {
-      setError("Please enter your full name");
+      setError(t.nameRequired);
       return;
     }
     setSaving(true);
@@ -61,9 +63,9 @@ export default function ProfilePage() {
         batteryKwh: form.batteryKwh ? Number(form.batteryKwh) : undefined,
       });
       setUser(updated);
-      toast.push("Profile saved");
+      toast.push(t.saved);
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Could not save your profile");
+      setError(err instanceof ApiRequestError ? err.message : t.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -76,13 +78,13 @@ export default function ProfilePage() {
       router.replace("/login");
       router.refresh();
     } catch {
-      toast.push("Could not sign out", "error");
+      toast.push(t.signOutFailed, "error");
       setSigningOut(false);
     }
   }
 
   return (
-    <Page title="Profile" subtitle={user.email}>
+    <Page title={t.profileTitle} subtitle={user.email}>
       <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
         <div className="min-w-0 space-y-4">
           <div className="vg-card flex flex-wrap items-center gap-4 p-5">
@@ -92,40 +94,40 @@ export default function ProfilePage() {
               <div className="mt-0.5 text-[13px] text-faint">{user.email}</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Badge tone={user.role === "USER" ? "brand" : "green"}>
-                  {user.role === "USER" ? "Driver" : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+                  {m.status.role[user.role]}
                 </Badge>
-                <Badge>Member since {fullDate(user.createdAt)}</Badge>
+                <Badge>{t.memberSince(f.longDate(user.createdAt))}</Badge>
               </div>
             </div>
           </div>
 
           <form onSubmit={save} className="vg-card space-y-4 p-5" noValidate>
-            <h2 className="font-display text-[16px] font-semibold text-ink">Your details</h2>
+            <h2 className="font-display text-[16px] font-semibold text-ink">{t.yourDetails}</h2>
             <FormError message={error} />
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name">
+              <Field label={t.fullName}>
                 <Input value={form.fullName} onChange={set("fullName")} autoComplete="name" />
               </Field>
-              <Field label="Phone">
+              <Field label={t.phone}>
                 <Input value={form.phone} onChange={set("phone")} autoComplete="tel" />
               </Field>
             </div>
 
-            <h3 className="pt-1 font-display text-[14.5px] font-semibold text-ink">Vehicle</h3>
+            <h3 className="pt-1 font-display text-[14.5px] font-semibold text-ink">{t.vehicle}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Make">
+              <Field label={t.make}>
                 <Input value={form.vehicleMake} onChange={set("vehicleMake")} placeholder="Tesla" />
               </Field>
-              <Field label="Model">
+              <Field label={t.model}>
                 <Input value={form.vehicleModel} onChange={set("vehicleModel")} placeholder="Model 3" />
               </Field>
-              <Field label="Licence plate">
+              <Field label={t.plate}>
                 <Input value={form.vehiclePlate} onChange={set("vehiclePlate")} placeholder="กก 1234" />
               </Field>
               <Field
-                label="Battery capacity (kWh)"
-                hint="Used to estimate charging time to your target"
+                label={t.battery}
+                hint={t.batteryHint}
               >
                 <Input
                   type="number"
@@ -139,17 +141,17 @@ export default function ProfilePage() {
             </div>
 
             <Button type="submit" loading={saving}>
-              Save changes
+              {m.common.save}
             </Button>
           </form>
         </div>
 
         <div className="min-w-0 space-y-3.5">
           <div className="rounded-[18px] bg-grid-green p-4 text-white">
-            <div className="text-[12px] text-grid-green-pale">Wallet balance</div>
-            <div className="font-display text-[26px] font-bold">{thb(user.walletBalance)}</div>
+            <div className="text-[12px] text-grid-green-pale">{t.walletBalance}</div>
+            <div className="font-display text-[26px] font-bold">{f.thb(user.walletBalance)}</div>
             <Link href="/wallet" className="mt-2 inline-block text-[12.5px] font-semibold text-grid-green-pale">
-              Top up & transactions →
+              {t.topUpLink}
             </Link>
           </div>
 
@@ -157,20 +159,20 @@ export default function ProfilePage() {
             <StatSkeleton count={2} />
           ) : summary ? (
             <div className="grid grid-cols-2 gap-3">
-              <StatTile label="Sessions" value={String(summary.sessions)} />
-              <StatTile label="Energy" value={kwh(summary.energy, 0)} />
+              <StatTile label={t.sessions} value={String(summary.sessions)} />
+              <StatTile label={t.energy} value={f.kwh(summary.energy, 0)} />
             </div>
           ) : null}
 
           <div className="vg-card divide-y divide-line">
-            <NavRow href="/favorites" label="Favourite stations" glyph="♥" />
-            <NavRow href="/reservations" label="Reservations" glyph="▦" />
-            <NavRow href="/notifications" label="Notifications" glyph="◉" />
-            <NavRow href="/settings" label="Account settings" glyph="⚙" />
+            <NavRow href="/favorites" label={t.favourites} glyph="♥" />
+            <NavRow href="/reservations" label={t.reservations} glyph="▦" />
+            <NavRow href="/notifications" label={t.notifications} glyph="◉" />
+            <NavRow href="/settings" label={t.settings} glyph="⚙" />
           </div>
 
           <Button variant="secondary" fullWidth loading={signingOut} onClick={signOut}>
-            Sign out
+            {t.signOut}
           </Button>
         </div>
       </div>

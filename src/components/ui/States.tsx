@@ -1,6 +1,9 @@
+"use client";
+
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={clsx("vg-skeleton rounded-xl", className)} />;
@@ -87,7 +90,7 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title = "Could not load this",
+  title,
   message,
   onRetry,
 }: {
@@ -95,13 +98,16 @@ export function ErrorState({
   message?: string;
   onRetry?: () => void;
 }) {
+  const { m } = useI18n();
   return (
     <div className="flex flex-col items-center gap-3 rounded-[22px] bg-danger-tint px-6 py-12 text-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white font-display text-lg font-bold text-danger">
         !
       </span>
       <div>
-        <p className="font-display text-[15px] font-semibold text-danger-dark">{title}</p>
+        <p className="font-display text-[15px] font-semibold text-danger-dark">
+          {title ?? m.common.loadFailed}
+        </p>
         {message ? (
           <p className="mx-auto mt-1.5 max-w-sm text-[13px] leading-relaxed text-danger-dark/80">
             {message}
@@ -110,7 +116,7 @@ export function ErrorState({
       </div>
       {onRetry ? (
         <Button variant="secondary" size="sm" onClick={onRetry}>
-          Try again
+          {m.common.retry}
         </Button>
       ) : null}
     </div>

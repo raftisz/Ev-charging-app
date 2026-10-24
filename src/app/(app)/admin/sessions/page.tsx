@@ -6,7 +6,6 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
-import { dateTime, duration, kw, kwh, thb } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/Stat";
@@ -15,14 +14,17 @@ import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components
 import { useToast } from "@/components/ui/Toast";
 import { useSession } from "@/components/layout/SessionProvider";
 import type { SessionDTO } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
-const FILTERS = ["All", "Active", "Completed", "Unpaid"] as const;
+const FILTERS = ["all", "active", "completed", "unpaid"] as const;
 
 const isUnpaid = (s: SessionDTO) => s.paymentStatus === "PENDING" || s.paymentStatus === "FAILED";
 
 export default function AdminSessionsPage() {
   const toast = useToast();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const { m, f } = useI18n();
+  const t = m.admin;
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [stopping, setStopping] = useState<SessionDTO | null>(null);
   const [busy, setBusy] = useState(false);
   const [refunding, setRefunding] = useState<SessionDTO | null>(null);
@@ -36,9 +38,9 @@ export default function AdminSessionsPage() {
   const sessions = useMemo(() => data?.sessions ?? [], [data]);
 
   const filtered = useMemo(() => {
-    if (filter === "Active") return sessions.filter((s) => s.status === "ACTIVE");
-    if (filter === "Completed") return sessions.filter((s) => s.status !== "ACTIVE");
-    if (filter === "Unpaid")
+    if (filter === "active") return sessions.filter((s) => s.status === "ACTIVE");
+    if (filter === "completed") return sessions.filter((s) => s.status !== "ACTIVE");
+    if (filter === "unpaid")
       return sessions.filter((s) => s.status !== "ACTIVE" && isUnpaid(s));
     return sessions;
   }, [sessions, filter]);
@@ -62,11 +64,11 @@ export default function AdminSessionsPage() {
     setBusy(true);
     try {
       const res = await api.refundPayment(refunding.receiptId);
-      toast.push(`Refunded ${thb(res.refund.amount)} to ${refunding.user?.fullName ?? "the driver"}'s wallet`);
+      toast.push(t.refunded(f.thb(res.refund.amount), refunding.user?.fullName ?? t.theDriver));
       setRefunding(null);
       void reload(true);
     } catch (err) {
-      toast.push(err instanceof ApiRequestError ? err.message : "Refund failed", "error");
+      toast.push(err instanceof ApiRequestError ? err.message : t.refundFailed, "error");
     } finally {
       setBusy(false);
     }
@@ -77,12 +79,12 @@ export default function AdminSessionsPage() {
     setBusy(true);
     try {
       await api.stopSession(stopping.id);
-      toast.push(`Session #${stopping.id} stopped`);
+      toast.push(t.sessionStopped(stopping.id));
       setStopping(null);
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not stop the session",
+        err instanceof ApiRequestError ? err.message : t.stopFailed,
         "error",
       );
     } finally {
@@ -93,8 +95,8 @@ export default function AdminSessionsPage() {
   return (
     <Page
       variant="admin"
-      title="Charging sessions"
-      subtitle={`${sessions.length} sessions · ${totals.active} running now`}
+      title={t.sessionsTitle}
+      subtitle={t.sessionsSubtitle(sessions.length, totals.active)}
     >
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? (
@@ -107,38 +109,38 @@ export default function AdminSessionsPage() {
       {data ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="Running now" value={String(totals.active)} tone="brand" />
-            <StatTile label="Energy delivered" value={kwh(totals.energy, 0)} />
-            <StatTile label="Revenue collected" value={thb(totals.revenue)} tone="green" />
-            <StatTile label="Outstanding" value={thb(totals.outstanding)} />
+            <StatTile label={t.runningNow} value={String(totals.active)} tone="brand" />
+            <StatTile label={t.energyDelivered} value={f.kwh(totals.energy, 0)} />
+            <StatTile label={t.revenueCollected} value={f.thb(totals.revenue)} tone="green" />
+            <StatTile label={t.outstanding} value={f.thb(totals.outstanding)} />
           </div>
 
           <div className="mt-4 mb-3 flex gap-1 rounded-full bg-surface-alt p-1 lg:w-fit">
-            {FILTERS.map((f) => (
+            {FILTERS.map((key) => (
               <button
-                key={f}
-                onClick={() => setFilter(f)}
-                aria-pressed={filter === f}
+                key={key}
+                onClick={() => setFilter(key)}
+                aria-pressed={filter === key}
                 className={clsx(
                   "flex-1 rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors lg:flex-none",
-                  filter === f
+                  filter === key
                     ? "bg-brand text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.9)]"
                     : "text-muted hover:text-ink",
                 )}
               >
-                {f}
+                {t.sessionFilters[key]}
               </button>
             ))}
           </div>
 
           {filtered.length === 0 ? (
-            <EmptyState icon="⚡" title={`No ${filter.toLowerCase()} sessions`} />
+            <EmptyState icon="⚡" title={t.noSessions[filter]} />
           ) : (
             <div className="vg-card overflow-hidden">
               <div className="hidden grid-cols-[0.5fr_1.5fr_1.3fr_1fr_0.8fr_0.8fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
-                {["#", "Station", "Driver", "Started", "Energy", "Cost", "Status", ""].map((c) => (
+                {t.sessionColumns.map((c, i) => (
                   <span
-                    key={c}
+                    key={i}
                     className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase"
                   >
                     {c}
@@ -157,21 +159,23 @@ export default function AdminSessionsPage() {
                         {s.station.name}
                       </div>
                       <div className="text-[12px] text-faint">
-                        {s.charger.chargerCode} · {kw(s.powerKw)}
+                        {s.charger.chargerCode} · {f.kw(s.powerKw)}
                       </div>
                     </div>
                     <div className="min-w-0">
                       <div className="truncate text-[13px] text-ink">{s.user?.fullName}</div>
                       <div className="truncate text-[12px] text-faint">{s.user?.email}</div>
                     </div>
-                    <span className="text-[13px] text-muted">{dateTime(s.startTime)}</span>
-                    <span className="text-[13px] text-muted">{kwh(s.energyKwh)}</span>
+                    <span className="text-[13px] text-muted">{f.dateTime(s.startTime)}</span>
+                    <span className="text-[13px] text-muted">{f.kwh(s.energyKwh)}</span>
                     <span className="font-display text-[13.5px] font-semibold text-ink">
-                      {thb(s.cost)}
+                      {f.thb(s.cost)}
                     </span>
                     <span className="flex flex-wrap gap-1.5">
                       {s.status === "ACTIVE" ? (
-                        <Badge tone="brand">{s.currentPercent}% · {duration(s.minutesElapsed)}</Badge>
+                        <Badge tone="brand">
+                          {s.currentPercent}% · {f.duration(s.minutesElapsed)}
+                        </Badge>
                       ) : (
                         <Badge
                           tone={
@@ -182,11 +186,9 @@ export default function AdminSessionsPage() {
                                 : "amber"
                           }
                         >
-                          {s.paymentStatus === "PAID"
-                            ? "Paid"
-                            : s.paymentStatus === "REFUNDED"
-                              ? "Refunded"
-                              : "Unpaid"}
+                          {s.paymentStatus === "PAID" || s.paymentStatus === "REFUNDED"
+                            ? m.status.payment[s.paymentStatus]
+                            : t.unpaid}
                         </Badge>
                       )}
                     </span>
@@ -198,18 +200,18 @@ export default function AdminSessionsPage() {
                           className="text-danger hover:bg-danger-tint"
                           onClick={() => setStopping(s)}
                         >
-                          Stop
+                          {t.stop}
                         </Button>
                       ) : (
                         <span className="flex items-center gap-2">
                           {s.receiptId ? (
                             <Link href={`/receipts/${s.receiptId}`} className="text-[12px] font-semibold text-brand">
-                              Receipt
+                              {t.receipt}
                             </Link>
                           ) : null}
                           {isAdmin && s.paymentStatus === "PAID" && s.receiptId ? (
                             <Button size="sm" variant="ghost" onClick={() => setRefunding(s)}>
-                              Refund
+                              {t.refund}
                             </Button>
                           ) : null}
                           {!s.receiptId && !(isAdmin && s.paymentStatus === "PAID") ? (
@@ -229,19 +231,24 @@ export default function AdminSessionsPage() {
       <Modal
         open={Boolean(stopping)}
         onClose={() => setStopping(null)}
-        title="Stop this session?"
+        title={t.stopTitle}
         description={
           stopping
-            ? `#${stopping.id} at ${stopping.station.name} for ${stopping.user?.fullName}. The charger is released and the driver is billed ${thb(stopping.cost)}.`
+            ? t.stopBody(
+                stopping.id,
+                stopping.station.name,
+                stopping.user?.fullName ?? t.theDriver,
+                f.thb(stopping.cost),
+              )
             : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setStopping(null)}>
-              Leave it running
+              {t.leaveRunning}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={stop}>
-              Stop session
+              {t.stopSession}
             </Button>
           </>
         }
@@ -250,19 +257,24 @@ export default function AdminSessionsPage() {
       <Modal
         open={Boolean(refunding)}
         onClose={() => setRefunding(null)}
-        title="Refund this payment?"
+        title={t.refundTitle}
         description={
           refunding
-            ? `${thb(refunding.cost)} goes back to ${refunding.user?.fullName ?? "the driver"}'s wallet for session #${refunding.id} at ${refunding.station.name}. A payment can be refunded once.`
+            ? t.refundBody(
+                f.thb(refunding.cost),
+                refunding.user?.fullName ?? t.theDriver,
+                refunding.id,
+                refunding.station.name,
+              )
             : undefined
         }
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setRefunding(null)}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={refund}>
-              Refund {refunding ? thb(refunding.cost) : ""}
+              {t.refundAmount(refunding ? f.thb(refunding.cost) : "")}
             </Button>
           </>
         }

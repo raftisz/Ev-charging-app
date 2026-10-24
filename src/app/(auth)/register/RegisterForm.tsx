@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { FormError } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type FormState = {
   fullName: string;
@@ -32,6 +33,7 @@ const EMPTY: FormState = {
 export function RegisterForm() {
   const router = useRouter();
   const toast = useToast();
+  const { m } = useI18n();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +44,12 @@ export function RegisterForm() {
 
   function validate() {
     const next: Record<string, string> = {};
-    if (form.fullName.trim().length < 2) next.fullName = "Please enter your full name";
+    if (form.fullName.trim().length < 2) next.fullName = m.auth.nameRequired;
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
-      next.email = "Enter a valid email address";
+      next.email = m.auth.emailInvalid;
     }
-    if (form.password.length < 8) next.password = "Use at least 8 characters";
-    if (form.confirm !== form.password) next.confirm = "Passwords do not match";
+    if (form.password.length < 8) next.password = m.auth.passwordShort;
+    if (form.confirm !== form.password) next.confirm = m.auth.passwordMismatch;
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -67,7 +69,7 @@ export function RegisterForm() {
         vehicleMake: form.vehicleMake,
         vehicleModel: form.vehicleModel,
       });
-      toast.push("Account created. Welcome to Volt Grid.");
+      toast.push(m.auth.created);
       router.replace("/dashboard");
     } catch (err) {
       if (err instanceof ApiRequestError && Array.isArray(err.details)) {
@@ -78,7 +80,7 @@ export function RegisterForm() {
         setErrors(fieldErrors);
       }
       setError(
-        err instanceof ApiRequestError ? err.message : "Could not create the account.",
+        err instanceof ApiRequestError ? err.message : m.auth.createFailed,
       );
       setLoading(false);
     }
@@ -87,26 +89,24 @@ export function RegisterForm() {
   return (
     <div>
       <h1 className="font-display text-[27px] font-bold tracking-[-0.02em] text-ink">
-        Create your account
+        {m.auth.createTitle}
       </h1>
-      <p className="mt-2 text-[14px] text-muted">
-        Takes a minute. You can add your car details now or later in Profile.
-      </p>
+      <p className="mt-2 text-[14px] text-muted">{m.auth.createLead}</p>
 
       <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
         <FormError message={error} />
 
-        <Field label="Full name" error={errors.fullName}>
+        <Field label={m.auth.fullName} error={errors.fullName}>
           <Input
             value={form.fullName}
             autoComplete="name"
-            placeholder="Somchai Patchara"
+            placeholder={m.auth.namePlaceholder}
             error={Boolean(errors.fullName)}
             onChange={set("fullName")}
           />
         </Field>
 
-        <Field label="Email" error={errors.email}>
+        <Field label={m.auth.email} error={errors.email}>
           <Input
             type="email"
             value={form.email}
@@ -117,7 +117,7 @@ export function RegisterForm() {
           />
         </Field>
 
-        <Field label="Phone" hint="Optional, used for reservation reminders">
+        <Field label={m.auth.phone} hint={m.auth.phoneHint}>
           <Input
             value={form.phone}
             autoComplete="tel"
@@ -127,15 +127,15 @@ export function RegisterForm() {
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Car make" hint="Optional">
+          <Field label={m.auth.carMake} hint={m.auth.optional}>
             <Input value={form.vehicleMake} placeholder="Tesla" onChange={set("vehicleMake")} />
           </Field>
-          <Field label="Car model" hint="Optional">
+          <Field label={m.auth.carModel} hint={m.auth.optional}>
             <Input value={form.vehicleModel} placeholder="Model 3" onChange={set("vehicleModel")} />
           </Field>
         </div>
 
-        <Field label="Password" error={errors.password} hint="At least 8 characters">
+        <Field label={m.auth.password} error={errors.password} hint={m.auth.passwordHint}>
           <Input
             type="password"
             value={form.password}
@@ -145,7 +145,7 @@ export function RegisterForm() {
           />
         </Field>
 
-        <Field label="Confirm password" error={errors.confirm}>
+        <Field label={m.auth.confirmPassword} error={errors.confirm}>
           <Input
             type="password"
             value={form.confirm}
@@ -156,14 +156,14 @@ export function RegisterForm() {
         </Field>
 
         <Button type="submit" size="lg" fullWidth loading={loading}>
-          Create account
+          {m.auth.createAccount}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-[13.5px] text-muted">
-        Already registered?{" "}
+        {m.auth.haveAccount}{" "}
         <Link href="/login" className="font-semibold text-brand">
-          Sign in
+          {m.auth.signIn}
         </Link>
       </p>
     </div>

@@ -5,11 +5,12 @@ import { Page } from "@/components/layout/Page";
 import { api } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
 import { useSession } from "@/components/layout/SessionProvider";
-import { relative } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { NotificationType } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
+import { translateNotification } from "@/i18n/notifications";
 
 const TYPE_STYLE: Record<NotificationType, { glyph: string; tint: string; fg: string }> = {
   SESSION: { glyph: "⚡", tint: "bg-grid-green-tint", fg: "text-grid-green" },
@@ -20,17 +21,19 @@ const TYPE_STYLE: Record<NotificationType, { glyph: string; tint: string; fg: st
 
 export default function NotificationsPage() {
   const toast = useToast();
+  const { m, f, locale } = useI18n();
+  const t = m.account;
   const { refreshUnread } = useSession();
   const { data, loading, error, reload } = useAsync(() => api.notifications());
 
   async function markAll() {
     try {
       await api.readAllNotifications();
-      toast.push("All notifications marked read");
+      toast.push(t.markedAll);
       void reload(true);
       void refreshUnread();
     } catch {
-      toast.push("Could not update notifications", "error");
+      toast.push(t.markFailed, "error");
     }
   }
 
@@ -38,12 +41,12 @@ export default function NotificationsPage() {
 
   return (
     <Page
-      title="Notifications"
-      subtitle={data ? `${data.unread} unread` : undefined}
+      title={t.notifications}
+      subtitle={data ? t.unreadCount(data.unread) : undefined}
       action={
         data && data.unread > 0 ? (
           <Button size="sm" variant="secondary" onClick={markAll}>
-            Mark all read
+            {t.markAll}
           </Button>
         ) : null
       }
@@ -54,8 +57,8 @@ export default function NotificationsPage() {
       {data && notifications.length === 0 ? (
         <EmptyState
           icon="◉"
-          title="Nothing to catch up on"
-          description="Session updates, reservation reminders and payment receipts land here."
+          title={t.noneTitle}
+          description={t.noneBody}
         />
       ) : null}
 
@@ -63,6 +66,7 @@ export default function NotificationsPage() {
         <ul className="space-y-2.5">
           {notifications.map((n) => {
             const style = TYPE_STYLE[n.type];
+            const text = translateNotification(locale, n);
             return (
               <li
                 key={n.id}
@@ -84,16 +88,16 @@ export default function NotificationsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start gap-2">
                     <span className="flex-1 font-display text-[14.5px] font-semibold text-ink">
-                      {n.title}
+                      {text.title}
                     </span>
                     <span className="shrink-0 text-[11.5px] text-faint">
-                      {relative(n.createdAt)}
+                      {f.relative(n.createdAt)}
                     </span>
                   </div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-muted">{n.body}</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted">{text.body}</p>
                 </div>
                 {!n.isRead ? (
-                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand" aria-label="Unread" />
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand" aria-label={t.unread} />
                 ) : null}
               </li>
             );

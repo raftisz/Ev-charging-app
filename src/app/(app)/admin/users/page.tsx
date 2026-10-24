@@ -5,7 +5,6 @@ import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
 import { api, ApiRequestError } from "@/lib/api-client";
 import { useAsync } from "@/lib/use-async";
-import { fullDate, thb } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -14,12 +13,15 @@ import { SearchIcon } from "@/components/ui/Icons";
 import { EmptyState, ErrorState, FormError, ListSkeleton } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import type { UserDTO } from "@/lib/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Row = UserDTO & { sessionCount: number; reservationCount: number };
 
 export default function AdminUsersPage() {
   const toast = useToast();
   const { user: me } = useSession();
+  const { m, f } = useI18n();
+  const t = m.admin;
   const [query, setQuery] = useState("");
   const { data, loading, error, reload } = useAsync(
     () => api.users(query.trim() || undefined),
@@ -49,7 +51,7 @@ export default function AdminUsersPage() {
   async function save() {
     if (!editing) return;
     setFormError(null);
-    if (form.fullName.trim().length < 2) return setFormError("Please enter a full name");
+    if (form.fullName.trim().length < 2) return setFormError(t.nameRequired);
     setSaving(true);
     try {
       // Roles are an admin decision; operators only send what they may change.
@@ -58,11 +60,11 @@ export default function AdminUsersPage() {
         ...(isAdmin && form.role !== editing.role ? { role: form.role } : {}),
         ...(form.isActive !== editing.isActive ? { isActive: form.isActive } : {}),
       });
-      toast.push("User updated");
+      toast.push(t.userUpdated);
       setEditing(null);
       void reload(true);
     } catch (err) {
-      setFormError(err instanceof ApiRequestError ? err.message : "Could not save the user");
+      setFormError(err instanceof ApiRequestError ? err.message : t.userSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -73,12 +75,12 @@ export default function AdminUsersPage() {
     setBusy(true);
     try {
       await api.deleteUser(deleting.id);
-      toast.push("User deleted");
+      toast.push(t.userDeleted);
       setDeleting(null);
       void reload(true);
     } catch (err) {
       toast.push(
-        err instanceof ApiRequestError ? err.message : "Could not delete the user",
+        err instanceof ApiRequestError ? err.message : t.userDeleteFailed,
         "error",
       );
     } finally {
@@ -87,7 +89,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <Page variant="admin" title="Users" subtitle={`${users.length} accounts`}>
+    <Page variant="admin" title={t.usersTitle} subtitle={t.accounts(users.length)}>
       <div className="relative mb-4">
         <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-faint">
           <SearchIcon />
@@ -95,21 +97,21 @@ export default function AdminUsersPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or email"
-          aria-label="Search users"
+          placeholder={t.searchUsers}
+          aria-label={t.searchUsersLabel}
           className="vg-input pl-10"
         />
       </div>
 
       {error && !data ? <ErrorState message={error} onRetry={() => void reload()} /> : null}
       {loading && !data ? <ListSkeleton count={6} /> : null}
-      {data && users.length === 0 ? <EmptyState icon="◍" title="No users match that search" /> : null}
+      {data && users.length === 0 ? <EmptyState icon="◍" title={t.noUsers} /> : null}
 
       {users.length ? (
         <div className="vg-card overflow-hidden">
           <div className="hidden grid-cols-[2fr_1fr_0.8fr_0.9fr_1fr_auto] gap-3 border-b border-line bg-surface px-4 py-2.5 lg:grid">
-            {["User", "Role", "Sessions", "Wallet", "Joined", ""].map((c) => (
-              <span key={c} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
+            {t.userColumns.map((c, i) => (
+              <span key={i} className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">
                 {c}
               </span>
             ))}
@@ -128,7 +130,7 @@ export default function AdminUsersPage() {
                     <div className="truncate text-[13.5px] font-medium text-ink">
                       {u.fullName}
                       {u.id === me.id ? (
-                        <span className="ml-1.5 text-[11.5px] text-faint">(you)</span>
+                        <span className="ml-1.5 text-[11.5px] text-faint">{t.you}</span>
                       ) : null}
                     </div>
                     <div className="truncate text-[12px] text-faint">{u.email}</div>
@@ -136,20 +138,20 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <Badge tone={u.role === "ADMIN" ? "green" : u.role === "OPERATOR" ? "amber" : "brand"}>
-                    {u.role.charAt(0) + u.role.slice(1).toLowerCase()}
+                    {m.status.role[u.role]}
                   </Badge>
-                  {!u.isActive ? <Badge tone="danger">Disabled</Badge> : null}
+                  {!u.isActive ? <Badge tone="danger">{t.disabled}</Badge> : null}
                 </div>
                 <span className="text-[13px] text-muted">
-                  {u.sessionCount} · {u.reservationCount} res.
+                  {t.sessionsRes(u.sessionCount, u.reservationCount)}
                 </span>
                 <span className="font-display text-[13.5px] font-semibold text-ink">
-                  {thb(u.walletBalance)}
+                  {f.thb(u.walletBalance)}
                 </span>
-                <span className="text-[12.5px] text-faint">{fullDate(u.createdAt)}</span>
+                <span className="text-[12.5px] text-faint">{f.longDate(u.createdAt)}</span>
                 <div className="flex gap-2">
                   <Button size="sm" variant="secondary" onClick={() => openEdit(u)}>
-                    Edit
+                    {t.edit}
                   </Button>
                   <Button
                     size="sm"
@@ -158,7 +160,7 @@ export default function AdminUsersPage() {
                     disabled={u.id === me.id}
                     onClick={() => setDeleting(u)}
                   >
-                    Delete
+                    {t.delete}
                   </Button>
                 </div>
               </li>
@@ -170,42 +172,44 @@ export default function AdminUsersPage() {
       <Modal
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
-        title={editing ? `Edit ${editing.fullName}` : ""}
+        title={editing ? t.editUser(editing.fullName) : ""}
         description={editing?.email}
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setEditing(null)}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button fullWidth loading={saving} onClick={save}>
-              Save changes
+              {t.save}
             </Button>
           </>
         }
       >
         <div className="space-y-3.5">
           <FormError message={formError} />
-          <Field label="Full name">
+          <Field label={t.fullName}>
             <Input
               value={form.fullName}
               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Role">
+            <Field label={t.role}>
               <Select
                 value={form.role}
                 disabled={!isAdmin}
                 onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
               >
-                <option value="USER">Driver</option>
-                <option value="OPERATOR">Operator</option>
-                <option value="ADMIN">Admin</option>
+                {(["USER", "OPERATOR", "ADMIN"] as const).map((r) => (
+                  <option key={r} value={r}>
+                    {m.status.role[r]}
+                  </option>
+                ))}
               </Select>
             </Field>
-            <Field label="Wallet balance">
+            <Field label={t.walletBalance}>
               {/* Read-only: balances only change through payments and refunds. */}
-              <Input value={editing ? thb(editing.walletBalance) : ""} readOnly disabled />
+              <Input value={editing ? f.thb(editing.walletBalance) : ""} readOnly disabled />
             </Field>
           </div>
           <label className="flex items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5">
@@ -216,9 +220,9 @@ export default function AdminUsersPage() {
               className="h-4 w-4 accent-[#2563eb]"
             />
             <span className="flex-1">
-              <span className="block text-[13.5px] font-semibold text-ink">Account active</span>
+              <span className="block text-[13.5px] font-semibold text-ink">{t.accountActive}</span>
               <span className="block text-[12px] text-faint">
-                Disabled accounts cannot sign in.
+                {t.accountActiveHint}
               </span>
             </span>
           </label>
@@ -228,19 +232,15 @@ export default function AdminUsersPage() {
       <Modal
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
-        title="Delete this account?"
-        description={
-          deleting
-            ? `${deleting.fullName} (${deleting.email}) and all of their reservations, sessions and notifications will be removed. Accounts with payment history can only be disabled.`
-            : undefined
-        }
+        title={t.deleteUserTitle}
+        description={deleting ? t.deleteUserBody(deleting.fullName, deleting.email) : undefined}
         footer={
           <>
             <Button variant="secondary" fullWidth onClick={() => setDeleting(null)}>
-              Keep it
+              {t.keepIt}
             </Button>
             <Button variant="danger" fullWidth loading={busy} onClick={confirmDelete}>
-              Delete account
+              {t.deleteAccount}
             </Button>
           </>
         }

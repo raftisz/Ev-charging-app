@@ -2,14 +2,8 @@
 
 import Link from "next/link";
 import clsx from "clsx";
-import { thb } from "@/lib/format";
-import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/payments";
-
-const HINT: Record<PaymentMethod, string> = {
-  WALLET: "Instant, no fees",
-  CREDIT_CARD: "Visa · Mastercard",
-  PROMPTPAY: "Scan to pay",
-};
+import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/payments";
+import { useI18n } from "@/i18n/I18nProvider";
 
 /** Radio list of payment methods; the wallet row shows the balance. */
 export function PaymentMethodPicker({
@@ -23,9 +17,10 @@ export function PaymentMethodPicker({
   walletBalance: number;
   amount: number;
 }) {
+  const { m: t, f } = useI18n();
   const short = walletBalance < amount;
   return (
-    <div className="space-y-2" role="radiogroup" aria-label="Payment method">
+    <div className="space-y-2" role="radiogroup" aria-label={t.payments.methodLabel}>
       {PAYMENT_METHODS.map((m) => (
         <button
           key={m}
@@ -48,19 +43,19 @@ export function PaymentMethodPicker({
           </span>
           <span className="flex-1">
             <span className="block text-[13.5px] font-semibold text-ink">
-              {PAYMENT_METHOD_LABEL[m]}
+              {t.status.paymentMethod[m]}
             </span>
             <span className={clsx("block text-[12px]", m === "WALLET" && short ? "text-danger" : "text-faint")}>
               {m === "WALLET"
-                ? `Balance ${thb(walletBalance)}${short ? " · not enough" : ""}`
-                : HINT[m]}
+                ? t.payments.balance(f.thb(walletBalance), short)
+                : t.payments.hint[m]}
             </span>
           </span>
         </button>
       ))}
       {value === "WALLET" && short ? (
         <Link href="/wallet" className="block text-right text-[12.5px] font-semibold text-brand">
-          Top up your wallet →
+          {t.payments.topUpWallet}
         </Link>
       ) : null}
     </div>

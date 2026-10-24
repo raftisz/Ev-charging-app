@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/server/auth";
 import { HttpError } from "@/server/http";
 import { getReceipt } from "@/server/payments";
-import { dateTime, fullDate, kwh, thb, time } from "@/lib/format";
+import { getI18n } from "@/i18n/server";
 import type { ReceiptDTO } from "@/lib/types";
 import { PrintButton } from "./PrintButton";
 
@@ -13,14 +13,9 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  return { title: `Receipt ${(await params).id} · Volt Grid` };
+  const { m } = await getI18n();
+  return { title: m.meta.page(m.receipt.pageTitle((await params).id)) };
 }
-
-const TITLE: Record<ReceiptDTO["payment"]["type"], string> = {
-  CHARGE: "Charging receipt",
-  TOPUP: "Wallet top-up receipt",
-  REFUND: "Refund receipt",
-};
 
 /** One payment as a printable receipt. Its owner or an admin only; else 404. */
 export default async function ReceiptPage({ params }: Params) {
@@ -35,6 +30,8 @@ export default async function ReceiptPage({ params }: Params) {
     throw error;
   }
   const { payment, session, customer } = receipt;
+  const { m, f } = await getI18n();
+  const t = m.receipt;
   const back = user.role === "ADMIN" && customer.id !== user.id ? "/admin/sessions" : "/wallet";
 
   return (
@@ -42,7 +39,7 @@ export default async function ReceiptPage({ params }: Params) {
       <div className="mx-auto max-w-[640px]">
         <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
           <Link href={back} className="text-[13px] font-semibold text-brand">
-            ← Back
+            {t.back}
           </Link>
           <PrintButton />
         </div>
@@ -53,57 +50,57 @@ export default async function ReceiptPage({ params }: Params) {
         >
           <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
             <div>
-              <div className="font-display text-[18px] font-bold text-brand">Volt Grid</div>
-              <div className="text-[12px] text-faint">EV charging network · Bangkok</div>
+              <div className="font-display text-[18px] font-bold text-brand">{m.common.appName}</div>
+              <div className="text-[12px] text-faint">{t.tagline}</div>
             </div>
             <div className="text-right">
-              <h1 className="font-display text-[17px] font-semibold text-ink">{TITLE[payment.type]}</h1>
+              <h1 className="font-display text-[17px] font-semibold text-ink">{t.title[payment.type]}</h1>
               <div className="text-[12.5px] text-muted" data-testid="receipt-no">
                 {receipt.receiptNo}
               </div>
               <div className="text-[12.5px] text-muted">
-                {fullDate(payment.createdAt)} · {time(payment.createdAt)}
+                {f.longDate(payment.createdAt)} · {f.time(payment.createdAt)}
               </div>
             </div>
           </header>
 
           {payment.status !== "PAID" ? (
             <p className="mt-4 rounded-[12px] bg-amber-tint px-3 py-2 text-[12.5px] font-semibold text-amber-dark">
-              Status: {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}
+              {t.status(m.status.payment[payment.status])}
             </p>
           ) : null}
 
           <dl className="mt-4 space-y-2 text-[13.5px]">
-            <Row label="Billed to" value={`${customer.fullName} · ${customer.email}`} />
+            <Row label={t.billedTo} value={`${customer.fullName} · ${customer.email}`} />
             {session ? (
               <>
-                <Row label="Station" value={session.stationName} />
-                <Row label="Address" value={session.stationAddress} />
-                <Row label="Charger" value={session.chargerCode} />
+                <Row label={t.station} value={session.stationName} />
+                <Row label={t.address} value={session.stationAddress} />
+                <Row label={t.charger} value={session.chargerCode} />
                 <Row
-                  label="Session"
-                  value={`#${session.id} · ${dateTime(session.startTime)}${session.endTime ? ` – ${time(session.endTime)}` : ""}`}
+                  label={t.session}
+                  value={`#${session.id} · ${f.dateTime(session.startTime)}${session.endTime ? ` – ${f.time(session.endTime)}` : ""}`}
                 />
-                <Row label="Energy" value={kwh(session.energyKwh, 2)} />
-                <Row label="Rate" value={`${thb(session.pricePerKwh)}/kWh`} />
+                <Row label={t.energy} value={f.kwh(session.energyKwh, 2)} />
+                <Row label={t.rate} value={m.payments.perKwh(f.thb(session.pricePerKwh))} />
               </>
             ) : (
-              <Row label="Item" value="Wallet top-up" />
+              <Row label={t.item} value={t.topUp} />
             )}
-            <Row label="Payment method" value={payment.methodLabel} />
-            {payment.providerRef ? <Row label="Reference" value={payment.providerRef} /> : null}
+            <Row label={t.method} value={m.status.paymentMethod[payment.method]} />
+            {payment.providerRef ? <Row label={t.reference} value={payment.providerRef} /> : null}
           </dl>
 
           <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
             <span className="text-[14px] font-semibold text-ink">
-              {payment.type === "REFUND" ? "Refunded to wallet" : "Total"}
+              {payment.type === "REFUND" ? t.refunded : t.total}
             </span>
             <span className="font-display text-[22px] font-bold text-ink" data-testid="receipt-total">
-              {thb(payment.amount)}
+              {f.thb(payment.amount)}
             </span>
           </div>
           <p className="mt-6 text-[11.5px] text-faint">
-            Amounts in Thai baht. Times are Bangkok time (UTC+7).
+            {t.footnote}
           </p>
         </article>
       </div>

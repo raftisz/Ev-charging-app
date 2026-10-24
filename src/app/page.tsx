@@ -4,6 +4,8 @@ import { getSession } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { Button } from "@/components/ui/Button";
 import { BoltMark } from "@/components/ui/Icons";
+import { LanguageSwitch } from "@/components/layout/LanguageSwitch";
+import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,23 +19,21 @@ export default async function OnboardingPage() {
     prisma.station.count({ where: { chargers: { some: { powerKw: { gte: 100 } } } } }),
   ]);
 
-  const points = [
-    ["Find", "Live availability, price per kWh and distance for every site."],
-    ["Reserve", "Hold a charger for a half-hour slot before you drive over."],
-    ["Charge", "Watch the session tick up in real time, then pay in one tap."],
-  ];
+  const { m } = await getI18n();
+  const t = m.landing;
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface">
       <header className="flex items-center gap-2.5 px-5 py-4 lg:px-10 lg:py-6">
         <BoltMark className="text-brand" />
         <span className="font-display text-[16px] font-bold tracking-[-0.01em] text-ink">
-          Volt Grid
+          {m.common.appName}
         </span>
-        <span className="text-[12px] text-faint">Bangkok network</span>
+        <span className="hidden text-[12px] text-faint sm:inline">{t.network}</span>
         <div className="flex-1" />
+        <LanguageSwitch />
         <Link href="/login" className="text-[13.5px] font-semibold text-brand">
-          Sign in
+          {t.signIn}
         </Link>
       </header>
 
@@ -41,40 +41,38 @@ export default async function OnboardingPage() {
         <div className="grid w-full max-w-[1080px] items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div>
             <p className="text-[12px] font-semibold tracking-[0.08em] text-brand uppercase">
-              EV charging, minus the guesswork
+              {t.eyebrow}
             </p>
             <h1 className="mt-3 font-display text-[34px] leading-[1.1] font-bold tracking-[-0.02em] text-ink lg:text-[46px]">
-              Charge with a plan,
+              {t.headline1}
               <br />
-              not a hope.
+              {t.headline2}
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
-              {stations} stations and {chargers} chargers across Bangkok, with live
-              availability, reservations and a session monitor that shows exactly what
-              you are paying for.
+              {t.lead(stations, chargers)}
             </p>
 
             <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
               <Button href="/register" size="lg" className="sm:px-8">
-                Create an account
+                {t.createAccount}
               </Button>
               <Button href="/login" size="lg" variant="secondary" className="sm:px-8">
-                Sign in
+                {t.signIn}
               </Button>
             </div>
 
             <div className="vg-card mt-6 px-4 py-3.5 text-[12.5px] leading-relaxed text-muted">
-              <span className="font-semibold text-ink">Demo accounts</span> · password{" "}
+              <span className="font-semibold text-ink">{t.demoAccounts}</span> · {t.password}{" "}
               <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-[11.5px]">
                 password123
               </code>
               <br />
-              user1@example.com (driver) · admin@example.com (admin)
+              {t.demoUsers}
               <br />
               <Link href="/login" className="font-semibold text-brand">
-                Or try it in one click
+                {t.oneClick}
               </Link>{" "}
-              · resets daily
+              · {t.resetsDaily}
             </div>
           </div>
 
@@ -94,15 +92,15 @@ export default async function OnboardingPage() {
                   <rect x="310" y="46" width="46" height="114" rx="10" fill="#fff" opacity=".3" />
                 </svg>
                 <div className="absolute bottom-4 left-4 text-white">
-                  <div className="font-display text-[22px] font-bold">{fastSites} fast sites</div>
-                  <div className="text-[12.5px] text-white/80">100 kW and above</div>
+                  <div className="font-display text-[22px] font-bold">{t.fastSites(fastSites)}</div>
+                  <div className="text-[12.5px] text-white/80">{t.fastSitesNote}</div>
                 </div>
               </div>
               <ul className="divide-y divide-line">
-                {points.map(([title, body]) => (
+                {t.points.map(([letter, title, body]) => (
                   <li key={title} className="flex gap-3.5 px-4 py-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-brand-tint font-display text-[13px] font-bold text-brand">
-                      {title[0]}
+                      {letter}
                     </span>
                     <div>
                       <div className="font-display text-[14.5px] font-semibold text-ink">
