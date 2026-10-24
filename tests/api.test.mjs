@@ -662,7 +662,8 @@ const run = async () => {
 
   section("Sign-in throttling");
   // A made-up client address keeps this from throttling the rest of the suite.
-  const probe = { "X-Forwarded-For": "203.0.113.77" };
+  // Random per run, so re-running against the same server starts clean.
+  const probe = { "X-Forwarded-For": `203.0.113.${1 + Math.floor(Math.random() * 250)}` };
   const tries = [];
   for (let i = 0; i < 6; i++) {
     tries.push((await req("guesser", "POST", "/api/auth/login", { email: "user2@example.com", password: `wrong-${i}` }, probe)).status);
@@ -673,6 +674,38 @@ const run = async () => {
   check("even the right password waits out the pause", r.status === 429 && Boolean(r.headers.get("retry-after")), String(r.status));
   r = await req("elsewhere", "POST", "/api/auth/login", { email: "user2@example.com", password: "password123" }, { "X-Forwarded-For": "198.51.100.4" });
   check("other addresses are unaffected", r.status === 200);
+
+  section("Language");
+  jar("thai").set("vg_locale", "th");
+  const thaiIp = { "X-Forwarded-For": `198.51.100.${1 + Math.floor(Math.random() * 250)}` };
+  r = await req("thai", "POST", "/api/auth/login", { email: "user1@example.com", password: "nope" }, thaiIp);
+  check("errors follow the language cookie", r.status === 401 && r.data.error === "อีเมลหรือรหัสผ่านไม่ถูกต้อง", r.data?.error);
+  r = await req("browser-th", "POST", "/api/auth/login", { email: "user1@example.com", password: "nope" }, { ...thaiIp, "Accept-Language": "th-TH,th;q=0.9,en;q=0.8" });
+  check("or the browser's language when there is no cookie", r.data?.error === "อีเมลหรือรหัสผ่านไม่ถูกต้อง", r.data?.error);
+  r = await req("browser-en", "POST", "/api/auth/login", { email: "user1@example.com", password: "nope" }, { ...thaiIp, "Accept-Language": "en-GB,en;q=0.9" });
+  check("English stays English", r.data?.error === "Email or password is incorrect", r.data?.error);
+  r = await req("thai", "POST", "/api/auth/register", { fullName: "X", email: "bad", password: "1" });
+  check("validation errors are translated", r.status === 422 && r.data.error === "กรุณาตรวจสอบช่องที่ไฮไลต์ไว้" && r.data.details.every(d => /[฀-๿]/.test(d.message)), JSON.stringify(r.data).slice(0, 200));
+  r = await req("thai", "POST", "/api/auth/demo", { as: "driver" });
+  check("signed in with Thai chosen", r.status === 200);
+  r = await req("thai", "GET", "/api/stations/9999");
+  check("not-found messages are translated", r.status === 404 && r.data.error === "ไม่พบสถานีนี้", r.data?.error);
+  r = await req("thai", "GET", "/api/charging-sessions?status=BOGUS");
+  check("messages with values are translated", r.status === 400 && /^status ต้องเป็นค่าใดค่าหนึ่ง/.test(r.data.error), r.data?.error);
+  r = await req("thai", "GET", "/api/payments/abc");
+  check("id errors name the id in Thai", r.data?.error === "รหัส ไม่ถูกต้อง", r.data?.error);
+  let langPage = await fetch(BASE + "/", { headers: { Cookie: "vg_locale=th" } });
+  let html = await langPage.text();
+  check("landing page renders in Thai", /<html[^>]*lang="th"/.test(html) && html.includes("เข้าสู่ระบบ") && html.includes("ชาร์จอย่างมีแผน"));
+  langPage = await fetch(BASE + "/", { headers: { "Accept-Language": "th-TH,th;q=0.9" } });
+  html = await langPage.text();
+  check("a Thai browser gets Thai on first visit", /<html[^>]*lang="th"/.test(html));
+  langPage = await fetch(BASE + "/");
+  html = await langPage.text();
+  check("everyone else gets English", /<html[^>]*lang="en"/.test(html) && html.includes("Charge with a plan"));
+  langPage = await fetch(BASE + "/login", { headers: { Cookie: "vg_locale=th" } });
+  html = await langPage.text();
+  check("page titles are translated", /<title>เข้าสู่ระบบ · Volt Grid<\/title>/.test(html), (html.match(/<title>[^<]*<\/title>/) ?? [""])[0]);
 
   section("Logout");
   r = await req("driver", "POST", "/api/auth/logout");

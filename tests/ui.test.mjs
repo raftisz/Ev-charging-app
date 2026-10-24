@@ -383,7 +383,7 @@ console.log("\n=== PromptPay top-up ===");
   check("dialog shows the 2-decimal amount", (await page.locator("text=฿500.00").count()) > 0);
   check("balance unchanged before confirming", (await page.locator('[data-testid="wallet-balance"]').innerText()) === before);
   await page.screenshot({ path: `${OUT}/promptpay-qr.png` });
-  await page.click('button:has-text("ยืนยันการชำระ")');
+  await page.click('button:has-text("Confirm payment")');
   await qr.waitFor({ state: "detached", timeout: 8000 });
   await page.waitForTimeout(1200);
   const after = await page.locator('[data-testid="wallet-balance"]').innerText();
@@ -477,6 +477,91 @@ console.log("\n=== Booking from a UTC browser ===");
   await page.screenshot({ path: `${OUT}/utc-reservation.png` });
 
   await page.request.patch(`${BASE}/api/reservations/${reservation.id}`, { data: { status: "CANCELLED" } });
+  await ctx.close();
+}
+
+console.log("\n=== Thai ===");
+{
+  // Switching on the sign-in page saves the choice and re-renders in Thai.
+  const { ctx, page } = await newPage({ width: 390, height: 844 }, "thai-switch");
+  await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
+  check("English by default", (await page.locator("h1").innerText()).includes("Welcome back"));
+  await page.click('button[lang="th"]');
+  await page.waitForFunction(() => document.documentElement.lang === "th", null, { timeout: 15000 });
+  await page.waitForSelector("text=ยินดีต้อนรับกลับมา", { timeout: 15000 });
+  check("switching to ไทย translates the page", (await page.locator("h1").innerText()).includes("ยินดีต้อนรับกลับมา"));
+  const saved = (await ctx.cookies()).find((c) => c.name === "vg_locale");
+  check("the choice is saved in a cookie", saved?.value === "th", JSON.stringify(saved));
+  await page.reload({ waitUntil: "networkidle" });
+  check("and survives a reload", await page.evaluate(() => document.documentElement.lang === "th"));
+
+  await page.click('button:has-text("ผู้ขับขี่")');
+  await page.waitForURL("**/dashboard", { timeout: 15000 });
+  await page.waitForSelector("text=สถานะเครือข่าย", { timeout: 15000 });
+  check("dashboard in Thai", await page.locator("text=แนะนำสำหรับการชาร์จครั้งถัดไป").isVisible());
+  check("tab bar in Thai", await page.locator("nav >> text=หน้าแรก").first().isVisible());
+  await page.screenshot({ path: `${OUT}/th-dashboard-mobile.png`, fullPage: true });
+
+  const driverPages = [
+    ["/stations", "สถานีและแผนที่"],
+    ["/stations/8", "หัวชาร์จ"],
+    ["/charging", "การชาร์จ"],
+    ["/reservations", "การจอง"],
+    ["/reservations/new", "จองหัวชาร์จ"],
+    ["/history", "ประวัติและการชำระเงิน"],
+    ["/wallet", "กระเป๋าเงิน"],
+    ["/profile", "โปรไฟล์"],
+    ["/settings", "ตั้งค่า"],
+    ["/notifications", "การแจ้งเตือน"],
+    ["/favorites", "สถานีโปรด"],
+  ];
+  for (const [path, text] of driverPages) {
+    await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+    await page.waitForSelector(`text=${text}`, { timeout: 15000 }).catch(() => {});
+    const body = await page.textContent("body");
+    check(`${path} in Thai`, body.includes(text), body.slice(0, 80));
+    check(`${path} fits the screen`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+    await page.screenshot({ path: `${OUT}/th${path.replaceAll("/", "-")}.png`, fullPage: true });
+  }
+
+  await page.goto(`${BASE}/notifications`, { waitUntil: "networkidle" });
+  await page.waitForSelector("li", { timeout: 15000 });
+  const notes = await page.locator("li").allTextContents();
+  check("stored notifications show in Thai", notes.length > 0 && notes.every((n) => /[฀-๿]/.test(n)), notes[0]?.slice(0, 80));
+
+  await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
+  await page.click('main button[lang="en"]');
+  await page.waitForFunction(() => document.documentElement.lang === "en", null, { timeout: 15000 });
+  await page.waitForSelector("text=Account, charging and app preferences", { timeout: 15000 });
+  check("settings switches back to English", await page.locator("text=Account, charging and app preferences").isVisible());
+  await ctx.close();
+}
+{
+  // An admin with a Thai browser gets the console in Thai on the first visit.
+  const { ctx, page } = await newPage({ width: 1440, height: 900 }, "thai-admin", { locale: "th-TH" });
+  await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
+  check("a Thai browser starts in Thai", await page.evaluate(() => document.documentElement.lang === "th"));
+  await page.click('button:has-text("แอดมิน")');
+  await page.waitForURL("**/dashboard", { timeout: 15000 });
+  for (const [path, text] of [
+    ["/admin", "รายได้ 30 วันล่าสุด"],
+    ["/admin/stations", "เพิ่มสถานี"],
+    ["/admin/chargers", "เพิ่มหัวชาร์จ"],
+    ["/admin/reservations", "การจองทั่วเครือข่าย"],
+    ["/admin/sessions", "รายได้ที่เก็บแล้ว"],
+    ["/admin/users", "บัญชี"],
+  ]) {
+    await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+    await page.waitForSelector(`text=${text}`, { timeout: 15000 }).catch(() => {});
+    check(`${path} in Thai`, (await page.textContent("body")).includes(text));
+    await page.screenshot({ path: `${OUT}/th${path.replaceAll("/", "-")}.png`, fullPage: true });
+  }
+  // With the browser's own language list, as the app's requests send it. (A
+  // fetch from the page would work too, but logs the deliberate 404.)
+  const languages = await page.evaluate(() => navigator.languages.join(","));
+  const res = await page.request.get(`${BASE}/api/stations/9999`, { headers: { "Accept-Language": languages } });
+  const apiError = (await res.json()).error;
+  check("API errors arrive in Thai", apiError === "ไม่พบสถานีนี้", apiError);
   await ctx.close();
 }
 
