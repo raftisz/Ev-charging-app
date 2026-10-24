@@ -33,6 +33,19 @@ comes from the original Volt Grid canvas in the same folder.
 - CRUD on stations, chargers, reservations, sessions and users
 - Operators get read plus station/charger management; admins get everything
 
+**In English and Thai**
+
+- Every screen, message, error and notification in both languages, switched
+  from the header, the sign-in page or Settings and remembered in a cookie
+- A first visit follows the browser's language (`Accept-Language`)
+- Dates in Bangkok time with Thai month names and the Buddhist year where Thai
+  readers expect it; Noto Sans Thai for Thai text
+- API errors come back in the visitor's language, and notifications stored in
+  English are shown in Thai
+- The two languages are type-checked against each other, and a test fails if
+  any message the server can send has no Thai version (see
+  [docs/i18n.md](docs/i18n.md))
+
 ## Tech stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
@@ -107,6 +120,7 @@ anywhere real.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test:api` | End-to-end REST API suite against a running server |
 | `npm run test:ui` | Playwright browser suite at 5 viewport widths |
+| `npm run test:i18n` | English/Thai parity, date formats, error and notification translations |
 
 ### Testing
 
@@ -116,14 +130,15 @@ With the dev server running:
 npm run test:api
 ```
 
-Covers 224 cases: auth and role boundaries, station search/filter/sort, favourites,
+Covers 236 cases: auth and role boundaries, station search/filter/sort, favourites,
 reservation clash detection, the full start → stop → pay session lifecycle,
 payments and refunds, dashboard and admin aggregates, admin CRUD, page-level
 route guards, and the abuse cases a public demo invites: operators promoting
 themselves, wallet edits outside the ledger, the wallet ceiling, taking a
 charger someone else reserved, two drivers racing for one charger or one slot,
-malformed query values and password guessing. With `CRON_SECRET` set it also
-runs the demo reset.
+malformed query values and password guessing; plus errors, page titles and the
+`<html lang>` following the language cookie or the browser's language. With
+`CRON_SECRET` set it also runs the demo reset.
 
 And the browser suite (once, `npx playwright install chromium`):
 
@@ -131,11 +146,14 @@ And the browser suite (once, `npx playwright install chromium`):
 npm run test:ui
 ```
 
-102 cases driving the real UI at 390px, 768px, 1024px, 1440px and 1920px:
+140 cases driving the real UI at 390px, 768px, 1024px, 1440px and 1920px:
 navigation shape per breakpoint, Leaflet tiles and markers, search and filters,
 loading / empty / error / success states, form validation, modals, the
 registration flow, and an assertion of zero horizontal overflow and zero console
-errors at every width. Screenshots are written to `tests/screenshots/`.
+errors at every width, and the whole driver app and admin console in Thai:
+switching language on the sign-in page and back in Settings, a Thai browser
+landing in Thai, and every page fitting a phone screen in Thai. Screenshots are
+written to `tests/screenshots/`.
 
 ### Continuous integration
 
@@ -153,5 +171,6 @@ build, the API suite against `next start` in UTC, and the browser suite.
 | [docs/architecture.md](docs/architecture.md) | Project structure, how the domain works, data, auth |
 | [docs/system-diagrams.md](docs/system-diagrams.md) | Architecture, target microservices, tech stack, ER diagram and user journey (Mermaid) |
 | [docs/api.md](docs/api.md) | Every REST endpoint and its purpose |
+| [docs/i18n.md](docs/i18n.md) | How English and Thai are organised and how to add a message |
 | [docs/deployment.md](docs/deployment.md) | Render, Vercel and any Node host · `GET /api/health` |
 | [docs/design-reference/](docs/design-reference/) | The visual concept and the original Volt Grid canvas |
