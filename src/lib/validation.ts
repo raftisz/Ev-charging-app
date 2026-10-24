@@ -107,3 +107,13 @@ export const userUpdateSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+
+/** What an admin can ask a connected charger to do from the OCPP console. */
+export const OCPP_CONSOLE_COMMANDS = ["reset-soft", "reset-hard", "available", "unavailable", "trigger-status"] as const;
+
+export const ocppCommandSchema = z
+  .object({
+    chargerId: z.coerce.number().int().positive(),
+    command: z.enum(OCPP_CONSOLE_COMMANDS),
+  })
+  .strict();

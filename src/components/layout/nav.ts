@@ -37,6 +37,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/analytics", label: "analytics", glyph: "▤" },
   { href: "/admin/stations", label: "stations", glyph: "◎" },
   { href: "/admin/chargers", label: "chargers", glyph: "⚡" },
+  { href: "/admin/ocpp", label: "ocpp", glyph: "⇄" },
   { href: "/admin/reservations", label: "reservations", glyph: "▦" },
   { href: "/admin/sessions", label: "sessions", glyph: "◐" },
   { href: "/admin/users", label: "users", glyph: "◍" },

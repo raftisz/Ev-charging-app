@@ -4,6 +4,7 @@ import type {
   ApiError,
   DashboardStats,
   NotificationDTO,
+  OcppConsoleDTO,
   PaymentDTO,
   PromptPayQrDTO,
   ReservationDTO,
@@ -167,6 +168,9 @@ export const api = {
       `/api/users${query({ q })}`,
     ),
   analytics: (days: number) => get<AnalyticsDTO>(`/api/admin/analytics?days=${days}`),
+  ocppConsole: (identity?: string) => get<OcppConsoleDTO>(`/api/admin/ocpp${query({ identity })}`),
+  ocppCommand: (chargerId: number, command: string) =>
+    post<{ action: string; response: Record<string, unknown> }>("/api/admin/ocpp/commands", { chargerId, command }),
   updateUser: (id: number, body: unknown) => patch<{ user: UserDTO }>(`/api/users/${id}`, body),
   deleteUser: (id: number) => del<{ ok: true }>(`/api/users/${id}`),
 
@@ -178,6 +182,8 @@ export const api = {
         status: string;
         powerKw: number;
         station: { id: number; name: string };
+        ocppIdentity: string | null;
+        ocppOnline: boolean;
         connectors: { id: number; type: string; label: string; powerKw: number }[];
       }[];
     }>(`/api/chargers${query(params)}`),
