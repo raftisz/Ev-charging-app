@@ -19,6 +19,7 @@ import { STATION_PHOTOS } from "../src/lib/station-photos";
 import { DEMO_PASSWORD } from "../src/lib/demo";
 import { minutesToReach, progressAt } from "../src/lib/charge-curve";
 import { addDays, bangkokDate, bangkokDay } from "../src/lib/timezone";
+import { ocppIdentity } from "../src/lib/ocpp";
 
 const CONNECTOR: Record<ConnectorName, ConnectorType> = {
   CCS2: "CCS2",
@@ -114,6 +115,7 @@ export async function seedDemoData(
 
   async function reset() {
     // Order matters: children first (SQLite cascades are on, but be explicit).
+    await prisma.ocppMessage.deleteMany();
     await prisma.notification.deleteMany();
     await prisma.payment.deleteMany();
     await prisma.chargingSession.deleteMany();
@@ -208,6 +210,17 @@ export async function seedDemoData(
       include: { chargers: true },
     });
     stations.push(station);
+  }
+
+  // Each charger's OCPP identity, VG-<station>-<code>: the charge point (or
+  // the simulator) connects to ws://<csms>/ocpp/VG-01-A1.
+  for (const station of stations) {
+    for (const charger of station.chargers) {
+      await prisma.charger.update({
+        where: { id: charger.id },
+        data: { ocppIdentity: ocppIdentity(station.id, charger.chargerCode) },
+      });
+    }
   }
 
   const byStationId = new Map(stations.map((s) => [s.id, s]));

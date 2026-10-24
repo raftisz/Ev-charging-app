@@ -146,6 +146,14 @@ model Charger {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  /// OCPP charge point identity, the last segment of its WebSocket URL.
+  ocppIdentity String?   @unique
+  /// Last message received from the charge point; recent means online.
+  ocppLastSeen DateTime?
+  ocppVendor   String?
+  ocppModel    String?
+  ocppFirmware String?
+
   station      Station           @relation(fields: [stationId], references: [id], onDelete: Cascade)
   connectors   Connector[]
   reservations Reservation[]
@@ -210,6 +218,19 @@ model ChargingSession {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  /// Set when the session runs on a real (or simulated) OCPP charge point:
+  /// the token the charger was told to start with, then its transaction.
+  ocppIdTag         String?   @unique
+  ocppTransactionId Int?      @unique
+  /// Energy register (Wh) at the start and at the latest meter reading.
+  meterStartWh      Int?
+  meterWh           Int?
+  meterAt           DateTime?
+  meterKw           Float?
+  meterSoc          Int?
+  /// Readings so far, [{ m: minutes since start, kw, soc }], for the power chart.
+  meterTrace        Json?
+
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   station     Station      @relation(fields: [stationId], references: [id], onDelete: Cascade)
   charger     Charger      @relation(fields: [chargerId], references: [id], onDelete: Cascade)
@@ -268,4 +289,21 @@ model Favorite {
   station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, stationId])
+}
+
+/// Every OCPP frame in or out, for the admin console. Pruned to the latest few thousand.
+model OcppMessage {
+  id          Int      @id @default(autoincrement())
+  identity    String
+  /// "in" from the charge point, "out" to it.
+  direction   String
+  /// 2 CALL, 3 CALLRESULT, 4 CALLERROR.
+  messageType Int
+  messageId   String
+  action      String?
+  payload     Json
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([identity, createdAt])
 }
