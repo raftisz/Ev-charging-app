@@ -34,6 +34,7 @@ export const DRIVER_TABS: NavItem[] = [
 
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "overview", glyph: "⌂" },
+  { href: "/admin/analytics", label: "analytics", glyph: "▤" },
   { href: "/admin/stations", label: "stations", glyph: "◎" },
   { href: "/admin/chargers", label: "chargers", glyph: "⚡" },
   { href: "/admin/reservations", label: "reservations", glyph: "▦" },

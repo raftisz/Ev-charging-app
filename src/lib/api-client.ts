@@ -1,5 +1,6 @@
 import type {
   AdminStats,
+  AnalyticsDTO,
   ApiError,
   DashboardStats,
   NotificationDTO,
@@ -165,6 +166,7 @@ export const api = {
     get<{ users: (UserDTO & { sessionCount: number; reservationCount: number })[] }>(
       `/api/users${query({ q })}`,
     ),
+  analytics: (days: number) => get<AnalyticsDTO>(`/api/admin/analytics?days=${days}`),
   updateUser: (id: number, body: unknown) => patch<{ user: UserDTO }>(`/api/users/${id}`, body),
   deleteUser: (id: number) => del<{ ok: true }>(`/api/users/${id}`),
 

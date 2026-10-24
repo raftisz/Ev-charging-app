@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/config";
+import { analytics } from "./analytics";
 import { live } from "./live";
 import { receipt } from "./receipt";
 import { admin } from "./admin";
@@ -21,7 +22,7 @@ import { status } from "./status";
  * Every message group, by language. Each group keeps its English and Thai
  * side by side (see ./common.ts) and is type-checked for matching keys.
  */
-const groups = { account, admin, auth, charging, common, dashboard, history, landing, live, meta, nav, payments, receipt, reservations, stations, status, wallet };
+const groups = { account, admin, analytics, auth, charging, common, dashboard, history, landing, live, meta, nav, payments, receipt, reservations, stations, status, wallet };
 
 type Groups = typeof groups;
 export type Messages = { [K in keyof Groups]: Groups[K]["en"] };
