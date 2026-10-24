@@ -36,6 +36,8 @@ All routes except register/login and `GET /api/stations` require a session cooki
 | GET | `/api/users` | List users (admin) |
 | GET/PATCH/DELETE | `/api/users/{id}` | Detail · update name/role/active · delete (staff; roles and staff accounts are admin-only; accounts with payments are disabled, not deleted) |
 | GET | `/api/admin/stats` | Network-wide KPIs, live sessions, recent activity |
+| GET | `/api/admin/analytics?days=7\|30\|90` | Revenue, energy, heatmap, station ranking, charger-type and payment mix (staff) |
+| GET | `/api/live?scope=driver\|network` | Server-Sent Events: a snapshot every 3 s (`network` is staff only; `&once=1` for JSON) — see [live-and-analytics.md](live-and-analytics.md) |
 | GET | `/api/cron/reset-demo` | Reseed the public demo (Vercel Cron, `Authorization: Bearer $CRON_SECRET`) |
 
 ## Station photos

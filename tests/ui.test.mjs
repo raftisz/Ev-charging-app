@@ -105,6 +105,10 @@ console.log("\n=== Desktop 1440x900 · driver ===");
   await page.waitForTimeout(1200);
   check("charging page shows live ring", (await page.textContent("body")).includes("target 80%"));
   check("stop button present", await page.locator('button:has-text("Stop charging")').isVisible());
+  await page.waitForSelector("text=Charging power", { timeout: 10000 }).catch(() => {});
+  check("power chart drawn", (await page.locator('svg[role="img"][aria-label*="kW"]').count()) === 1);
+  await page.waitForSelector('[data-live-mode="live"]', { timeout: 10000 }).catch(() => {});
+  check("live badge shows the stream", (await page.locator('[data-live-mode="live"]').count()) > 0, await page.locator("[data-live-mode]").first().getAttribute("data-live-mode").catch(() => "none"));
   await page.screenshot({ path: `${OUT}/desktop-charging.png` });
 
   await page.goto(`${BASE}/reservations/new`, { waitUntil: "networkidle" });
@@ -187,6 +191,19 @@ console.log("\n=== Desktop 1440x900 · admin ===");
   await page.goto(`${BASE}/admin/reservations`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   check("admin reservations rendered", (await page.locator("li").count()) > 3);
+
+  await page.goto(`${BASE}/admin/analytics`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("text=When drivers charge", { timeout: 15000 }).catch(() => {});
+  let text = await page.textContent("body");
+  check("analytics KPIs and sections", ["Revenue billed", "Energy delivered", "Revenue per day", "When drivers charge", "Charger types", "How drivers pay"].every((t) => text.includes(t)));
+  check("heatmap has 168 cells", (await page.locator('[role="img"][aria-label*=":00"]').count()) === 168);
+  check("comparison with the previous period", /vs previous period|same as previous period/.test(text));
+  await page.screenshot({ path: `${OUT}/desktop-admin-analytics.png`, fullPage: true });
+  await page.click('button:has-text("7 days")');
+  await page.waitForFunction(() => [...document.querySelectorAll('[role="group"] button[aria-pressed="true"]')].some((b) => b.textContent === "7 days"));
+  await page.waitForTimeout(800);
+  check("period switch keeps the page", (await page.textContent("body")).includes("When drivers charge"));
+  check("analytics in the admin nav", await page.locator('a[href="/admin/analytics"]').first().isVisible());
   await ctx.close();
 }
 
@@ -550,6 +567,7 @@ console.log("\n=== Thai ===");
     ["/admin/reservations", "การจองทั่วเครือข่าย"],
     ["/admin/sessions", "รายได้ที่เก็บแล้ว"],
     ["/admin/users", "บัญชี"],
+    ["/admin/analytics", "ช่วงเวลาที่คนมาชาร์จ"],
   ]) {
     await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
     await page.waitForSelector(`text=${text}`, { timeout: 15000 }).catch(() => {});

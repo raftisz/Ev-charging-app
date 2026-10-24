@@ -24,12 +24,17 @@ comes from the original Volt Grid canvas in the same folder.
 - Save stations as favourites
 - Reserve a charger from half-hour availability slots, clash-checked against
   every pending, confirmed and active reservation on that charger
-- Run a live charging session that advances in real time, then stop and pay
-- Review 45 days of history, notifications, profile and settings
+- Run a live charging session streamed over Server-Sent Events, with a power
+  chart that follows a realistic DC/AC charge curve, then stop and pay
+- Review 90 days of history, notifications, profile and settings
 
 **For operators and admins**
 
-- A separate console with network-wide KPIs, live sessions and recent activity
+- A separate console with network-wide KPIs, live sessions (with kW per session
+  and total network power) and recent activity
+- Analytics for 7, 30 or 90 days: revenue and energy per day, a weekday × hour
+  heatmap, station ranking with utilisation, charger-type and payment mix, each
+  KPI compared with the previous period
 - CRUD on stations, chargers, reservations, sessions and users
 - Operators get read plus station/charger management; admins get everything
 
@@ -73,7 +78,7 @@ cp .env.example .env
 ```bash
 npm run db:up            # PostgreSQL 16 in Docker on port 5433
 npx prisma migrate dev   # applies the schema
-npm run seed             # 20 stations, 71 chargers, 10 users, ~113 sessions
+npm run seed             # 20 stations, 71 chargers, 10 users, ~650 sessions over 90 days
 npm run dev
 ```
 
@@ -90,7 +95,7 @@ use the password `password123`.
 
 | Email | Role | What it shows |
 |---|---|---|
-| `user1@example.com` | Driver | A live charging session, reservations, 45 days of history |
+| `user1@example.com` | Driver | A live charging session, reservations, 90 days of history |
 | `user2@example.com` … `user8@example.com` | Driver | Ordinary driver accounts |
 | `admin@example.com` | Admin | Full admin console with CRUD on everything |
 | `operator@example.com` | Operator | Read + station/charger management, no user deletion |
@@ -121,6 +126,7 @@ anywhere real.
 | `npm run test:api` | End-to-end REST API suite against a running server |
 | `npm run test:ui` | Playwright browser suite at 5 viewport widths |
 | `npm run test:i18n` | English/Thai parity, date formats, error and notification translations |
+| `npm run test:curve` | The charge curve behind live sessions and the power chart |
 
 ### Testing
 
@@ -172,5 +178,6 @@ build, the API suite against `next start` in UTC, and the browser suite.
 | [docs/system-diagrams.md](docs/system-diagrams.md) | Architecture, target microservices, tech stack, ER diagram and user journey (Mermaid) |
 | [docs/api.md](docs/api.md) | Every REST endpoint and its purpose |
 | [docs/i18n.md](docs/i18n.md) | How English and Thai are organised and how to add a message |
+| [docs/live-and-analytics.md](docs/live-and-analytics.md) | The charge curve, live updates over SSE, and the analytics console |
 | [docs/deployment.md](docs/deployment.md) | Render, Vercel and any Node host · `GET /api/health` |
 | [docs/design-reference/](docs/design-reference/) | The visual concept and the original Volt Grid canvas |
