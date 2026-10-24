@@ -25,3 +25,33 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      # OCPP (optional): where the CSMS below is, e.g. https://volt-grid-csms.onrender.com.
+      # Leave empty to run every charger as a simulated session.
+      - key: OCPP_CSMS_URL
+        sync: false
+      - key: OCPP_COMMAND_SECRET
+        fromService:
+          type: web
+          name: volt-grid-csms
+          envVarKey: OCPP_COMMAND_SECRET
+
+  # The OCPP 1.6J central system. Chargers (or `npm run ocpp:sim`) connect to
+  # wss://volt-grid-csms.onrender.com/ocpp/<identity>. It needs a host that
+  # keeps WebSockets open, which is why it can't live on Vercel.
+  - type: web
+    name: volt-grid-csms
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci
+    startCommand: npm run ocpp:csms
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        # The same database as the app.
+        sync: false
+      - key: OCPP_COMMAND_SECRET
+        generateValue: true
+      - key: OCPP_CHARGER_PASSWORD
+        # Optional: chargers must then send HTTP Basic <identity>:<password>.
+        sync: false

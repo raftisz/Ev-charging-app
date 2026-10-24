@@ -9,6 +9,8 @@
     "start": "prisma migrate deploy && tsx prisma/seed.ts --if-empty && next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "ocpp:csms": "tsx ocpp/csms.ts",
+    "ocpp:sim": "tsx ocpp/sim.ts",
     "db:reset": "prisma migrate reset --force",
     "db:push": "prisma db push",
     "postinstall": "prisma generate",
@@ -21,6 +23,7 @@
     "test:photos": "tsx tests/station-photos.test.ts",
     "test:i18n": "TZ=UTC tsx tests/i18n.test.ts",
     "test:curve": "tsx tests/charge-curve.test.ts",
+    "test:ocpp": "node tests/ocpp.test.mjs",
     "seed:if-empty": "tsx prisma/seed.ts --if-empty",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
@@ -40,6 +43,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-leaflet": "^5.0.0",
+    "ws": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -51,6 +55,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.2",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
