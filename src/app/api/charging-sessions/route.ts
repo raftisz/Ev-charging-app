@@ -12,6 +12,8 @@ import {
 import { lockCharger, lockUser } from "@/server/locks";
 import { startSessionSchema } from "@/lib/validation";
 import { SESSION_INCLUDE, listSessions, serializeSession } from "@/server/sessions";
+import { runsOverOcpp, sendCommand } from "@/server/ocpp/commands";
+import { sessionIdTag } from "@/lib/ocpp";
 import type { Prisma } from "@/generated/prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -112,7 +114,7 @@ export const POST = handler(async (request: Request) => {
         data: { status: "ACTIVE" },
       });
     }
-    const session = await tx.chargingSession.create({
+    const created = await tx.chargingSession.create({
       data: {
         userId: user.id,
         stationId: charger.stationId,
@@ -125,10 +127,35 @@ export const POST = handler(async (request: Request) => {
         powerKw: charger.powerKw,
         pricePerKwh: charger.station.pricePerKwh,
       },
+    });
+    // On a charger connected over OCPP the session waits for the hardware:
+    // it gets a token to start with, and the meter, not the clock, decides
+    // how much energy was delivered.
+    const overOcpp = runsOverOcpp(charger);
+    const session = await tx.chargingSession.update({
+      where: { id: created.id },
+      data: overOcpp ? { ocppIdTag: sessionIdTag(created.id) } : {},
       include: SESSION_INCLUDE,
     });
     return { session, charger };
   });
+
+  if (session.ocppIdTag && charger.ocppIdentity) {
+    const sent = await sendCommand(charger.ocppIdentity, "RemoteStartTransaction", {
+      connectorId: 1,
+      idTag: session.ocppIdTag,
+    });
+    if (!sent.ok || sent.response.status !== "Accepted") {
+      await prisma.$transaction(async (tx) => {
+        await tx.chargingSession.delete({ where: { id: session.id } });
+        await tx.charger.update({ where: { id: charger.id }, data: { status: "AVAILABLE" } });
+        if (body.reservationId) {
+          await tx.reservation.update({ where: { id: body.reservationId }, data: { status: "CONFIRMED" } });
+        }
+      });
+      throw conflict("The charger did not accept the start command. Try again or choose another charger.");
+    }
+  }
 
   await prisma.notification.create({
     data: {

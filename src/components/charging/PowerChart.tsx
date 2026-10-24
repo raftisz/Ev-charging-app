@@ -40,7 +40,11 @@ export function PowerChart({ session }: { session: SessionDTO }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<CurvePoint | null>(null);
 
-  const elapsed = session.minutesElapsed;
+  // A charger on OCPP reports real readings: draw those for the past and the
+  // model only for what is still to come.
+  const trace = session.ocpp?.trace ?? [];
+  const metered = trace.length > 0;
+  const elapsed = metered ? Math.max(session.minutesElapsed, trace[trace.length - 1].m) : session.minutesElapsed;
   const total = Math.max(elapsed + session.minutesToTarget, 1);
   const input = useMemo(
     () => ({
@@ -51,7 +55,19 @@ export function PowerChart({ session }: { session: SessionDTO }) {
     }),
     [session.charger.powerKw, session.batteryKwh, session.startPercent, session.targetPercent],
   );
-  const points = useMemo(() => curvePoints(input, total, 60), [input, total]);
+  const modelled = useMemo(() => curvePoints(input, total, 60), [input, total]);
+  const remaining = useMemo(
+    () => (metered ? curvePoints({ ...input, startPercent: session.currentPercent }, session.minutesToTarget, 40) : []),
+    [metered, input, session.currentPercent, session.minutesToTarget],
+  );
+  const points: CurvePoint[] = metered
+    ? [
+        ...trace.map((t) => ({ minute: t.m, kw: t.kw, soc: t.soc ?? Number.NaN, energyKwh: Number.NaN })),
+        ...remaining
+          .filter((p) => p.minute > 0)
+          .map((p) => ({ ...p, minute: p.minute + elapsed, energyKwh: session.energyKwh + p.energyKwh })),
+      ]
+    : modelled;
 
   const maxKw = Math.max(...points.map((p) => p.kw), session.charger.powerKw * 0.5, 1);
   const step = niceStep(maxKw);
@@ -89,7 +105,7 @@ export function PowerChart({ session }: { session: SessionDTO }) {
     <div ref={ref} className="relative">
       <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="font-display text-[15px] font-semibold text-ink">{m.live.powerTitle}</span>
-        <span className="text-[12px] text-faint">{m.live.powerNote}</span>
+        <span className="text-[12px] text-faint">{metered ? m.live.powerNoteMetered : m.live.powerNote}</span>
       </div>
       {width > 0 ? (
         <svg
@@ -150,8 +166,10 @@ export function PowerChart({ session }: { session: SessionDTO }) {
           {hover ? (isFuture ? m.live.atMinuteFuture : m.live.atMinute)(f.duration(shown.minute)) : m.live.now}
         </span>
         <span className="font-semibold text-ink tabular-nums">{f.kw(shown.kw)}</span>
-        <span className="tabular-nums">{Math.floor(shown.soc)}%</span>
-        <span className="tabular-nums">{f.kwh(shown.energyKwh, 2)}</span>
+        {Number.isFinite(shown.soc) ? <span className="tabular-nums">{Math.floor(shown.soc)}%</span> : null}
+        {Number.isFinite(shown.energyKwh) ? (
+          <span className="tabular-nums">{f.kwh(shown.energyKwh, 2)}</span>
+        ) : null}
       </div>
     </div>
   );

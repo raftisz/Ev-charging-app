@@ -60,6 +60,8 @@ export type ChargerDTO = {
   chargerCode: string;
   status: ChargerStatus;
   powerKw: number;
+  /** Connected to the CSMS over OCPP right now. */
+  ocppOnline: boolean;
   connectors: ConnectorDTO[];
 };
 
@@ -149,6 +151,17 @@ export type SessionDTO = {
   user?: { id: number; fullName: string; email: string };
   /** The settled charge's payment, which is also its receipt. */
   receiptId: number | null;
+  /**
+   * Set when the session runs on a charger connected over OCPP: figures come
+   * from its meter. "waiting" until the charger starts the transaction.
+   */
+  ocpp: {
+    state: "waiting" | "charging";
+    transactionId: number | null;
+    meteredAt: string | null;
+    /** Readings so far, minutes since start, for the power chart. */
+    trace: { m: number; kw: number; soc: number | null }[];
+  } | null;
 };
 
 export type ReceiptDTO = {
@@ -264,4 +277,48 @@ export type AnalyticsDTO = {
   }[];
   powerClasses: { key: PowerClass; sessions: number; energyKwh: number }[];
   paymentMethods: { method: PaymentMethodCode; count: number; amount: number }[];
+};
+
+export type OcppChargePointDTO = {
+  chargerId: number;
+  identity: string;
+  station: { id: number; name: string };
+  chargerCode: string;
+  powerKw: number;
+  status: ChargerStatus;
+  online: boolean;
+  lastSeen: string | null;
+  vendor: string | null;
+  model: string | null;
+  firmware: string | null;
+  transaction: {
+    sessionId: number;
+    transactionId: number | null;
+    driver: string;
+    energyKwh: number;
+    kw: number;
+    soc: number | null;
+  } | null;
+};
+
+export type OcppFrameDTO = {
+  id: number;
+  identity: string;
+  /** "in" from the charge point, "out" to it. */
+  direction: "in" | "out";
+  /** 2 CALL, 3 CALLRESULT, 4 CALLERROR. */
+  messageType: number;
+  messageId: string;
+  action: string | null;
+  payload: unknown;
+  createdAt: string;
+};
+
+export type OcppConsoleDTO = {
+  /** OCPP_CSMS_URL and OCPP_COMMAND_SECRET are set. */
+  configured: boolean;
+  /** The CSMS answered its health check. */
+  reachable: boolean;
+  chargePoints: OcppChargePointDTO[];
+  frames: OcppFrameDTO[];
 };

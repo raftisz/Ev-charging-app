@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isOcppOnline, ocppIdentity } from "@/lib/ocpp";
 import { prisma } from "@/server/db";
 import { conflict, handler, notFound, requireAdmin } from "@/server/http";
 import { chargerCreateSchema } from "@/lib/validation";
@@ -31,6 +32,8 @@ export const GET = handler(async (request: Request) => {
       status: c.status,
       powerKw: c.powerKw,
       station: c.station,
+      ocppIdentity: c.ocppIdentity,
+      ocppOnline: isOcppOnline(c.ocppLastSeen),
       connectors: c.connectors.map((x) => ({
         id: x.id,
         type: x.type,
@@ -57,6 +60,7 @@ export const POST = handler(async (request: Request) => {
     data: {
       stationId: body.stationId,
       chargerCode: body.chargerCode,
+      ocppIdentity: ocppIdentity(body.stationId, body.chargerCode),
       powerKw: body.powerKw,
       status: body.status,
       connectors: { create: [{ type: body.connectorType, powerKw: body.powerKw }] },

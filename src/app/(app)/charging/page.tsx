@@ -199,6 +199,17 @@ export default function ChargingPage() {
                   <div className="mt-1 mb-4 text-center text-[13px] text-grid-green-pale sm:text-left">
                     {t.startedAt(session.charger.chargerCode, f.time(session.startTime))}
                   </div>
+                  {session.ocpp ? (
+                    <div className="-mt-2 mb-4 flex justify-center sm:justify-start">
+                      <span
+                        title={m.live.ocppBadgeHint(String(session.ocpp.transactionId ?? "–"))}
+                        data-ocpp-state={session.ocpp.state}
+                        className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white"
+                      >
+                        {m.live.ocppBadge}
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <Metric
                       label={targetReached ? t.status : t.timeToTarget}
@@ -223,6 +234,13 @@ export default function ChargingPage() {
                 <span>{t.atStart(session.startPercent)}</span>
                 <span>{t.targetPct(session.targetPercent)}</span>
               </div>
+
+              {session.ocpp?.state === "waiting" ? (
+                <div className="mt-4 rounded-xl bg-white/15 px-3.5 py-3 text-[12.5px] leading-relaxed text-white">
+                  <div className="font-semibold">{m.live.ocppWaitingTitle}</div>
+                  <div className="mt-0.5 text-grid-green-pale">{m.live.ocppWaitingBody}</div>
+                </div>
+              ) : null}
 
               {targetReached ? (
                 <div className="mt-4 rounded-xl bg-white/15 px-3.5 py-3 text-[12.5px] leading-relaxed font-medium text-white">

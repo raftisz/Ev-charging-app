@@ -2,6 +2,10 @@ import "server-only";
 import { prisma } from "@/server/db";
 import type { PaymentStatus, SessionDTO } from "@/lib/types";
 import { minutesToReach, progressAt } from "@/lib/charge-curve";
+import type { TracePoint } from "@/server/ocpp/metering";
+
+/** A reading older than this means the charger has stopped reporting power. */
+const STALE_METER_MS = 60_000;
 
 const DEFAULT_BATTERY_KWH = 64;
 
@@ -50,6 +54,8 @@ export function projectSession(session: SessionRecord) {
     };
   }
 
+  if (session.ocppIdTag) return projectMetered(session, battery, minutesElapsed);
+
   const curve = {
     ratedKw: session.powerKw,
     batteryKwh: battery,
@@ -67,6 +73,48 @@ export function projectSession(session: SessionRecord) {
     cost: Number((now.energyKwh * session.pricePerKwh).toFixed(2)),
     currentKw: Number(now.kw.toFixed(1)),
     batteryKwh: battery,
+  };
+}
+
+/**
+ * An OCPP session reports what the charger's meter says: energy is the
+ * register's rise since the start, power and state of charge are the latest
+ * reading. Only the time to target is still estimated, from the curve.
+ */
+function projectMetered(session: SessionRecord, battery: number, minutesElapsed: number) {
+  const energyKwh = Math.max(0, ((session.meterWh ?? 0) - (session.meterStartWh ?? session.meterWh ?? 0)) / 1000);
+  const soc = session.meterSoc ?? Math.min(100, session.startPercent + (energyKwh / battery) * 100);
+  const fresh = session.meterAt && Date.now() - session.meterAt.getTime() < STALE_METER_MS;
+  const toTarget =
+    soc >= session.targetPercent
+      ? 0
+      : minutesToReach({
+          ratedKw: session.powerKw,
+          batteryKwh: battery,
+          startPercent: soc,
+          targetPercent: session.targetPercent,
+        });
+  return {
+    minutesElapsed: Math.round(session.ocppTransactionId ? minutesElapsed : 0),
+    minutesToTarget: Math.round(toTarget),
+    energyKwh: Number(energyKwh.toFixed(2)),
+    currentPercent: Math.min(100, Math.floor(soc)),
+    cost: Number((energyKwh * session.pricePerKwh).toFixed(2)),
+    currentKw: fresh ? Number((session.meterKw ?? 0).toFixed(1)) : 0,
+    batteryKwh: battery,
+  };
+}
+
+function ocppInfo(session: SessionRecord): SessionDTO["ocpp"] {
+  if (!session.ocppIdTag) return null;
+  return {
+    state: session.ocppTransactionId ? "charging" : "waiting",
+    transactionId: session.ocppTransactionId,
+    meteredAt: session.meterAt?.toISOString() ?? null,
+    trace:
+      session.status === "ACTIVE" && Array.isArray(session.meterTrace)
+        ? (session.meterTrace as TracePoint[])
+        : [],
   };
 }
 
@@ -96,6 +144,7 @@ export function serializeSession(session: SessionRecord): SessionDTO {
       ? { id: session.user.id, fullName: session.user.fullName, email: session.user.email }
       : undefined,
     receiptId: session.payments[0]?.id ?? null,
+    ocpp: ocppInfo(session),
   };
 }
 

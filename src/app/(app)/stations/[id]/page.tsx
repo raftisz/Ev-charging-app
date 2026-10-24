@@ -190,8 +190,16 @@ export default function StationDetailPage({
                       {charger.chargerCode}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[13.5px] font-semibold text-ink">
+                      <div className="flex items-center gap-1.5 text-[13.5px] font-semibold text-ink">
                         {charger.connectors.map((c) => c.label).join(", ")}
+                        {charger.ocppOnline ? (
+                          <span
+                            title={m.live.ocppChipHint}
+                            className="rounded-full bg-grid-green-tint px-1.5 py-px text-[10px] font-bold tracking-[0.04em] text-grid-green-dark"
+                          >
+                            {m.live.ocppChip}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="text-[12.5px] text-faint">
                         {f.kw(charger.powerKw)} ·{" "}

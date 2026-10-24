@@ -6,6 +6,8 @@ import { PAYMENT_METHOD_LABEL, toSatang } from "@/lib/payments";
 import { thb } from "@/lib/format";
 import { startPromptPay } from "@/server/payments";
 import { SESSION_INCLUDE, projectSession, serializeSession } from "@/server/sessions";
+import { sendCommand } from "@/server/ocpp/commands";
+import { finishMeteredSession } from "@/server/ocpp/metering";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,32 @@ export const PATCH = handler(async (request: Request, ctx: Params) => {
 
   if (action === "stop") {
     if (session.status !== "ACTIVE") throw conflict("That session has already finished");
+
+    if (session.ocppIdTag) {
+      // Ask the charger to stop; its StopTransaction closes the session from
+      // the meter (via the CSMS). If the charger is gone or never started,
+      // close it here from the last reading instead.
+      const identity = (await prisma.charger.findUnique({ where: { id: session.chargerId } }))?.ocppIdentity;
+      if (identity && session.ocppTransactionId) {
+        const sent = await sendCommand(identity, "RemoteStopTransaction", {
+          transactionId: session.ocppTransactionId,
+        });
+        if (sent.ok && sent.response.status === "Accepted") {
+          for (let i = 0; i < 20; i++) {
+            const now = await prisma.chargingSession.findUnique({ where: { id: session.id }, select: { status: true } });
+            if (now?.status !== "ACTIVE") break;
+            await new Promise((r) => setTimeout(r, 300));
+          }
+        }
+      }
+      await finishMeteredSession(prisma, session.id, { reason: "Local" });
+      const updated = await prisma.chargingSession.findUniqueOrThrow({
+        where: { id: session.id },
+        include: SESSION_INCLUDE,
+      });
+      return NextResponse.json({ session: serializeSession(updated) });
+    }
+
     const live = projectSession(session);
 
     const updated = await prisma.$transaction(async (tx) => {

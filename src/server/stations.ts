@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/server/db";
 import { ORIGIN, distanceKm, etaMinutes } from "@/lib/geo";
+import { isOcppOnline } from "@/lib/ocpp";
 import { CONNECTOR_LABEL } from "@/lib/format";
 import type {
   ChargerDTO,
@@ -34,6 +35,7 @@ function toChargerDTO(charger: StationRecord["chargers"][number]): ChargerDTO {
     chargerCode: charger.chargerCode,
     status: charger.status,
     powerKw: charger.powerKw,
+    ocppOnline: isOcppOnline(charger.ocppLastSeen),
     connectors: charger.connectors.map((c) => ({
       id: c.id,
       type: c.type,

@@ -47,6 +47,10 @@ const EXACT_TH: Record<string, string> = {
   "That charger does not belong to the selected station": "หัวชาร์จนี้ไม่ได้อยู่ในสถานีที่เลือก",
   "That charger is already in use": "หัวชาร์จนี้กำลังถูกใช้งาน",
   "That charger is out of service right now": "หัวชาร์จนี้ปิดให้บริการอยู่",
+  "That charger is not connected": "หัวชาร์จนี้ไม่ได้เชื่อมต่อกับระบบอยู่",
+  "The charger did not answer the command": "หัวชาร์จไม่ตอบสนองต่อคำสั่ง",
+  "The charger did not accept the start command. Try again or choose another charger.":
+    "หัวชาร์จไม่รับคำสั่งเริ่มชาร์จ ลองอีกครั้งหรือเลือกหัวชาร์จอื่น",
   "That charger is reserved for another driver right now": "หัวชาร์จนี้ถูกจองไว้ให้ผู้ขับขี่คนอื่นในช่วงเวลานี้",
   "This charger has a session running. Stop it first.": "หัวชาร์จนี้กำลังชาร์จอยู่ กรุณาหยุดการชาร์จก่อน",
   "Stop the active charging sessions at this station first": "กรุณาหยุดการชาร์จที่กำลังทำงานในสถานีนี้ก่อน",
