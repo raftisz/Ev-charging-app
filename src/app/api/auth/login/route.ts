@@ -5,6 +5,8 @@ import { HttpError, forbidden, handler } from "@/server/http";
 import { loginSchema } from "@/lib/validation";
 import { serializeUser } from "@/server/users";
 import { clear, clientIp, hit, retryAfter } from "@/server/rate-limit";
+import { getLocale } from "@/i18n/server";
+import { translateError } from "@/i18n/errors";
 
 /** Wrong passwords allowed per account and address before a pause. */
 const PER_ACCOUNT = 5;
@@ -25,7 +27,10 @@ export const POST = handler(async (request: Request) => {
   if (wait > 0) {
     return NextResponse.json(
       {
-        error: `Too many sign-in attempts. Try again in ${Math.ceil(wait / 60)} minute(s).`,
+        error: translateError(
+          await getLocale(),
+          `Too many sign-in attempts. Try again in ${Math.ceil(wait / 60)} minute(s).`,
+        ),
         details: null,
       },
       { status: 429, headers: { "Retry-After": String(wait) } },

@@ -2,6 +2,9 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentUser } from "@/server/auth";
+import { getLocale } from "@/i18n/server";
+import { translateError, translateIssue } from "@/i18n/errors";
+import type { Locale } from "@/i18n/config";
 
 /** The server is missing something it needs, e.g. an environment variable. */
 export class ConfigError extends Error {}
@@ -22,7 +25,19 @@ export const forbidden = (m = "You do not have access to this resource") => new 
 export const notFound = (m = "Not found") => new HttpError(404, m);
 export const conflict = (m: string) => new HttpError(409, m);
 
-/** Wraps a route handler so thrown HttpError/ZodError become clean JSON. */
+/** The visitor's language, or English if it cannot be read. */
+async function errorLocale(): Promise<Locale> {
+  try {
+    return await getLocale();
+  } catch {
+    return "en";
+  }
+}
+
+/**
+ * Wraps a route handler so thrown HttpError/ZodError become clean JSON, with
+ * the message in the visitor's language (see src/i18n/errors.ts).
+ */
 export function handler<Args extends unknown[]>(
   fn: (...args: Args) => Promise<NextResponse | Response>,
 ) {
@@ -30,9 +45,11 @@ export function handler<Args extends unknown[]>(
     try {
       return await fn(...args);
     } catch (error) {
+      const locale = await errorLocale();
+      const say = (message: string) => translateError(locale, message);
       if (error instanceof HttpError) {
         return NextResponse.json(
-          { error: error.message, details: error.details ?? null },
+          { error: say(error.message), details: error.details ?? null },
           { status: error.status },
         );
       }
@@ -40,7 +57,7 @@ export function handler<Args extends unknown[]>(
         console.error("[config]", error.message);
         return NextResponse.json(
           {
-            error: `The server is not configured correctly: ${error.message}`,
+            error: say(`The server is not configured correctly: ${error.message}`),
           },
           { status: 500 },
         );
@@ -48,10 +65,10 @@ export function handler<Args extends unknown[]>(
       if (error instanceof ZodError) {
         return NextResponse.json(
           {
-            error: "Please check the highlighted fields",
+            error: say("Please check the highlighted fields"),
             details: error.issues.map((i) => ({
               field: i.path.join("."),
-              message: i.message,
+              message: translateIssue(locale, i),
             })),
           },
           { status: 422 },
@@ -59,7 +76,7 @@ export function handler<Args extends unknown[]>(
       }
       console.error("[api]", error);
       return NextResponse.json(
-        { error: "Something went wrong on our side. Please try again." },
+        { error: say("Something went wrong on our side. Please try again.") },
         { status: 500 },
       );
     }
