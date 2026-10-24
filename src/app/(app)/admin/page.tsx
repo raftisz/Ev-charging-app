@@ -5,6 +5,8 @@ import clsx from "clsx";
 import { Page } from "@/components/layout/Page";
 import { api } from "@/lib/api-client";
 import { useAsync, usePolling } from "@/lib/use-async";
+import { useLive } from "@/lib/use-live";
+import { LiveBadge } from "@/components/charging/LiveBadge";
 import { Badge } from "@/components/ui/Badge";
 import { AreaChart, StatTile } from "@/components/ui/Stat";
 import { EmptyState, ErrorState, ListSkeleton, StatSkeleton } from "@/components/ui/States";
@@ -24,6 +26,9 @@ export default function AdminOverviewPage() {
   usePolling(() => void reload(true), 20_000, true);
 
   const stats = data?.stats;
+  // Live sessions stream in every few seconds; the rest refreshes every 20.
+  const live = useLive("network");
+  const liveSessions = live.data?.sessions ?? data?.activeSessions ?? [];
 
   return (
     <Page
@@ -83,13 +88,19 @@ export default function AdminOverviewPage() {
                   <h2 className="flex-1 font-display text-[16px] font-semibold text-ink">
                     {t.liveSessions}
                   </h2>
+                  <LiveBadge mode={live.mode} />
+                  <span className="mx-2.5 hidden text-[12.5px] text-faint sm:inline">
+                    {live.data
+                      ? `${m.live.networkPower} ${f.kw(live.data.networkKw)}`
+                      : null}
+                  </span>
                   <Link href="/admin/sessions" className="text-[12.5px] font-semibold text-brand">
                     {t.allSessions}
                   </Link>
                 </div>
-                {data.activeSessions.length ? (
+                {liveSessions.length ? (
                   <ul>
-                    {data.activeSessions.map((s) => (
+                    {liveSessions.map((s) => (
                       <li
                         key={s.id}
                         className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 last:border-0"
@@ -111,6 +122,9 @@ export default function AdminOverviewPage() {
                           </div>
                         </div>
                         <Badge tone="brand">{s.currentPercent}%</Badge>
+                        <span className="w-[64px] text-right text-[12.5px] font-semibold text-ink tabular-nums">
+                          {f.kw(s.currentKw)}
+                        </span>
                         <span className="text-[12.5px] text-muted">{f.kwh(s.energyKwh)}</span>
                         <span className="font-display text-[13.5px] font-semibold text-ink">
                           {f.thb(s.cost)}

@@ -707,6 +707,60 @@ const run = async () => {
   html = await langPage.text();
   check("page titles are translated", /<title>เข้าสู่ระบบ · Volt Grid<\/title>/.test(html), (html.match(/<title>[^<]*<\/title>/) ?? [""])[0]);
 
+  section("Live updates");
+  r = await req("admin", "GET", "/api/live?scope=network&once=1");
+  check("network snapshot for staff", r.status === 200 && r.data.scope === "network" && Array.isArray(r.data.sessions) && typeof r.data.networkKw === "number", JSON.stringify(r.data).slice(0, 160));
+  check("network power is the sum of the sessions", Math.abs(r.data.networkKw - r.data.sessions.reduce((s, x) => s + x.currentKw, 0)) < 0.5);
+  r = await req("live-driver", "POST", "/api/auth/demo", { as: "driver" });
+  r = await req("live-driver", "GET", "/api/live?scope=network&once=1");
+  check("drivers can't watch the whole network", r.status === 403, String(r.status));
+  r = await req("live-driver", "GET", "/api/live?scope=driver&once=1");
+  check("driver snapshot", r.status === 200 && r.data.scope === "driver" && "session" in r.data, JSON.stringify(r.data).slice(0, 160));
+  if (r.data.session) {
+    const s = r.data.session;
+    check("live session carries speed and battery", s.currentKw > 0 && s.currentKw <= s.charger.powerKw && s.batteryKwh > 0, JSON.stringify({ kw: s.currentKw, rated: s.charger.powerKw }));
+  }
+  r = await req("nobody", "GET", "/api/live?scope=driver&once=1");
+  check("live needs a sign-in", r.status === 401, String(r.status));
+  r = await req("live-driver", "GET", "/api/live?scope=bogus&once=1");
+  check("unknown scope is rejected", r.status === 400, String(r.status));
+  {
+    const cookies = [...jar("live-driver")].map(([k, v]) => `${k}=${v}`).join("; ");
+    const ctrl = new AbortController();
+    const res = await fetch(BASE + "/api/live?scope=driver", { headers: { Cookie: cookies }, signal: ctrl.signal });
+    check("stream is text/event-stream", res.status === 200 && (res.headers.get("content-type") ?? "").startsWith("text/event-stream"));
+    const reader = res.body.getReader();
+    let text = "";
+    const until = Date.now() + 8000;
+    while ((text.match(/event: snapshot/g) ?? []).length < 2 && Date.now() < until) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      text += new TextDecoder().decode(value);
+    }
+    ctrl.abort();
+    check("stream pushes repeated snapshots", (text.match(/event: snapshot/g) ?? []).length >= 2 && /retry: \d+/.test(text), text.slice(0, 120));
+  }
+
+  section("Analytics");
+  for (const days of [7, 30, 90]) {
+    r = await req("admin", "GET", `/api/admin/analytics?days=${days}`);
+    const a = r.data;
+    check(`${days}-day analytics`, r.status === 200 && a.days === days && a.daily.length === days, `${r.status} ${a?.daily?.length}`);
+    if (r.status !== 200) continue;
+    const sum = (k) => a.daily.reduce((s, d) => s + d[k], 0);
+    check(`${days}d: daily revenue adds up to the total`, Math.abs(sum("revenue") - a.totals.revenue) < 0.05, `${sum("revenue")} vs ${a.totals.revenue}`);
+    check(`${days}d: heatmap is 7×24 and counts every session`, a.heatmap.length === 7 && a.heatmap.every(row => row.length === 24) && a.heatmap.flat().reduce((s, n) => s + n, 0) === sum("sessions"));
+    check(`${days}d: station revenue adds up`, Math.abs(a.stations.reduce((s, x) => s + x.revenue, 0) - a.totals.revenue) < 0.05);
+    check(`${days}d: power classes cover all energy`, Math.abs(a.powerClasses.reduce((s, x) => s + x.energyKwh, 0) - sum("energyKwh")) < 1);
+    check(`${days}d: money is to the satang`, [a.totals.revenue, ...a.daily.map(d => d.revenue)].every(v => Math.round(v * 100) === Number((v * 100).toFixed(6))));
+  }
+  r = await req("admin", "GET", "/api/admin/analytics?days=14");
+  check("other periods are rejected", r.status === 400, String(r.status));
+  r = await req("admin", "GET", "/api/admin/analytics");
+  check("period defaults to 30 days", r.status === 200 && r.data.days === 30, String(r.data?.days));
+  r = await req("live-driver", "GET", "/api/admin/analytics?days=30");
+  check("drivers can't see analytics", r.status === 403, String(r.status));
+
   section("Logout");
   r = await req("driver", "POST", "/api/auth/logout");
   check("logout", r.status === 200);
@@ -742,7 +796,7 @@ const run = async () => {
     const res2 = await fetch(BASE + path, { headers: { Cookie: driverCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);
   }
-  const adminPages = ["/admin/stations", "/admin/chargers", "/admin/reservations", "/admin/sessions", "/admin/users"];
+  const adminPages = ["/admin/stations", "/admin/chargers", "/admin/reservations", "/admin/sessions", "/admin/users", "/admin/analytics"];
   for (const path of adminPages) {
     const res2 = await fetch(BASE + path, { headers: { Cookie: adminCookie }, redirect: "manual" });
     check(`GET ${path} → 200`, res2.status === 200, `got ${res2.status}`);

@@ -1,0 +1,36 @@
+import { defineMessages } from "@/i18n/define";
+
+export const live = defineMessages(
+  {
+    powerTitle: "Charging power",
+    powerNote: "solid so far, dashed until your target",
+    powerAria: (kw: string, left: string) => `Charging at ${kw}, ${left} to target`,
+    now: "Now",
+    atMinute: (t: string) => `At ${t}`,
+    atMinuteFuture: (t: string) => `Expected at ${t}`,
+    badgeLive: "Live",
+    badgePolling: "Updating",
+    badgeConnecting: "Connecting",
+    badgeLiveHint: "Updates stream in every 3 seconds",
+    badgePollingHint: "Live stream unavailable, refreshing every 5 seconds",
+    networkPower: "Network power now",
+    networkPowerHint: (sessions: number) => `across ${sessions} active sessions`,
+    endedElsewhere: "This session was stopped. Settle the bill below.",
+  },
+  {
+    powerTitle: "กำลังไฟที่ชาร์จ",
+    powerNote: "เส้นทึบคือที่ผ่านมา เส้นประคือที่คาดไว้จนถึงเป้าหมาย",
+    powerAria: (kw: string, left: string) => `กำลังชาร์จ ${kw} อีก ${left} ถึงเป้าหมาย`,
+    now: "ตอนนี้",
+    atMinute: (t: string) => `ที่นาที ${t}`,
+    atMinuteFuture: (t: string) => `คาดว่าที่ ${t}`,
+    badgeLive: "สด",
+    badgePolling: "กำลังอัปเดต",
+    badgeConnecting: "กำลังเชื่อมต่อ",
+    badgeLiveHint: "ข้อมูลอัปเดตแบบสดทุก 3 วินาที",
+    badgePollingHint: "ใช้การเชื่อมต่อแบบสดไม่ได้ ระบบจะรีเฟรชทุก 5 วินาที",
+    networkPower: "กำลังไฟรวมของเครือข่ายตอนนี้",
+    networkPowerHint: (sessions: number) => `จากการชาร์จ ${sessions} รายการ`,
+    endedElsewhere: "การชาร์จนี้ถูกหยุดแล้ว ชำระเงินได้ด้านล่าง",
+  },
+);

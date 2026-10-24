@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Page } from "@/components/layout/Page";
 import { useSession } from "@/components/layout/SessionProvider";
 import { api } from "@/lib/api-client";
-import { useAsync, usePolling } from "@/lib/use-async";
+import { useAsync } from "@/lib/use-async";
+import { useLive } from "@/lib/use-live";
+import { LiveBadge } from "@/components/charging/LiveBadge";
 import { bangkokTime } from "@/lib/timezone";
 import { Button } from "@/components/ui/Button";
 import { BarChart, ProgressRing, StatTile } from "@/components/ui/Stat";
@@ -19,8 +21,9 @@ export default function DashboardPage() {
   const t = m.dashboard;
   const { data, loading, error, reload } = useAsync(() => api.dashboard());
 
-  // The live session keeps advancing, so refresh it while one is running.
-  usePolling(() => void reload(true), 15_000, Boolean(data?.activeSession));
+  // While a session is running its figures stream in over /api/live.
+  const live = useLive("driver", Boolean(data?.activeSession));
+  const activeSession = live.data ? live.data.session : (data?.activeSession ?? null);
 
   const hour = Number(bangkokTime(new Date()).slice(0, 2));
   const greeting = hour < 12 ? t.morning : hour < 18 ? t.afternoon : t.evening;
@@ -62,8 +65,8 @@ export default function DashboardPage() {
       {data ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start">
           <div className="min-w-0 space-y-4">
-            {data.activeSession ? (
-              <LiveSessionCard session={data.activeSession} />
+            {activeSession ? (
+              <LiveSessionCard session={activeSession} mode={live.mode} />
             ) : (
               <NoSessionCard />
             )}
@@ -275,8 +278,10 @@ export default function DashboardPage() {
 
 function LiveSessionCard({
   session,
+  mode,
 }: {
   session: NonNullable<Awaited<ReturnType<typeof api.dashboard>>["activeSession"]>;
+  mode: "connecting" | "live" | "polling";
 }) {
   const { m, f } = useI18n();
   const t = m.dashboard;
@@ -295,9 +300,10 @@ function LiveSessionCard({
         <span className="text-[11.5px] font-semibold tracking-[0.08em] text-grid-green-pale uppercase">
           {reached ? t.targetReached : t.chargingNow}
         </span>
+        <LiveBadge mode={mode} tone="onColor" />
         <div className="flex-1" />
         <span className="text-[12px] font-medium text-grid-green-pale">
-          {t.fastPower(Math.round(session.powerKw))}
+          {t.fastPower(Math.round(session.currentKw))}
         </span>
       </div>
 

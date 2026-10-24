@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiRequestError } from "@/lib/api-client";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type State<T> = {
   data: T | null;
@@ -21,6 +22,8 @@ export function useAsync<T>(loader: () => Promise<T>, deps: unknown[] = []) {
   });
   const mounted = useRef(true);
   const loaderRef = useRef(loader);
+  const fallback = useRef("");
+  fallback.current = useI18n().m.common.genericError;
 
   useEffect(() => {
     loaderRef.current = loader;
@@ -44,9 +47,7 @@ export function useAsync<T>(loader: () => Promise<T>, deps: unknown[] = []) {
         data: s.data,
         loading: false,
         error:
-          error instanceof ApiRequestError
-            ? error.message
-            : "Something went wrong. Please try again.",
+          error instanceof ApiRequestError ? error.message : fallback.current,
       }));
     }
   }, []);

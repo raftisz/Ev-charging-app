@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Page } from "@/components/layout/Page";
 import { api, ApiRequestError } from "@/lib/api-client";
-import { useAsync, usePolling } from "@/lib/use-async";
+import { useAsync } from "@/lib/use-async";
+import { useLive } from "@/lib/use-live";
+import { PowerChart } from "@/components/charging/PowerChart";
+import { LiveBadge } from "@/components/charging/LiveBadge";
 import { useSession } from "@/components/layout/SessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -43,9 +46,19 @@ export default function ChargingPage() {
     };
   });
 
-  usePolling(() => void reload(true), 10_000, Boolean(data?.active));
+  // Live figures stream in over /api/live; the page load gives the first frame.
+  const live = useLive("driver");
+  const [ended, setEnded] = useState<number | null>(null);
+  const streamed = live.data ? live.data.session : undefined;
+  const candidate = streamed === undefined ? (data?.active ?? null) : streamed;
+  const session = candidate && candidate.id !== ended ? candidate : null;
 
-  const session = data?.active ?? null;
+  // The session ended somewhere else (an admin stopped it, the target was
+  // reached): refresh the list so it shows up under "waiting for payment".
+  const activeId = data?.active?.id ?? null;
+  useEffect(() => {
+    if (activeId !== null && streamed === null) void reload(true);
+  }, [activeId, streamed, reload]);
   const targetReached = session
     ? session.currentPercent >= session.targetPercent
     : false;
@@ -55,6 +68,7 @@ export default function ChargingPage() {
     setStopping(true);
     try {
       const { session: finished } = await api.stopSession(session.id);
+      setEnded(finished.id);
       toast.push(t.stopped(f.kwh(finished.energyKwh)));
       setConfirmStop(false);
       setPayFor(finished);
@@ -156,6 +170,7 @@ export default function ChargingPage() {
                 <span className="text-[11.5px] font-semibold tracking-[0.08em] text-grid-green-pale uppercase">
                   {targetReached ? t.targetReached : t.chargingNow}
                 </span>
+                <LiveBadge mode={live.mode} tone="onColor" />
                 <div className="flex-1" />
                 <span className="text-[12.5px] text-grid-green-pale">
                   {f.kw(session.powerKw)} · {m.payments.perKwh(f.thb(session.pricePerKwh))}
@@ -190,7 +205,7 @@ export default function ChargingPage() {
                       value={targetReached ? t.ready : f.duration(session.minutesToTarget)}
                     />
                     <Metric label={t.energyDelivered} value={f.kwh(session.energyKwh)} />
-                    <Metric label={t.speed} value={f.kw(session.powerKw)} />
+                    <Metric label={t.speed} value={f.kw(session.currentKw)} />
                     <Metric label={t.costSoFar} value={f.thb(session.cost)} />
                   </div>
                 </div>
@@ -236,6 +251,10 @@ export default function ChargingPage() {
                   {t.stop}
                 </Button>
               </div>
+            </div>
+
+            <div className="vg-card p-4">
+              <PowerChart session={session} />
             </div>
 
             <div className="vg-card p-4">

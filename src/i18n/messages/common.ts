@@ -14,6 +14,7 @@ export const common = defineMessages(
     loading: "Loading…",
     loadFailed: "Could not load this",
     closeDialog: "Close dialog",
+    genericError: "Something went wrong. Please try again.",
   },
   {
     appName: "Volt Grid",
@@ -28,5 +29,6 @@ export const common = defineMessages(
     loading: "กำลังโหลด…",
     loadFailed: "โหลดข้อมูลไม่สำเร็จ",
     closeDialog: "ปิดหน้าต่าง",
+    genericError: "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง",
   },
 );
