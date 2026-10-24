@@ -252,7 +252,7 @@ export default function ChargingPage() {
                 <Button
                   variant="secondary"
                   fullWidth
-                  className="border-transparent bg-white text-grid-green-dark hover:bg-white/90"
+                  className="border-transparent bg-white! text-grid-green-dark! hover:bg-white/90!"
                   href={`/stations/${session.station.id}`}
                 >
                   {t.stationDetails}
@@ -261,8 +261,8 @@ export default function ChargingPage() {
                   fullWidth
                   className={
                     targetReached
-                      ? "order-first bg-white text-grid-green-dark hover:bg-white/90 sm:order-last"
-                      : "border border-white/35 bg-white/10 text-white hover:bg-white/20"
+                      ? "order-first bg-white! text-grid-green-dark! hover:bg-white/90! sm:order-last"
+                      : "border border-white/35 bg-white/10! text-white! shadow-none! hover:bg-white/20!"
                   }
                   onClick={() => setConfirmStop(true)}
                 >

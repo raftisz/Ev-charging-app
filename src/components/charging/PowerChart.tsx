@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { curvePoints, type CurvePoint } from "@/lib/charge-curve";
+import { curvePoints, minutesToReach, type CurvePoint } from "@/lib/charge-curve";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { SessionDTO } from "@/lib/types";
 
@@ -44,17 +44,22 @@ export function PowerChart({ session }: { session: SessionDTO }) {
   // model only for what is still to come.
   const trace = session.ocpp?.trace ?? [];
   const metered = trace.length > 0;
-  const elapsed = metered ? Math.max(session.minutesElapsed, trace[trace.length - 1].m) : session.minutesElapsed;
-  const total = Math.max(elapsed + session.minutesToTarget, 1);
   const input = useMemo(
     () => ({
-      ratedKw: session.charger.powerKw,
+      ratedKw: session.powerKw,
       batteryKwh: session.batteryKwh,
       startPercent: session.startPercent,
       targetPercent: session.targetPercent,
     }),
-    [session.charger.powerKw, session.batteryKwh, session.startPercent, session.targetPercent],
+    [session.powerKw, session.batteryKwh, session.startPercent, session.targetPercent],
   );
+  // Once the battery reaches the target the car stops drawing power. A
+  // session left plugged in for hours would otherwise squash the curve into
+  // the first few minutes, so the chart ends where charging ended.
+  const reachedAt = useMemo(() => (metered ? Number.POSITIVE_INFINITY : minutesToReach(input)), [metered, input]);
+  const rawElapsed = metered ? Math.max(session.minutesElapsed, trace[trace.length - 1].m) : session.minutesElapsed;
+  const elapsed = Math.min(rawElapsed, reachedAt);
+  const total = Math.max(elapsed + session.minutesToTarget, 1);
   const modelled = useMemo(() => curvePoints(input, total, 60), [input, total]);
   const remaining = useMemo(
     () => (metered ? curvePoints({ ...input, startPercent: session.currentPercent }, session.minutesToTarget, 40) : []),
@@ -69,7 +74,7 @@ export function PowerChart({ session }: { session: SessionDTO }) {
       ]
     : modelled;
 
-  const maxKw = Math.max(...points.map((p) => p.kw), session.charger.powerKw * 0.5, 1);
+  const maxKw = Math.max(...points.map((p) => p.kw), session.powerKw * 0.5, 1);
   const step = niceStep(maxKw);
   const top = Math.ceil(maxKw / step) * step;
   const plotW = Math.max(width - PAD.left - PAD.right, 10);
